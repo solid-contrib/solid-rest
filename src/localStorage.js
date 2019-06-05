@@ -1,5 +1,6 @@
 /* 
    constructor should define the pacakage's name 
+   by default this will be added to the x-powered-by header of all responses
 */
 class SolidLocalStorage {
   constructor() {
