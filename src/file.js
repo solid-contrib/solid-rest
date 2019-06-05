@@ -1,0 +1,126 @@
+const concatStream = require('concat-stream')
+const Headers = require('node-fetch').Headers
+const contentTypeLookup = require('mime-types').contentType
+const url = require('url')
+const Readable = require('stream').Readable
+const path = require("path");
+const fs = require("fs");
+
+class SolidFileStorage {
+  constructor() {
+    this.name = "solid-rest-file-0.0.1"
+  }
+
+ _makeStream(text){
+      let s = new Readable
+      s.push(text)
+      s.push(null)  
+      return s;
+}
+ text (stream) {
+  return new Promise((resolve, reject) => {
+    stream = stream || ""
+    if(typeof stream === "string") return resolve(stream);
+    stream.pipe(concatStream({
+      encoding: 'string'
+    }, resolve())).catch(e=>{console.log(e); reject()})
+    stream.on('error', reject())
+  })
+}
+ json (stream) {
+    return text(stream).then(text => JSON.parse(text))
+}
+
+async  getObjectType(fn,options){
+    let stat;
+    try { stat = fs.lstatSync(fn); }
+    catch(err){ }
+    let type   = ( stat && stat.isDirectory()) ? "Container" : "Resource";
+    if(!stat && fn.endsWith('/')) type = "Container"
+    return Promise.resolve( [type,stat] )
+}
+
+async getResource(pathname,options,objectType){
+ return new Promise((resolve) => {
+  let fn = pathname.replace(/.*\//,'');    
+  let success="";
+  try{ 
+     fs.createReadStream(pathname)
+    .on("data",(chunk)=>{success=success+chunk})
+    .on("error",(err)=>{console.log(err)})
+    .on("end",()=>{
+      return resolve( [
+        200,
+        success, {
+'Content-Type':contentTypeLookup(path.extname(pathname)),
+Link : `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl", <http://www.w3.org/ns/ldp#Resource>; rel="type"`
+        }
+      ])
+    })
+  }catch(e){}
+})}
+
+async putResource(pathname,options){
+    return new Promise((resolve) => {
+        options.body = this._makeStream( options.body );
+        options.body.pipe(fs.createWriteStream(pathname)).on('finish',()=>{
+          resolve( [201,undefined,{'location': options.uri}] )
+        }).on('error', (err) => { 
+          console.log(err)
+          if(options.method==="PUT" && options.objectType==="Container")
+            resolve( [405] )
+          resolve( [500] )
+        })
+    })
+}
+async deleteResource(fn){
+    return new Promise(function(resolve) {
+        fs.unlink( fn, function(err) {
+            if(err)  resolve( [409] );
+            else     resolve( [200] );
+        });
+    });
+}
+deleteContainer(fn){
+    return new Promise(function(resolve) {
+        fs.rmdir( fn, function(err) {
+            if(err) {
+                resolve( [409] );
+            } else {
+                resolve( [200] );
+            }
+        });
+    });
+}
+postContainer(fn,options){
+    fn = fn.replace(/\/$/,'');
+    return new Promise(function(resolve) {
+        fs.mkdir( fn, {}, (err) => {
+            if(err) {
+                return resolve( [409] )
+            } 
+            else {
+                return resolve( [201,undefined,{location:fn}] )
+            }
+        });
+    });
+}
+async makeContainers(pathname,options){
+      let filename = path.basename(pathname);
+      let reg = new RegExp(filename+"\$")
+      let foldername = pathname.replace(reg,'');
+      let [t,exists] = await this.getObjectType(foldername);
+      if(exists) return Promise.resolve(200)
+      foldername = foldername.replace(/\/$/,'');
+      fs.mkdir( foldername, {"recursive":true}, (err) => {
+        if(err) return Promise.resolve( 500 )
+        else    return Promise.resolve( 201 )
+      })
+}
+async getContainer(pathname,options) {
+  return fs.readdirSync(pathname)
+}
+
+}
+module.exports = SolidFileStorage
+

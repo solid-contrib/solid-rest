@@ -1,0 +1,16 @@
+
+class SolidRest {
+
+constructor( storage ) {
+  this.storage = storage.name
+}
+
+test() {
+  alert(this.storage)
+}
+
+}
+
+module.exports = exports = SolidRest
+
+/* END */

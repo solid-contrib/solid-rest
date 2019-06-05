@@ -1,0 +1,7 @@
+*~
+#*
+drafts
+node_modules
+dist
+coverage
+lib
