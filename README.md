@@ -10,6 +10,8 @@ This package sits between auth modules like solid-auth-client and solid-auth-cli
 
 <img src="https://github.com/jeff-zucker/solid-rest/blob/master/sold-rest.png" alt="diagram of solid-rest">
 
-This package provides request routing, header handling, response preparation, and a test framework.  Storage modules can leverage all of that and/or over-ride what they want.  I am preparing an API guide, in the meantime there is documentation in the [localStorage](./src/localStorage.js).
+**For those who want to use file:// or app:// URLs** Soon, solid-rest will be included in the auth modules.  At that point, in a nodejs app, you simply require solid-rest and then use the extra URLs and in a browser app you supply script tags for solid-rest and for whichever of the app:// handlers you want.
+
+**For those who want to create other storage handlers:** This package provides request routing, header handling, response preparation, and a test framework.  Storage modules can leverage all of that and/or over-ride what they want.  I am preparing an API guide, in the meantime there is documentation in the [localStorage](./src/localStorage.js) file.
 
 copyright &copy; 2019, Jeff Zucker, may be freely distributed with the MIT license
