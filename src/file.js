@@ -8,7 +8,7 @@ const fs = require("fs");
 
 class SolidFileStorage {
   constructor() {
-    this.name = "solid-rest-file-0.0.1"
+    this.name = "solid-rest-file-storage-1.0.0"
   }
 
  _makeStream(text){

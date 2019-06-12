@@ -4,7 +4,7 @@
 */
 class SolidLocalStorage {
   constructor() {
-    this.name = "solid-rest-localStorage-0.0.1"
+    this.name = "solid-rest-localStorage-1.0.0"
   }
 
 /*
