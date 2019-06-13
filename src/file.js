@@ -1,5 +1,4 @@
 const concatStream = require('concat-stream')
-const Headers = require('node-fetch').Headers
 const contentTypeLookup = require('mime-types').contentType
 const url = require('url')
 const Readable = require('stream').Readable
@@ -8,6 +7,7 @@ const fs = require("fs");
 
 class SolidFileStorage {
   constructor() {
+    this.prefix = "file"
     this.name = "solid-rest-file-storage-1.0.0"
   }
 
@@ -51,10 +51,7 @@ async getResource(pathname,options,objectType){
     .on("end",()=>{
       return resolve( [
         200,
-        success, {
-'Content-Type':contentTypeLookup(path.extname(pathname)),
-Link : `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl", <http://www.w3.org/ns/ldp#Resource>; rel="type"`
-        }
+        success
       ])
     })
   }catch(e){}

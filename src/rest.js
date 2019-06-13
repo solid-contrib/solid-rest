@@ -6,8 +6,11 @@ const contentTypeLookup = require('mime-types').contentType
 
 class SolidRest {
 
-constructor( storage ) {
-  this.storage = storage
+constructor( handlers ) {
+  this.storageHandlers = {}
+  handlers.forEach( handler => {
+     this.storageHandlers[handler.prefix] = handler
+  })
   this.statusText = {
     200 : "OK",
     201 : "Created",
@@ -25,6 +28,12 @@ async fetch(uri, options) {
   options.uri = decodeURIComponent(uri)
   let pathname = decodeURIComponent(Url.parse(uri).pathname)
   options.method = (options.method || options.Method || 'GET').toUpperCase()
+  let scheme = Url.parse(uri).protocol
+  let prefix = scheme.match("file") ? 'file' : uri.replace(scheme+'//','').replace(/\/.*/,'')
+  self.storage = self.storageHandlers[prefix]
+  options.scheme = scheme
+  options.prefix = prefix
+  if(!self.storage) throw "Did not recognize prefix "+prefix
   const [objectType,objectExists] = 
     await self.storage.getObjectType(pathname,options)
   options.objectType = objectType
@@ -36,7 +45,7 @@ async fetch(uri, options) {
     if(!objectExists) return _response([404])
     if( objectType==="Container"){
       let contents = await  self.storage.getContainer(pathname,options)
-      contents = _container2turtle(pathname,options,contents) 
+      contents = await _container2turtle(pathname,options,contents) 
       return _response( contents )
     }
     else if( objectType==="Resource" ){
@@ -123,25 +132,34 @@ async fetch(uri, options) {
       s.push(null)  
       return s;
   }
-  function _container2turtle( pathname, options, contentsArray ){
+  async function _container2turtle( pathname, options, contentsArray ){
     if(typeof self.storage.container2turtle != "undefined")
       return self.storage.container2turtle(pathname,options,contentsArray)  
     let filenames=contentsArray.filter( item => {
       if(!item.endsWith('.acl') && !item.endsWith('.meta')){ return item }
     })
+    let folder = options.uri;
+    if(!folder.endsWith("/")) folder = folder + "/"
+    let str2 = ""
     let str = "@prefix ldp: <http://www.w3.org/ns/ldp#>.\n"
             + "<> a ldp:BasicContainer, ldp:Container"
     if(filenames.length){
       str = str + "; ldp:contains\n";
-      filenames.forEach(async function(filename) {
-        let fn = filename
+      for(var i=0;i<filenames.length;i++){
+        let fn = filenames[i]
+        let [ftype,e] =  await self.storage.getObjectType(pathname + fn)
+        if(ftype==="Container") fn = fn + "/"
+        let prefix = options.prefix==="file" ? "" : options.prefix
+        fn = options.scheme+"//"+prefix+pathname + fn
         str = str + `  <${fn}>,\n`
-      });
+        ftype = ftype==="Container" ? "a ldp:Container; a ldp:BasicContainer." : "a ldp:Resource."
+        str2 = str2 + `  <${fn}> ${ftype}\n`
+      }
       str = str.replace(/,\n$/,"")
     }
-    str = str + `.\n`
+    str = str + `.\n` + str2
     // str = _makeStream(str);
-    return ( [ 200,  str, _getHeaders(pathname,options,'Container') ] )
+    return  ([200,str])
   }
   /* DEFAULT HEADER
        link created using .meta and .acl appended to uri 
@@ -159,7 +177,7 @@ async fetch(uri, options) {
     headers.allow = headers.allow || 
       [ 'OPTIONS, HEAD, GET, PATCH, POST, PUT, DELETE' ]
     headers['x-powered-by'] = headers['x-powered-by'] || 
-      'solid-rest'
+      self.storage.name
     headers.link = headers.link || 
       options.objectType==="Container"
         ? `<.meta>; rel="describedBy", <.acl>; rel="acl",`

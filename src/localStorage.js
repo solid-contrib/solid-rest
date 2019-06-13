@@ -4,6 +4,7 @@
 */
 class SolidLocalStorage {
   constructor() {
+    this.prefix = "ls"
     this.name = "solid-rest-localStorage-1.0.0"
   }
 

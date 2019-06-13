@@ -2,16 +2,24 @@ const SolidRest         = require('../src/rest.js')
 const SolidLocalStorage = require('../src/localStorage.js')
 const SolidFileStorage  = require('../src/file.js')
 let [tests,fails,passes] = [0,0,0]
-console.log(`\n`)
 
+const rest = new SolidRest([
+  new SolidLocalStorage(),
+  new SolidFileStorage()
+  // anything can go here, it doesn't need to be pre-registered or known
+  // as long as it defines a prefix app://thatPrefix will use that storage handler
+])
+
+
+console.log(`\n`)
 run( "localStorage" ).then( ()=>{ run("file")  })
 
 async function run(storageType){
 
   [tests,fails,passes] = [0,0,0]
-  let [rest,cfg] = getConfig(storageType)
+  let cfg = getConfig(storageType)
 
-  console.log(`Testing ${rest.storage.name} ...`)
+  console.log(`Testing ${cfg.folder} ...`)
 
   let res = await rest.fetch( cfg.file,{method:"PUT",body:cfg.text} )
   ok( "put resource", res.status==201)
@@ -65,23 +73,21 @@ async function run(storageType){
 
 }
 function getConfig(storageType){
-  let scheme,rest
+  let scheme
   if(storageType==="localStorage"){
     scheme = "app://ls"
-    rest = new SolidRest( new SolidLocalStorage() )
   }
   else if(storageType==="file"){
     scheme = "file://" + process.cwd()
-    rest = new SolidRest( new SolidFileStorage() )
   }
-  return [ rest, {
+  return  {
     folder : scheme + "/test-folder/",
     file   : scheme + "/test-folder/" + "test-file.ttl",
     deepC  : scheme + "/test-folder/deep-folder/",
     deepR  : scheme + "/test-folder/deep-folder/" + "test-file2.ttl",
     fn     : "test-file3.ttl",
     text   : "<> a <#test>.",
-  } ]
+  }
 }
 function ok( label, success ){
    tests = tests + 1;   
