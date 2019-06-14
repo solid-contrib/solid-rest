@@ -14,6 +14,7 @@ constructor( handlers ) {
   this.statusText = {
     200 : "OK",
     201 : "Created",
+    400 : "slashes not allowed in filenames",
     404 : "Not Found",
     405 : "Method Not Supported",
     409 : "Conflict",
@@ -79,8 +80,9 @@ async fetch(uri, options) {
   */
   if( options.method==="POST"){
     if( !objectExists ) return _response([404])
-    let slug = options.headers.Slug || options.headers.slug
     let link = options.headers.Link || options.headers.link
+    let slug = options.headers.Slug || options.headers.slug
+    if(slug.match(/\//)) return (_response([400]))
     pathname = path.join(pathname,slug);
     if( link && link.match("Container") ) {  
       return Promise.resolve( _response( await 
@@ -94,7 +96,7 @@ async fetch(uri, options) {
   /* PUT
   */
   if (options.method === 'PUT' ) {
-    if(objectType==="Container") return Promise.resolve( _response([405]) )
+    if(objectType==="Container") return Promise.resolve( _response([409]) )
     let res = await self.storage.makeContainers(pathname,options)
     if(!res==200 && !res==201) return Promise.resolve(_response([res]))
     return Promise.resolve(

@@ -6,6 +6,7 @@ class SolidLocalStorage {
   constructor() {
     this.prefix = "ls"
     this.name = "solid-rest-localStorage-1.0.0"
+    localStorage.setItem( "/", " " );
   }
 
 /*
@@ -17,6 +18,7 @@ class SolidLocalStorage {
 */
 async getObjectType(pathname,options){
   let type = (pathname.match(/\/$/)) ? "Container" : "Resource";
+  pathname = pathname.replace(/\/$/,'') // REMOVE TRAILING SLASH
   let exists = false
   let keys = Object.keys(localStorage)
   for(var k in keys) {
@@ -60,6 +62,13 @@ dump(pathname,options) {
     console.log( m, localStorage.getItem(m) )
   })
 }
+clear() {
+  let keys = Object.keys(localStorage).filter(k=>{
+    if(!k.match(/(setItem|getItem|removeItem)/)) return k
+  }).map(item=>{
+    this.deleteResource(item)
+  })
+}
 
 /*
    putResource(pathname,options)
@@ -75,7 +84,7 @@ async putResource(pathname,options){
     localStorage.setItem( pathname, options.body );
     return Promise.resolve( [201] )
   }
-  catch(e){ console.log(e); Promise.resolve( [500] ) }
+  catch(e){ console.log(e); return Promise.resolve( [500] ) }
 }
 
 /*
@@ -86,7 +95,7 @@ async putResource(pathname,options){
       * returns [status,undefined,optionalHeader]
 */
 async postContainer(pathname,options){
-  return await putResource
+  return this.putResource(pathname,options)
 }
 
 /*
@@ -125,9 +134,9 @@ async deleteContainer(pathname,options){
 */
 async makeContainers(pathname,options){
   let [t,exists] = await this.getObjectType(pathname);
-  if(exists) return Promise.resolve(200)
+  if(exists) return Promise.resolve(201)
 //  let containers = pathname.split('/');
-  return Promise.resolve( [200] )
+  return Promise.resolve( [201] )
 }
 }
 

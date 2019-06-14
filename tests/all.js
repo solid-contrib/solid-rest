@@ -28,7 +28,7 @@ async function run(storageType){
   ok( "put resource with recursive create containers", res.status==201)
 
   res = await rest.fetch( cfg.folder,{method:"PUT"} )
-  ok( "405 on put container (method not allowed)", res.status==405)
+  ok( "409 on put container (method not allowed)", res.status==409)
 
 
 //  let link='<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"';

@@ -63,7 +63,6 @@ async putResource(pathname,options){
         options.body.pipe(fs.createWriteStream(pathname)).on('finish',()=>{
           resolve( [201,undefined,{'location': options.uri}] )
         }).on('error', (err) => { 
-          console.log(err)
           if(options.method==="PUT" && options.objectType==="Container")
             resolve( [405] )
           resolve( [500] )
@@ -90,17 +89,20 @@ deleteContainer(fn){
     });
 }
 postContainer(fn,options){
-    fn = fn.replace(/\/$/,'');
-    return new Promise(function(resolve) {
-        fs.mkdir( fn, {}, (err) => {
-            if(err) {
-                return resolve( [409] )
-            } 
-            else {
-                return resolve( [201,undefined,{location:fn}] )
-            }
-        });
+  fn = fn.replace(/\/$/,'');
+  return new Promise(function(resolve) {
+    if(fs.existsSync(fn)){
+      return resolve( [201] )
+    }
+    fs.mkdir( fn, {}, (err) => {
+      if(err) {
+        return resolve( [500] )
+      } 
+      else {
+        return resolve( [201] )
+      }
     });
+  });
 }
 async makeContainers(pathname,options){
       let filename = path.basename(pathname);
