@@ -17,7 +17,7 @@ class SolidFileStorage {
       s.push(null)  
       return s;
 }
- text (stream) {
+ async text (stream) {
   return new Promise((resolve, reject) => {
     stream = stream || ""
     if(typeof stream === "string") return resolve(stream);
@@ -27,7 +27,7 @@ class SolidFileStorage {
     stream.on('error', reject())
   })
 }
- json (stream) {
+ async json (stream) {
     return text(stream).then(text => JSON.parse(text))
 }
 

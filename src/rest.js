@@ -119,12 +119,12 @@ async fetch(uri, options) {
       json: _json.bind(null, body)
     }
   }
-  function _text (stream) {
+  async function _text (stream) {
     if(typeof self.storage.text !="undefined")
       return self.storage.text(stream) 
     else return stream
   }
-  function _json (stream) {
+  async function _json (stream) {
     if(typeof self.storage.json != "undefined") return self.storage.json(stream)
     else return JSON.parse(stream)
   }
