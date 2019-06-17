@@ -22,6 +22,11 @@ constructor( handlers ) {
   }
 }
 
+storage(options){
+  if(!this.storageHandlers[options.rest_prefix]) throw "Did not recognize prefix "+options.rest_prefix
+  return this.storageHandlers[options.rest_prefix]
+}
+
 async fetch(uri, options) {
   const self = this
   options = options || {}
@@ -31,46 +36,44 @@ async fetch(uri, options) {
   options.method = (options.method || options.Method || 'GET').toUpperCase()
   let scheme = Url.parse(uri).protocol
   let prefix = scheme.match("file") ? 'file' : uri.replace(scheme+'//','').replace(/\/.*/,'')
-  self.storage = self.storageHandlers[prefix]
   options.scheme = scheme
-  options.prefix = prefix
-  if(!self.storage) throw "Did not recognize prefix "+prefix
+  options.rest_prefix = prefix
   const [objectType,objectExists] = 
-    await self.storage.getObjectType(pathname,options)
+    await self.storage(options).getObjectType(pathname,options)
   options.objectType = objectType
   options.objectExists = objectExists
 
   /* GET
   */
   if (options.method === 'GET') {
-    if(!objectExists) return _response([404])
+    if(!objectExists) return _response([404],options)
     if( objectType==="Container"){
-      let contents = await  self.storage.getContainer(pathname,options)
+      let contents = await  self.storage(options).getContainer(pathname,options)
       contents = await _container2turtle(pathname,options,contents) 
-      return _response( contents )
+      return _response( contents,options )
     }
     else if( objectType==="Resource" ){
-      return _response(await self.storage.getResource(pathname,options))
+      return _response(await self.storage(options).getResource(pathname,options),options)
     }
   }
   /* HEAD
   */
   if (options.method === 'HEAD') {
-    if(!objectExists) return _response([404])
-    else return _response( [200] )
+    if(!objectExists) return _response([404],options)
+    else return _response( [200],options )
   }
   /* DELETE
   */
   if( options.method==="DELETE" ){
-    if(!objectExists) return _response([404])
+    if(!objectExists) return _response([404],options)
     if( objectType==="Container" ){
       return Promise.resolve( _response( 
-        await self.storage.deleteContainer(pathname,options) 
+        await self.storage(options).deleteContainer(pathname,options) , options
       ))
     }
     else if (objectType === 'Resource' ) {
       return Promise.resolve( _response(
-        await self.storage.deleteResource(pathname,options)
+        await self.storage(options).deleteResource(pathname,options) , options
       ) )
     }
     else {
@@ -79,34 +82,34 @@ async fetch(uri, options) {
   /* POST
   */
   if( options.method==="POST"){
-    if( !objectExists ) return _response([404])
+    if( !objectExists ) return _response([404],options)
     let link = options.headers.Link || options.headers.link
     let slug = options.headers.Slug || options.headers.slug
-    if(slug.match(/\//)) return (_response([400]))
+    if(slug.match(/\//)) return (_response([400],options))
     pathname = path.join(pathname,slug);
     if( link && link.match("Container") ) {  
       return Promise.resolve( _response( await 
-        self.storage.postContainer(pathname,options) 
+        self.storage(options).postContainer(pathname,options) , options
       ))
     }
     else if( link && link.match("Resource")){
-      return _response( await self.storage.putResource( pathname, options))
+      return _response( await self.storage(options).putResource( pathname, options) , options )
     }
   }
   /* PUT
   */
   if (options.method === 'PUT' ) {
-    if(objectType==="Container") return Promise.resolve( _response([409]) )
-    let res = await self.storage.makeContainers(pathname,options)
-    if(!res==200 && !res==201) return Promise.resolve(_response([res]))
+    if(objectType==="Container") return Promise.resolve( _response([409],options) )
+    let res = await self.storage(options).makeContainers(pathname,options)
+    if(!res==200 && !res==201) return Promise.resolve(_response([res],options))
     return Promise.resolve(
-       _response( await self.storage.putResource( pathname, options ))
+       _response( await self.storage(options).putResource( pathname, options ), options )
     )
   }
   else {
-    return Promise.resolve( _response([405]) )
+    return Promise.resolve( _response([405],options) )
   }
-  function _response( response ){
+  function _response( response, options ){
     let [status,body,headers]  = response
     headers = headers || _getHeaders(pathname,options)
     return {
@@ -115,17 +118,17 @@ async fetch(uri, options) {
       statusText: self.statusText[status],
       headers: new Headers(headers),
       body: body,
-      text: _text.bind(null, body),
-      json: _json.bind(null, body)
+      text: _text.bind(null, body,options),
+      json: _json.bind(null, body,options)
     }
   }
-  async function _text (stream) {
-    if(typeof self.storage.text !="undefined")
-      return self.storage.text(stream) 
+  async function _text (stream,options) {
+    if(typeof self.storage(options).text !="undefined")
+      return self.storage(options).text(stream) 
     else return stream
   }
-  async function _json (stream) {
-    if(typeof self.storage.json != "undefined") return self.storage.json(stream)
+  async function _json (stream,options) {
+    if(typeof self.storage(options).json != "undefined") return self.storage(options).json(stream)
     else return JSON.parse(stream)
   }
   function _makeStream(text){
@@ -135,8 +138,8 @@ async fetch(uri, options) {
       return s;
   }
   async function _container2turtle( pathname, options, contentsArray ){
-    if(typeof self.storage.container2turtle != "undefined")
-      return self.storage.container2turtle(pathname,options,contentsArray)  
+    if(typeof self.storage(options).container2turtle != "undefined")
+      return self.storage(options).container2turtle(pathname,options,contentsArray)  
     let filenames=contentsArray.filter( item => {
       if(!item.endsWith('.acl') && !item.endsWith('.meta')){ return item }
     })
@@ -149,10 +152,10 @@ async fetch(uri, options) {
       str = str + "; ldp:contains\n";
       for(var i=0;i<filenames.length;i++){
         let fn = filenames[i]
-        let [ftype,e] =  await self.storage.getObjectType(pathname + fn)
+        let [ftype,e] =  await self.storage(options).getObjectType(pathname + fn)
         if(ftype==="Container") fn = fn + "/"
-        let prefix = options.prefix==="file" ? "" : options.prefix
-        fn = options.scheme+"//"+prefix+pathname + fn
+//        let prefix = options.rest_prefix==="file" ? "" : options.rest_prefix
+//        fn = options.scheme+"//"+prefix+pathname + fn
         str = str + `  <${fn}>,\n`
         ftype = ftype==="Container" ? "a ldp:Container; a ldp:BasicContainer." : "a ldp:Resource."
         str2 = str2 + `  <${fn}> ${ftype}\n`
@@ -170,8 +173,8 @@ async fetch(uri, options) {
   */
   function _getHeaders(pathname,options){    
     let fn = pathname.replace(/.*\//,'');    
-    let headers = (typeof self.storage.getHeaders != "undefined")
-      ? self.storage.getHeaders(pathname,options)
+    let headers = (typeof self.storage(options).getHeaders != "undefined")
+      ? self.storage(options).getHeaders(pathname,options)
       : {}
     headers.location = headers.location || options.uri
     headers.date = headers.date || 
@@ -179,7 +182,7 @@ async fetch(uri, options) {
     headers.allow = headers.allow || 
       [ 'OPTIONS, HEAD, GET, PATCH, POST, PUT, DELETE' ]
     headers['x-powered-by'] = headers['x-powered-by'] || 
-      self.storage.name
+      self.storage(options).name
     headers.link = headers.link || 
       options.objectType==="Container"
         ? `<.meta>; rel="describedBy", <.acl>; rel="acl",`

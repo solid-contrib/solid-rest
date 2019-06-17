@@ -95,6 +95,7 @@ async putResource(pathname,options){
       * returns [status,undefined,optionalHeader]
 */
 async postContainer(pathname,options){
+  pathname = pathname + '/'     // because wasn't on slug
   return this.putResource(pathname,options)
 }
 

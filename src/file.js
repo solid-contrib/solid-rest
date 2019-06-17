@@ -61,7 +61,7 @@ async putResource(pathname,options){
     return new Promise((resolve) => {
         options.body = this._makeStream( options.body );
         options.body.pipe(fs.createWriteStream(pathname)).on('finish',()=>{
-          resolve( [201,undefined,{'location': options.uri}] )
+          resolve( [201] )
         }).on('error', (err) => { 
           if(options.method==="PUT" && options.objectType==="Container")
             resolve( [405] )
@@ -111,8 +111,8 @@ async makeContainers(pathname,options){
       let [t,exists] = await this.getObjectType(foldername);
       if(exists) return Promise.resolve(200)
       foldername = foldername.replace(/\/$/,'');
-      fs.mkdir( foldername, {"recursive":true}, (err) => {
-        if(err) return Promise.resolve( 500 )
+      await fs.mkdir( foldername, {"recursive":true}, (err) => {
+        if(err) return Promise.resolve( err )
         else    return Promise.resolve( 201 )
       })
 }
