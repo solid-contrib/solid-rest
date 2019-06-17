@@ -9,7 +9,7 @@
   "module": "lib/index.js",
   "scripts": {
     "prepublish": "npm run build",
-    "build": "npm run build:window && npm run build:lib",
+    "build": "npm run build:window",
     "build:lib": "rm -rf lib && babel src --env-name production -d lib",
     "build:window": "webpack --config=./webpack/webpack.window.config.js -p"
   },
