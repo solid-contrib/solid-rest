@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/jeff-zucker/solid-rest#readme",
   "dependencies": {
+    "fs-extra": "^8.0.1",
     "mime-types": "^2.1.24",
     "node-fetch": "^2.6.0"
   },

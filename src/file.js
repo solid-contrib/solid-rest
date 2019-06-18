@@ -3,7 +3,7 @@ const contentTypeLookup = require('mime-types').contentType
 const url = require('url')
 const Readable = require('stream').Readable
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs-extra");
 
 class SolidFileStorage {
   constructor() {
@@ -94,7 +94,7 @@ postContainer(fn,options){
     if(fs.existsSync(fn)){
       return resolve( [201] )
     }
-    fs.mkdir( fn, {}, (err) => {
+    fs.mkdirp( fn, {}, (err) => {
       if(err) {
         return resolve( [500] )
       } 
@@ -111,7 +111,7 @@ async makeContainers(pathname,options){
       let [t,exists] = await this.getObjectType(foldername);
       if(exists) return Promise.resolve(200)
       foldername = foldername.replace(/\/$/,'');
-      await fs.mkdir( foldername, {"recursive":true}, (err) => {
+      fs.mkdirpSync( foldername, {}, (err) => {
         if(err) return Promise.resolve( err )
         else    return Promise.resolve( 201 )
       })
