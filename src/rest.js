@@ -153,7 +153,7 @@ async fetch(uri, options) {
       for(var i=0;i<filenames.length;i++){
         let fn = filenames[i]
         let [ftype,e] =  await self.storage(options).getObjectType(pathname + fn)
-        if(ftype==="Container") fn = fn + "/"
+        if(ftype==="Container" && !fn.endsWith("/")) fn = fn + "/"
 //        let prefix = options.rest_prefix==="file" ? "" : options.rest_prefix
 //        fn = options.scheme+"//"+prefix+pathname + fn
         str = str + `  <${fn}>,\n`

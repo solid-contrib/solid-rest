@@ -49,9 +49,11 @@ async getResource(pathname,options){
     * OR returns a turtle representation of the container and contents
 */
 async getContainer(pathname,options) {
-  let files = Object.keys(localStorage).filter( k=>{
-    if(k.startsWith(pathname) && k != pathname){ return k }
-  }).map(v=>{return v.replace(pathname,'')})
+  const files = Object.keys(localStorage)
+    .filter(path => path.startsWith(pathname) && path != pathname) // Only children
+    .map(path => path.substr(pathname.length))
+    .filter(path => !path.slice(0, -1).includes("/")) // Only include direct children
+
   return files
 }
 
