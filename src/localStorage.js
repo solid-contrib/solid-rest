@@ -137,8 +137,9 @@ async deleteContainer(pathname,options){
 */
 async makeContainers(pathname,options){
   let [t,exists] = await this.getObjectType(pathname);
-  if(exists) return Promise.resolve(201)
+  if(exists) return Promise.resolve([201])
 //  let containers = pathname.split('/');
+  // TODO: Recursively create containers
   return Promise.resolve( [201] )
 }
 }
