@@ -1,9 +1,11 @@
 const concatStream = require('concat-stream')
-const contentTypeLookup = require('mime-types').contentType
+const contentTypeLookup = require('mime-types').contentType;
 const url = require('url')
-const Readable = require('stream').Readable
+const Readable = require('stream').Readable;
 const path = require("path");
 const fs = require("fs-extra");
+
+let self = this;  // alain
 
 class SolidFileStorage {
   constructor() {
@@ -12,7 +14,7 @@ class SolidFileStorage {
   }
 
  _makeStream(text){
-      let s = new Readable
+      let s = new Readable;
       s.push(text)
       s.push(null)  
       return s;
@@ -36,7 +38,7 @@ async  getObjectType(fn,options){
     try { stat = fs.lstatSync(fn); }
     catch(err){ }
     let type   = ( stat && stat.isDirectory()) ? "Container" : "Resource";
-    if(!stat && fn.endsWith('/')) type = "Container"
+    if(!stat && fn.endsWith('/')) type = "Container";
     return Promise.resolve( [type,stat] )
 }
 
@@ -109,12 +111,21 @@ async makeContainers(pathname,options){
       let reg = new RegExp(filename+"\$")
       let foldername = pathname.replace(reg,'');
       let [t,exists] = await this.getObjectType(foldername);
-      if(exists) return Promise.resolve(200)
+      if(exists) return Promise.resolve([200])
       foldername = foldername.replace(/\/$/,'');
-      fs.mkdirpSync( foldername, {}, (err) => {
-        if(err) return Promise.resolve( err )
-        else    return Promise.resolve( 201 )
-      })
+	  if (!fs.existsSync(foldername)) {
+            var dirName = "";
+            var filePathSplit = foldername.split('/');
+            for (var index = 0; index < filePathSplit.length; index++) {
+                dirName += filePathSplit[index]+'/';
+                if (!fs.existsSync(dirName)) {
+                	await fs.mkdirSync(dirName, (err) => {
+                		if ( err) {return Promise.resolve(err)}
+                	})
+        		}
+            }
+      }
+      return Promise.resolve( [201] )
 }
 async getContainer(pathname,options) {
   return fs.readdirSync(pathname)

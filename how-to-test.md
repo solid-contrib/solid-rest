@@ -22,7 +22,7 @@
 
   7. Enter the command: npm install
 
-  8. Enter the command: node tests/test
+  8. Enter the command: node tests/all
 
 ## How to report the results
 

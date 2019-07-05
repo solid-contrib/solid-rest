@@ -12,7 +12,12 @@ const rest = new SolidRest([
 
 
 console.log(`\n`)
-run( "localStorage" ).then( ()=>{ run("file")  })
+restTests();
+
+async function restTests(){
+	await run( "localStorage" ).catch (e => console.log('localStorage '+ e))
+	await run("file").catch( e => console.log('file '+ e))
+}
 
 async function run(storageType){
 
