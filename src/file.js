@@ -1,6 +1,4 @@
 const concatStream = require('concat-stream')
-const contentTypeLookup = require('mime-types').contentType
-const url = require('url')
 const Readable = require('stream').Readable
 const path = require("path");
 const fs = require("fs-extra");
@@ -109,12 +107,13 @@ async makeContainers(pathname,options){
       let reg = new RegExp(filename+"\$")
       let foldername = pathname.replace(reg,'');
       let [t,exists] = await this.getObjectType(foldername);
-      if(exists) return Promise.resolve(200)
+      if(exists) return Promise.resolve([200])
       foldername = foldername.replace(/\/$/,'');
-      fs.mkdirpSync( foldername, {}, (err) => {
-        if(err) return Promise.resolve( err )
+      await fs.mkdirpSync( foldername, {}, (err) => {
+        if(err) return Promise.resolve( 500 )
         else    return Promise.resolve( 201 )
       })
+      return Promise.resolve([200])
 }
 async getContainer(pathname,options) {
   return fs.readdirSync(pathname)

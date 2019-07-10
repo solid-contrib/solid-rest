@@ -101,12 +101,13 @@ async fetch(uri, options) {
   */
   if (options.method === 'PUT' ) {
     if(objectType==="Container") return _response(null, options, 409)
-    const [status, , headers] = await self.storage(options).makeContainers(pathname,options) // Probably was an error before? It acted like res was no array
+
+    const [status, undefined, headers] = await self.storage(options).makeContainers(pathname,options) 
     Object.assign(options.headers, headers)
 
     if(status !== 200 && status !== 201) return _response(null, options, status)
-
     const [putStatus, , putHeaders] = await self.storage(options).putResource(pathname, options)
+
     Object.assign(options.headers, putHeaders) // Note: The headers from makeContainers are also returned here
 
     return _response(null, options, putStatus)

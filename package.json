@@ -1,12 +1,12 @@
 {
   "name": "solid-rest",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "author": "Jeff Zucker",
   "license": "MIT",
   "description": "treat any storage as a mini Solid server",
   "main": "./src/rest.js",
   "browser": "./dist/browser/solid-rest.js",
-  "module": "lib/index.js",
+  "module": "lib/rest.js",
   "scripts": {
     "prepublish": "npm run build",
     "build": "npm run build:window",
@@ -27,6 +27,7 @@
   },
   "homepage": "https://github.com/jeff-zucker/solid-rest#readme",
   "dependencies": {
+    "concat-stream": "^2.0.0",
     "fs-extra": "^8.0.1",
     "mime-types": "^2.1.24",
     "node-fetch": "^2.6.0"
