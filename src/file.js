@@ -9,12 +9,15 @@ class SolidFileStorage {
     this.name = "solid-rest-file-storage-1.0.0"
   }
 
- _makeStream(text){
-      let s = new Readable
-      s.push(text)
-      s.push(null)  
-      return s;
-}
+  _makeStream(text){
+    if (typeof text === 'object' && typeof text.stream === 'function') {
+      return text.stream()
+    }
+       let s = new Readable
+       s.push(text)
+       s.push(null)  
+       return s;
+ }
  async text (stream) {
   return new Promise((resolve, reject) => {
     stream = stream || ""
