@@ -32,11 +32,12 @@ async fetch(uri, options) {
     await self.storage(options).getObjectType(pathname,options)
   options.objectType = objectType
   options.objectExists = objectExists
+  const notFoundMessage = '404 Not Found'
 
   /* GET
   */
   if (options.method === 'GET') {
-    if(!objectExists) return _response(null, options, 404)
+    if(!objectExists) return _response(notFoundMessage, options, 404)
     if( objectType==="Container"){
       let contents = await  self.storage(options).getContainer(pathname,options)
       const [status, turtleContents, headers] = await _container2turtle(pathname,options,contents)
@@ -54,13 +55,13 @@ async fetch(uri, options) {
   /* HEAD
   */
   if (options.method === 'HEAD') {
-    if(!objectExists) return _response(null, options, 404)
+    if(!objectExists) return _response(notFoundMessage, options, 404)
     else return _response(null, options, 200)
   }
   /* DELETE
   */
   if( options.method==="DELETE" ){
-    if(!objectExists) return _response(null, options, 404)
+    if(!objectExists) return _response(notFoundMessage, options, 404)
     if( objectType==="Container" ){
       const [status, , headers] = await self.storage(options).deleteContainer(pathname,options)
       Object.assign(options.headers, headers)
@@ -79,7 +80,7 @@ async fetch(uri, options) {
   /* POST
   */
   if( options.method==="POST"){
-    if( !objectExists ) return _response(null, options, 404)
+    if( !objectExists ) return _response(notFoundMessage, options, 404)
     let link = options.headers.Link || options.headers.link
     let slug = options.headers.Slug || options.headers.slug
     if(slug.match(/\//)) return _response(null, options, 400) // Now returns 400 instead of 404
