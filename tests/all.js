@@ -55,6 +55,18 @@ async function run(storageType){
   res = await rest.fetch( cfg.deepR )
   ok( 'get resource', res.status==200  && cfg.text===await res.text() ) 
 
+var res2="";
+res2 = await rest.fetch( cfg.noR )
+// catch(e) {console.log(e)}
+console.log(res2.statusText)
+  ok( '404 on attempt to get non-existant resource', res2.status==404 ) 
+
+var res3="";
+try {res3 = await rest.fetch( cfg.noC ) }
+catch(e) {console.log(e)}
+//console.log(res3)
+  ok( '404 on attempt to get non-existant container', res3.status==404 ) 
+
   res = await rest.fetch( cfg.folder )
   ok( 'get container', res.status==200 ) 
 
@@ -99,6 +111,8 @@ function getConfig(storageType){
     file   : scheme + "/test-folder/" + "test-file.ttl",
     deepC  : scheme + "/test-folder/deep-folder/",
     deepR  : scheme + "/test-folder/deep-folder/" + "test-file2.ttl",
+    noR    : scheme + "/test-folder/noSuchFile",
+    noC    : scheme + "/test-folder/noSuchFolder",
     fn     : "test-file3.ttl",
     fo     : "otherFolder",
     text   : "<> a <#test>."
