@@ -55,20 +55,14 @@ async function run(storageType){
   res = await rest.fetch( cfg.deepR )
   ok( 'get resource', res.status==200  && cfg.text===await res.text() ) 
 
-var res2="";
-res2 = await rest.fetch( cfg.noR )
-// catch(e) {console.log(e)}
-console.log(res2.statusText)
-  ok( '404 on attempt to get non-existant resource', res2.status==404 ) 
-
-var res3="";
-try {res3 = await rest.fetch( cfg.noC ) }
-catch(e) {console.log(e)}
-//console.log(res3)
-  ok( '404 on attempt to get non-existant container', res3.status==404 ) 
-
   res = await rest.fetch( cfg.folder )
   ok( 'get container', res.status==200 ) 
+
+  res = await rest.fetch( cfg.noR )
+  ok( '404 on attempt to get non-existant resource', res.status==404 ) 
+
+  res = await rest.fetch( cfg.noC ) 
+  ok( '404 on attempt to get non-existant container', res.status==404 ) 
 
   res = await rest.fetch( cfg.file, {method:"HEAD"} )
   ok( "head resource", res.status == 200 )
