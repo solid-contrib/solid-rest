@@ -136,11 +136,22 @@ async deleteContainer(pathname,options){
     * on failure, return [500,undefined,optionalHeader]
 */
 async makeContainers(pathname,options){
-  let [t,exists] = await this.getObjectType(pathname);
-  if(exists) return Promise.resolve([201])
-//  let containers = pathname.split('/');
-  // TODO: Recursively create containers
-  return Promise.resolve( [201] )
+  const inexistentParents = []
+
+  // Get all parents which need to be created
+  let curParent = getParent(pathname)
+  while (curParent && !(await this.getObjectType(curParent + '/'))[1]) {
+    inexistentParents.push(curParent)
+    curParent = getParent(curParent)
+  }
+  if (!curParent) // Should not happen, that we get to the root
+    return [500]
+
+  // Create missing parents
+  while (inexistentParents.length) {
+    await this.postContainer(inexistentParents.pop())
+  }
+  return [201]
 }
 }
 

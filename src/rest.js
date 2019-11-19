@@ -133,8 +133,7 @@ async fetch(uri, options) {
     let filenames=contentsArray.filter( item => {
       if(!item.endsWith('.acl') && !item.endsWith('.meta')){ return item }
     })
-    let folder = options.url;
-    if(!folder.endsWith("/")) folder = folder + "/"
+    if (!pathname.endsWith("/")) pathname += "/"
     let str2 = ""
     let str = "@prefix ldp: <http://www.w3.org/ns/ldp#>.\n"
             + "<> a ldp:BasicContainer, ldp:Container"
@@ -184,6 +183,8 @@ async fetch(uri, options) {
       options.objectType==="Container"
         ? "text/turtle"
         : contentTypeLookup(path.extname(pathname))
+    if (!headers['content-type'])
+      delete headers['content-type']
     return headers
   } // end of getHeaders()
  } // end of fetch()
