@@ -184,6 +184,8 @@ async fetch(uri, options) {
       options.objectType==="Container"
         ? "text/turtle"
         : contentTypeLookup(path.extname(pathname))
+    if (!headers['content-type'])
+      delete headers['content-type']
     return headers
   } // end of getHeaders()
  } // end of fetch()
