@@ -133,8 +133,7 @@ async fetch(uri, options) {
     let filenames=contentsArray.filter( item => {
       if(!item.endsWith('.acl') && !item.endsWith('.meta')){ return item }
     })
-    let folder = options.url;
-    if(!folder.endsWith("/")) folder = folder + "/"
+    if (!pathname.endsWith("/")) pathname += "/"
     let str2 = ""
     let str = "@prefix ldp: <http://www.w3.org/ns/ldp#>.\n"
             + "<> a ldp:BasicContainer, ldp:Container"
