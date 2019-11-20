@@ -129,43 +129,38 @@ async deleteContainer(pathname,options){
 }
 
 async makeContainers(pathname,options){
-
-  let [t,exists] = await this.getObjectType(pathname);
-  if(exists) return Promise.resolve([201])
-  return Promise.resolve( [201] )
-
-  // Recursively create containers
-  // below here is Otto's patch which I couldn't get to work, 
-  // TBD: try Otto's patch again later
-  //
-/*
-  makeContainers(pathname,options)
-    * if path's parent containers exist, return[200,undefined,optionalHeader]
-    * else, recursively create parent containers
-    * on success, return [201,undefined,optionalHeader]
-    * on failure, return [500,undefined,optionalHeader]
-*/
-
   const inexistentParents = []
 
   // Get all parents which need to be created
-  let curParent = this.getParent(pathname)
-//  while (curParent && !(await this.getObjectType(curParent + '/'))[1]) {
+  let curParent = getParent(pathname)
   while (curParent && !(await this.getObjectType(curParent))[1]) {
     inexistentParents.push(curParent)
-    curParent = this.getParent(curParent)
+    curParent = getParent(curParent)
   }
   if (!curParent) // Should not happen, that we get to the root
     return [500]
 
   // Create missing parents
   while (inexistentParents.length) {
-    // await this.postContainer(inexistentParents.pop())
-    let newC = this.removeDoubleSlashesAtEnd(inexistentParents.pop())
-    await this.postContainer(newC)
+    // postContainer expects an url without '/' at the end
+    await this.postContainer(inexistentParents.pop().slice(0, -1))
   }
   return [201]
 }
+}
+
+/**
+ * return parent url with / at the end.
+ * If no parent exists return null
+ * @param {string} url 
+ * @returns {string|null}
+ */
+function getParent(url) {
+  while (url.endsWith('/'))
+    url = url.slice(0, -1)
+  if (!url.includes('/'))
+    return null
+  return url.substring(0, url.lastIndexOf('/')) + '/'
 }
 
 /* 
