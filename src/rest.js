@@ -55,7 +55,7 @@ async fetch(uri, options) {
   /* HEAD
   */
   if (options.method === 'HEAD') {
-    if(!objectExists) return _response(notFoundMessage, options, 404)
+    if(!objectExists) return _response(null, options, 404)
     else return _response(null, options, 200)
   }
   /* DELETE
