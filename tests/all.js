@@ -27,7 +27,7 @@ async function run(storageType){
   console.log(`Testing ${cfg.folder} ...`)
 
   let res = await rest.fetch( cfg.file,{method:"PUT",body:cfg.text} )
-  ok( "put resource", res.status==201)
+  ok( "put resource", res.status==201,res)
 
   res = await rest.fetch( cfg.deepR,{method:"PUT",body:cfg.text} )
   ok( "put resource with recursive create containers", res.status==201)
@@ -106,16 +106,17 @@ function getConfig(storageType){
     deepC  : scheme + "/test-folder/deep-folder/",
     deepR  : scheme + "/test-folder/deep-folder/" + "test-file2.ttl",
     noR    : scheme + "/test-folder/noSuchFile",
-    noC    : scheme + "/test-folder/noSuchFolder",
+    noC    : scheme + "/test-folder/noSuchFolder/",
     fn     : "test-file3.ttl",
     fo     : "otherFolder",
     text   : "<> a <#test>."
   }
 }
-function ok( label, success ){
+function ok( label, success,res ){
    tests = tests + 1;   
    if(success) passes = passes + 1
    else fails = fails+1
    let msg = success ? "ok " : "FAIL "
    console.log( "  " + msg + label)
+   if(!success) console.log(res)
 }
