@@ -42,8 +42,7 @@ async  getObjectType(fn,options){
 }
 
 async getResource(pathname,options,objectType){
-  let fn = pathname.replace(/.*\//,'');    
-  const bodyData = fs.createReadStream(fn)
+  const bodyData = fs.createReadStream(pathname)
   return [
     200,
     bodyData
