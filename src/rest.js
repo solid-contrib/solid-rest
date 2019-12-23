@@ -34,45 +34,48 @@ async fetch(uri, options) {
   options.objectExists = objectExists
   const notFoundMessage = '404 Not Found'
 
+  const resOptions = Object.assign({}, options)
+  resOptions.headers = {}
+
   /* GET
   */
   if (options.method === 'GET') {
-    if(!objectExists) return _response(notFoundMessage, options, 404)
+    if(!objectExists) return _response(notFoundMessage, resOptions, 404)
     if( objectType==="Container"){
       let contents = await  self.storage(options).getContainer(pathname,options)
       const [status, turtleContents, headers] = await _container2turtle(pathname,options,contents)
-      Object.assign(options.headers, headers)
+      Object.assign(resOptions.headers, headers)
 
-      return _response(turtleContents, options, status)
+      return _response(turtleContents, resOptions, status)
     }
     else if( objectType==="Resource" ){
       const [status, contents, headers] = await self.storage(options).getResource(pathname,options)
-      Object.assign(options.headers, headers)
+      Object.assign(resOptions.headers, headers)
 
-      return _response(contents, options, status)
+      return _response(contents, resOptions, status)
     }
   }
   /* HEAD
   */
   if (options.method === 'HEAD') {
-    if(!objectExists) return _response(null, options, 404)
-    else return _response(null, options, 200)
+    if(!objectExists) return _response(null, resOptions, 404)
+    else return _response(null, resOptions, 200)
   }
   /* DELETE
   */
   if( options.method==="DELETE" ){
-    if(!objectExists) return _response(notFoundMessage, options, 404)
+    if(!objectExists) return _response(notFoundMessage, resOptions, 404)
     if( objectType==="Container" ){
       const [status, , headers] = await self.storage(options).deleteContainer(pathname,options)
-      Object.assign(options.headers, headers)
+      Object.assign(resOptions.headers, headers)
 
-      return _response(null, options, status)
+      return _response(null, resOptions, status)
     }
     else if (objectType === 'Resource' ) {
       const [status, , headers] = await self.storage(options).deleteResource(pathname,options)
-      Object.assign(options.headers, headers)
+      Object.assign(resOptions.headers, headers)
 
-      return _response(null, options, status)
+      return _response(null, resOptions, status)
     }
     else {
     }
@@ -80,41 +83,41 @@ async fetch(uri, options) {
   /* POST
   */
   if( options.method==="POST"){
-    if( !objectExists ) return _response(notFoundMessage, options, 404)
+    if( !objectExists ) return _response(notFoundMessage, resOptions, 404)
     let link = options.headers.Link || options.headers.link
     let slug = options.headers.Slug || options.headers.slug
-    if(slug.match(/\//)) return _response(null, options, 400) // Now returns 400 instead of 404
+    if(slug.match(/\//)) return _response(null, resOptions, 400) // Now returns 400 instead of 404
     pathname = path.join(pathname,slug);
     if( link && link.match("Container") ) {
       const [status, , headers] =  await self.storage(options).postContainer(pathname,options)
-      Object.assign(options.headers, headers)
+      Object.assign(resOptions.headers, headers)
 
-      return _response(null, options, status)
+      return _response(null, resOptions, status)
     }
     else if( link && link.match("Resource")){
       const [status, , headers] = await self.storage(options).putResource( pathname, options)
-      Object.assign(options.headers, headers)
+      Object.assign(resOptions.headers, headers)
 
-      return _response(null, options, status)
+      return _response(null, resOptions, status)
     }
   }
   /* PUT
   */
   if (options.method === 'PUT' ) {
-    if(objectType==="Container") return _response(null, options, 409)
+    if(objectType==="Container") return _response(null, resOptions, 409)
 
     const [status, undefined, headers] = await self.storage(options).makeContainers(pathname,options) 
-    Object.assign(options.headers, headers)
+    Object.assign(resOptions.headers, headers)
 
-    if(status !== 200 && status !== 201) return _response(null, options, status)
+    if(status !== 200 && status !== 201) return _response(null, resOptions, status)
     const [putStatus, , putHeaders] = await self.storage(options).putResource(pathname, options)
 
-    Object.assign(options.headers, putHeaders) // Note: The headers from makeContainers are also returned here
+    Object.assign(resOptions.headers, putHeaders) // Note: The headers from makeContainers are also returned here
 
-    return _response(null, options, putStatus)
+    return _response(null, resOptions, putStatus)
   }
   else {
-    return _response(null, options, 405)
+    return _response(null, resOptions, 405)
   }
 
   /**
