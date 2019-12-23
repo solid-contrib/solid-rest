@@ -42,21 +42,13 @@ async  getObjectType(fn,options){
 }
 
 async getResource(pathname,options,objectType){
- return new Promise((resolve) => {
   let fn = pathname.replace(/.*\//,'');    
-  let success="";
-  try{ 
-     fs.createReadStream(pathname)
-    .on("data",(chunk)=>{success=success+chunk})
-    .on("error",(err)=>{console.log(err)})
-    .on("end",()=>{
-      return resolve( [
-        200,
-        success
-      ])
-    })
-  }catch(e){}
-})}
+  const bodyData = fs.createReadStream(fn)
+  return [
+    200,
+    bodyData
+  ]
+}
 
 async putResource(pathname,options){
     return new Promise((resolve) => {
