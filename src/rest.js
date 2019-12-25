@@ -174,7 +174,7 @@ async fetch(uri, options) {
     if( ext==='.ttl'
      || ext==='.acl'
      || ext==='.meta'
-     || type==="Containter"
+     || type==="Container"
     ) {
       return 'text/turtle'
     }
