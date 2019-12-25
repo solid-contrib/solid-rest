@@ -139,7 +139,7 @@ async fetch(uri, options) {
     })
     if (!pathname.endsWith("/")) pathname += "/"
     let str2 = ""
-    let str = "@prefix ldp: <http://www.w3.org/ns/ldp#>.\n"
+    let str = "@prefix : <#>. @prefix ldp: <http://www.w3.org/ns/ldp#>.\n"
             + "<> a ldp:BasicContainer, ldp:Container"
     if(filenames.length){
       str = str + "; ldp:contains\n";
@@ -150,14 +150,37 @@ async fetch(uri, options) {
 //        let prefix = options.rest_prefix==="file" ? "" : options.rest_prefix
 //        fn = options.scheme+"//"+prefix+pathname + fn
         str = str + `  <${fn}>,\n`
-        ftype = ftype==="Container" ? "a ldp:Container; a ldp:BasicContainer." : "a ldp:Resource."
-        str2 = str2 + `  <${fn}> ${ftype}\n`
+        let ctype = _getContentType(_getExtension(fn),options.objectType)
+        ftype = ftype==="Container" ? "ldp:Container; a ldp:BasicContainer" : "ldp:Resource"
+        str2 = str2 + `<${fn}> a ${ftype}.\n`
+        str2 = str2 + `<${fn}> :type "${ctype}".\n`
       }
       str = str.replace(/,\n$/,"")
     }
     str = str + `.\n` + str2
     // str = _makeStream(str);
     return  ([200,str])
+  }
+
+  /* treats filename ".acl" and ".meta" as extensions
+  */
+  function _getExtension(pathname) {
+    let ext = ( path.basename(pathname).startsWith('.') )
+            ? path.basename(pathname)
+            : path.extname(pathname)
+    return ext
+  }
+  function _getContentType(ext,type) {
+    if( ext==='.ttl'
+     || ext==='.acl'
+     || ext==='.meta'
+     || type==="Containter"
+    ) {
+      return 'text/turtle'
+    }
+    else {
+      return contentTypeLookup(ext)
+    }
   }
   /* DEFAULT HEADER
        link created using .meta and .acl appended to uri 
@@ -176,6 +199,46 @@ async fetch(uri, options) {
       [ 'OPTIONS, HEAD, GET, PATCH, POST, PUT, DELETE' ]
     headers['x-powered-by'] = headers['x-powered-by'] || 
       self.storage(options).name
+/*
+    const ext = ( path.basename(pathname).startsWith('.') )
+              ? path.basename(pathname)
+              : path.extname(pathname)
+*/
+  
+    const ext = _getExtension(pathname)
+
+    headers['content-type'] 
+       = headers['content-type'] 
+      || _getContentType(ext,options.objectType)
+    if(!headers['content-type']){
+       delete headers['content-type']
+    }
+    headers.link = headers.link;
+    if( !headers.link ) {
+        if( ext === '.acl' ) {
+          // TBD : IS THIS CORRECT? IS THE TYPE OF ACL "resource"?
+          headers.link =
+            `<http://www.w3.org/ns/ldp#Resource>; rel="type"`
+        }
+        else if( ext === '.meta' ) {
+          headers.link =
+           `<${fn}.acl>; rel="acl",`
+          +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
+        }
+        else if (options.objectType==='Container') {
+          headers.link =
+           `<.meta>; rel="describedBy", <.acl>; rel="acl",`
+          +`<http://www.w3.org/ns/ldp#Container>; rel="type",`
+          +`<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"`
+        }
+        else {
+          headers.link =
+           `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl",`
+          +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
+        }
+    }
+    return headers
+/*
     headers.link = headers.link || 
       options.objectType==="Container"
         ? `<.meta>; rel="describedBy", <.acl>; rel="acl",`
@@ -183,13 +246,8 @@ async fetch(uri, options) {
           +`<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"`
         : `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl",`
           +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
-    headers['content-type'] = headers['content-type'] || 
-      options.objectType==="Container"
-        ? "text/turtle"
-        : contentTypeLookup(path.extname(pathname))
-    if (!headers['content-type'])
-      delete headers['content-type']
-    return headers
+*/
+
   } // end of getHeaders()
  } // end of fetch()
 } // end of SolidRest()
