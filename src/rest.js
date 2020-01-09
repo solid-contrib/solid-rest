@@ -196,7 +196,8 @@ async fetch(uri, options) {
     headers.date = headers.date || 
       new Date(Date.now()).toISOString()
     headers.allow = headers.allow || 
-      [ 'OPTIONS, HEAD, GET, PATCH, POST, PUT, DELETE' ]
+      [ 'HEAD, GET, POST, PUT, DELETE' ]
+      //   [ 'OPTIONS, HEAD, GET, PATCH, POST, PUT, DELETE' ]
     headers['x-powered-by'] = headers['x-powered-by'] || 
       self.storage(options).name
 /*
