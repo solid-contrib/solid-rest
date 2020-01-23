@@ -6,12 +6,42 @@
 [![NPM](https://nodei.co/npm/solid-rest.png)](https://nodei.co/npm/solid-rest/)
 -->
 
-This package sits between auth modules like solid-auth-client and solid-auth-cli to handle requests for file:// and app:// URIs. and then uses the appropriate storage module to do the work.  Doing it this way means that any app that uses those auth modules (which AFAIK is all Solid apps) can make use of the extended storage spaces.  The file:// portion is already working in rdflib in nodejs.  So far I have backends working for a file-system and for localStorage.  Files work only in node; localStorage works either in browser or node (using a simulated in-memory localStorage).  Otto_A_A is working on a cache backend which will use web-workers to dynamically update a mini-pod in the browser's cache.  
+This package sits between auth modules like solid-auth-client and solid-auth-cli to handle requests for file:// and app:// URIs. and then uses the appropriate storage module to do the work.  Doing it this way means that any app that uses those auth modules (which AFAIK is all Solid apps) can make use of the extended storage spaces.  
 
-<img src="https://github.com/jeff-zucker/solid-rest/blob/master/sold-rest.png" alt="diagram of solid-rest">
+In nodejs, the file:// space works to access the local file system and the app://ls space works to access an in-memory local storage.
 
-**For those who want to use file:// or app:// URLs** Soon, solid-rest will be included in the auth modules.  At that point, in a nodejs app, you simply require solid-rest and then use the extra URLs and in a browser app you supply script tags for solid-rest and for whichever of the app:// handlers you want.
+In the browser, the app://bfs space provides acces to the browserFS system which supports over a dozen backends, including Dropbox, the native file system API, indexedDB.  I've successfully tested Solid-rest-browserFS using rdflib against the indexedDB, localStorage, and native file system API (available in chrome with appropriate flags set).  It should work for all other backends as far as I know.
 
-**For those who want to create other storage handlers:** This package provides request routing, header handling, response preparation, and a test framework.  Storage modules can leverage all of that and/or over-ride what they want.  I am preparing an API guide, in the meantime there is documentation in the [localStorage](./src/localStorage.js) file.
+Temporarily, using the browser version requires a patched solid-auth-client (included in the repository).  Once that patch makes it into the master, that will no longer be neccessary.
 
+See the tests for examples of usage.  Here's the basic idea:
+```javascript
+solid.rest    = new SolidRest([ new SolidBrowserFS() ])
+
+async function init(){
+  /*
+    add browserFS configs here
+    if all you need is LocalStorage, it is included by default
+    and you can skip this step
+  */
+  fs = await solid.rest.storage("bfs").initBackends({
+      '/HTML5FS'   : { fs: "HTML5FS"  , options:{size:5} },
+      '/IndexedDB' : { fs: "IndexedDB", options:{storeName:"bfs"}}
+  })
+  /*
+     You can now use app://bfs/HTML5FS/*, app://bfs/IndexDB/*, and
+     app://bfs/LocalStorage/* as URIs in any app using solid-auth-client.
+  */  
+  ...
+  const fetcher = $rdf.fetcher(store,{fetch:solid-auth.fetch})
+  /*
+     You can now use app://bfs/HTML5FS/*, app://bfs/IndexDB/*, and
+     app://bfs/LocalStorage/* as URIs in any any app using rdflib.
+     Defining fetch will become unneccessary once solid-auth-client
+     is patched.
+  */  
+}
+
+
+```
 copyright &copy; 2019, Jeff Zucker, may be freely distributed with the MIT license
