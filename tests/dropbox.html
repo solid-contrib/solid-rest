@@ -1,0 +1,71 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8" />
+<!--
+  This is a test of the solid-rest-browserFS Dropbox backend.
+  Currently not working.
+  I need to find what kind of client it wants ...
+-->
+
+<!-- browserfs --> <script src="https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js"></script>
+
+<!-- rdflib --> <script src="https://cdn.jsdelivr.net/npm/rdflib@0.21.0/dist/rdflib.min.js"></script>
+
+<!-- solid-auth-client --> <script src="../bundles/solid-auth-client.bundle.js"></script>
+
+<!-- dropbox --><script src='../bundles/Dropbox-sdk.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/promise-polyfill@7/dist/polyfill.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.3/fetch.js"></script>
+
+<!-- solid-rest -->    <script src="../dist/main.js"></script>
+<!-- solid-rest-bfs --> <script src="../src/browserFS.js"></script>
+  
+</head><body>
+  <p>
+    This is a test of the solid-rest-browserFS Dropbox backend.
+    Currently not working.
+    I need to find what kind of client it wants ...
+    Once that's solved, it should work for the Dropbox backend.
+  </p>
+  <div id="results"></div>
+<script>
+
+solid.rest    = new SolidRest([ new SolidBrowserFS() ])
+
+async function run(){
+    const dropCli = await new Dropbox.Dropbox({ accessToken: 
+      'YOUR ACCESS TOKEN HERE', 
+      fetch: fetch 
+    })
+
+    /* TEST THE CLIENT DIRECTLY (THIS WORKS FOR ME) 
+    */
+    dropCli.filesListFolder({path: ''}).then( (folder)=> {
+      for(file of folder.entries){
+        show(file.name)
+      }
+    }).catch( (e)=>{console.log(e)} )
+
+
+    /* THIS FAILS, APPARENTLY IT IS NOT THE RIGHT DROPBOX CLIENT.
+       WITH THE RIGHT CLIENT, THIS SHOULD WORK TO READ THE 
+       TOP LEVEL FOLDER
+    */
+    fs = await solid.rest.storage("bfs").initBackends({
+        '/Dropbox' : { fs: "Dropbox", options:{client: dropCli} }
+    })
+    const store      = $rdf.graph()
+    const fetcher    = $rdf.fetcher(store,{fetch:solid.auth.fetch})
+    let containerUri = "app://bfs/Dropbox/"
+    let container    = $rdf.sym(containerUri)     
+    let contains     = $rdf.sym(`http://www.w3.org/ns/ldp#contains`)
+    await fetcher.load(containerUri)
+    let files = store.each( container, contains, null )
+    for(file of files){
+        show(file.uri)
+    }
+}
+run()
+function show(msg){
+  let elm = document.getElementById('results')
+  elm.innerHTML = elm.innerHTML + "<p>"+msg+"</p>"
+}
+</script></body></html>

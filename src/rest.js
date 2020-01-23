@@ -13,27 +13,36 @@ constructor( handlers ) {
 }
 
 storage(options){
-  if(!this.storageHandlers[options.rest_prefix]) throw "Did not recognize prefix "+options.rest_prefix
-  return this.storageHandlers[options.rest_prefix]
+  const prefix = (typeof options==="string") ? options : options.rest_prefix
+  if(!this.storageHandlers[prefix]) throw "Did not recognize prefix "+prefix
+  return this.storageHandlers[prefix]
 }
 
 async fetch(uri, options) {
-  const self = this
-  options = Object.assign({}, options)
-  options.headers = options.headers || {}
-  options.url = decodeURIComponent(uri)
+  let self = this
+  options = options || {}
   let pathname = decodeURIComponent(Url.parse(uri).pathname)
-  options.method = (options.method || options.Method || 'GET').toUpperCase()
   let scheme = Url.parse(uri).protocol
   let prefix = scheme.match("file") ? 'file' : uri.replace(scheme+'//','').replace(/\/.*/,'')
   options.scheme = scheme
   options.rest_prefix = prefix
+  if(!self.storage){
+    if(self.storageHandler) {
+      self.storage=()=>{return self.storageHandlers[prefix]}    
+    }
+    else {
+        self=new SolidRest([ new SolidBrowserFS() ])
+    }
+  }
+  options = Object.assign({}, options)
+  options.headers = options.headers || {}
+  options.url = decodeURIComponent(uri)
   const [objectType,objectExists] = 
     await self.storage(options).getObjectType(pathname,options)
   options.objectType = objectType
   options.objectExists = objectExists
   const notFoundMessage = '404 Not Found'
-
+  options.method = (options.method || options.Method || 'GET').toUpperCase()
   const resOptions = Object.assign({}, options)
   resOptions.headers = {}
 
@@ -85,7 +94,7 @@ async fetch(uri, options) {
   if( options.method==="POST"){
     if( !objectExists ) return _response(notFoundMessage, resOptions, 404)
     let link = options.headers.Link || options.headers.link
-    let slug = options.headers.Slug || options.headers.slug
+    let slug = options.headers.Slug || options.headers.slug || options.slug
     if(slug.match(/\//)) return _response(null, resOptions, 400) // Now returns 400 instead of 404
     pathname = path.join(pathname,slug);
     if( link && link.match("Container") ) {
@@ -105,7 +114,6 @@ async fetch(uri, options) {
   */
   if (options.method === 'PUT' ) {
     if(objectType==="Container") return _response(null, resOptions, 409)
-
     const [status, undefined, headers] = await self.storage(options).makeContainers(pathname,options) 
     Object.assign(resOptions.headers, headers)
 
@@ -192,7 +200,7 @@ async fetch(uri, options) {
     let headers = (typeof self.storage(options).getHeaders != "undefined")
       ? self.storage(options).getHeaders(pathname,options)
       : {}
-    headers.location = headers.location || options.url
+    headers.location = headers.url = headers.location || options.url
     headers.date = headers.date || 
       new Date(Date.now()).toISOString()
     headers.allow = headers.allow || 

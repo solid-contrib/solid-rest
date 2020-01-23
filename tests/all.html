@@ -1,0 +1,171 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8" />
+<!--
+  Tests solid-rest-browserFS directly
+  See rdflib.html to test it via rdflib
+-->
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js"></script>
+
+<script src="../src/browserFS.js"></script>  
+<script src="../dist/main.js"></script>
+<div id="results"></div>
+<script>
+
+let [tests,fails,passes] = [0,0,0]
+
+const rest = new SolidRest([
+  new SolidBrowserFS(),
+])
+const resLink=
+  '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
+const conLink=
+  '<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"'
+
+
+show(`\n`)
+
+async function init(){
+  let fs = await rest.storage("bfs").initBackends({
+      '/HTML5FS'   : { fs: "HTML5FS"  , options:{size:5} },
+      '/IndexedDB' : { fs: "IndexedDB", options:{storeName:"bfs"}}
+  })
+  await run("bfsH")  // HTML5FS
+  await run("bfsI")  // IndexedDB
+  await run("bfsL")  // LocalStorage
+}
+init()
+
+async function run(storageType){
+
+  [tests,fails,passes] = [0,0,0]
+  let cfg = getConfig(storageType)
+
+  show(`Testing ${cfg.folder} ...`)
+/*
+  res = await rest.fetch( "app://bfs/",{
+    method:"POST",
+    headers:{slug:'IndexedDB',link:conLink},
+  })
+  res = await rest.fetch( "app://bfs/",{
+    method:"POST",
+    headers:{slug:'HTML5FS',link:conLink},
+  })
+*/
+  res = await rest.fetch( cfg.scheme + "/",{
+    method:"POST",
+    headers:{slug:'test-folder',link:conLink},
+  })
+
+  res=await rest.fetch(cfg.file,{method:"PUT",body:cfg.text})
+  ok( "put resource", res.status==201,res)
+
+  res = await rest.fetch( cfg.deepR,{method:"PUT",body:cfg.text} )
+  ok( "put resource with recursive create containers", res.status==201)
+
+  res = await rest.fetch( cfg.folder,{method:"PUT"} )
+  ok( "409 on put container (method not allowed)", res.status==409)
+
+
+  res = await rest.fetch( cfg.folder,{
+    method:"POST",
+    headers:{slug:cfg.fo,link:conLink},
+  })
+  ok( "post container", res.status==201,res)
+
+  res = await rest.fetch( cfg.folder,{
+    method:"POST",
+    headers:{slug:cfg.fn,link:resLink,body:cfg.txt},
+    body:cfg.txt
+  })
+  ok( "post resource", res.status==201)
+
+  res = await rest.fetch( cfg.file )
+  let got = await res.text()
+  ok( 'get resource', res.status==200 && got===cfg.text ) 
+
+  res = await rest.fetch( cfg.folder )
+  got = await res.text()
+  ok( 'get container', 
+    res.status==200 && got.startsWith("@prefix")
+  ) 
+
+  res = await rest.fetch( cfg.noR )
+  ok( '404 on attempt to get non-existant resource', res.status==404 ) 
+
+  res = await rest.fetch( cfg.noC ) 
+  ok( '404 on attempt to get non-existant container', res.status==404 ) 
+
+  res = await rest.fetch( cfg.file, {method:"HEAD"} )
+  ok( "head resource", res.status == 200 )
+
+  res = await rest.fetch( cfg.folder, {method:"HEAD"} )
+  ok( "head container", res.status == 200 )
+
+  res = await rest.fetch( cfg.folder,{method:"DELETE"} )
+  ok( "409 on attempt to delete non-empty container", res.status == 409 )
+
+  res = await rest.fetch( cfg.file,{method:"DELETE"} )
+  res = await rest.fetch( cfg.deepR,{method:"DELETE"} )
+  res = await rest.fetch( cfg.folder + cfg.fn,{method:"DELETE"} )
+  res = await rest.fetch( cfg.file,{method:"DELETE"} )
+
+  res = await rest.fetch( cfg.file )
+  ok( "delete resource", res.status == 404 )
+
+  res = await rest.fetch( cfg.deepC,{method:"DELETE"} )
+  res = await rest.fetch( cfg.folder+cfg.fo+"/",{method:"DELETE"} )
+  res = await rest.fetch( cfg.folder,{method:"DELETE"} )
+  res = await rest.fetch( cfg.folder )
+  ok( "delete container", res.status == 404 )
+
+  // rest.storageHandlers["ls"].dump()
+
+  show(`${passes}/${tests} tests passed, ${fails} failed\n<br>`)
+
+}
+function getConfig(storageType){
+  let scheme
+  if(storageType==="localStorage"){
+    scheme = "app://ls"
+  }
+  else if(storageType==="bfsM"){
+    scheme = "app://bfs/InMemory"
+  }
+  else if(storageType==="bfsL"){
+    scheme = "app://bfs/LocalStorage"
+  }
+  else if(storageType==="bfsH"){
+    scheme = "app://bfs/HTML5FS"
+  }
+  else if(storageType==="bfsI"){
+    scheme = "app://bfs/IndexedDB"
+  }
+  else if(storageType==="file"){
+    scheme = "file://" + process.cwd()
+  }
+  return  {
+    scheme : scheme,
+    folder : scheme + "/test-folder/",
+    file   : scheme + "/test-folder/" + "test-file.ttl",
+    deepC  : scheme + "/test-folder/deep-folder/",
+    deepR  : scheme + "/test-folder/deep-folder/" + "test-file2.ttl",
+    noR    : scheme + "/test-folder/noSuchFile",
+    noC    : scheme + "/test-folder/noSuchFolder/",
+    fn     : "test-file3.ttl",
+    fo     : "otherFolder",
+    text   : "<> a <#goodtest>."
+  }
+}
+function ok( label, success,res ){
+   tests = tests + 1;   
+   if(success) passes = passes + 1
+   else fails = fails+1
+   let msg = success ? "ok " : "FAIL "
+   show( "&nbsp;&nbsp;&nbsp;&nbsp;" + msg + label)
+   if(!success) console.log(res)
+}
+function show (msg){
+    let elm = document.getElementById('results')
+    elm.innerHTML = elm.innerHTML + msg+"<br>"
+}
+</script>

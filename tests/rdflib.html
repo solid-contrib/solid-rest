@@ -1,0 +1,134 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8" />
+<!--
+  Tests solid-rest-browserFS via rdflib
+  See all.html to test directly
+-->
+
+<!-- BROWSERFS FROM CDN --> <script src="https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js"></script>
+
+<!-- RDFLIB FROM CDN --> <script src="https://cdn.jsdelivr.net/npm/rdflib@0.21.0/dist/rdflib.min.js"></script>
+
+<!-- SOLID-AUTH-CLIENT FROM LOCAL PATCH -->
+<script src="../bundles/solid-auth-client.bundle.js"></script>
+
+<!-- SOLID-REST FROM LOCAL -->
+<!-- solid-rest -->    <script src="../dist/main.js"></script>
+<!-- solid-rest-bfs --> <script src="../src/browserFS.js"></script>
+  
+</head><body>
+  <div id="results"></div>
+<script>
+
+solid.rest    = new SolidRest([ new SolidBrowserFS() ])
+
+async function init(){
+  fs = await solid.rest.storage("bfs").initBackends({
+      '/HTML5FS'   : { fs: "HTML5FS"  , options:{size:5} },
+      '/IndexedDB' : { fs: "IndexedDB", options:{storeName:"bfs"}}
+  })
+  show("Testing <b>rdflib</b> using <b>solid-rest</b> interface to <b>BrowserFS</b> backends ...")
+  await run( "LocalStorage")
+  await run( "HTML5FS"     )
+  await run( "IndexedDB"   )
+}
+init()
+
+async function addAndPutBack(c){
+  const store   = $rdf.graph()
+  const fetcher = $rdf.fetcher(store,{fetch:solid.auth.fetch})
+  const doc        = $rdf.sym(c.fileUri)
+  const hasMessage = $rdf.sym(c.fileUri+"#hasMessage")
+  try {
+    await store.add( doc, hasMessage,c.message,doc)
+    await fetcher.putBack(c.fileUri)
+    return Promise.resolve()
+  }
+  catch(e) { Promise.reject(e) }
+}
+
+async function loadAndQueryResource(c){
+  const store   = $rdf.graph()
+  const fetcher = $rdf.fetcher(store,{fetch:solid.auth.fetch})
+  try {
+      await fetcher.load(c.fileUri)
+  }
+  catch(e) {console.warn(e); return Promise.resolve()}
+  const doc        = $rdf.sym(c.fileUri)
+  const hasMessage = $rdf.sym(c.fileUri+"#hasMessage")
+  let message      = store.any( doc, hasMessage, null )
+  if(message.value===c.message){ 
+      show( `&nbsp;&nbsp;&nbsp;&nbsp;* ok putBack/load/query resource.` )
+  }
+  return Promise.resolve()
+}
+async function loadAndQueryContainer(c){
+  const store   = $rdf.graph()
+  const fetcher = $rdf.fetcher(store,{fetch:solid.auth.fetch})
+  try {
+      await fetcher.load(c.folderUri)
+  }
+  catch(e) {console.warn(e); return Promise.resolve()}
+  let container = $rdf.sym(c.folderUri)     
+  let contains  = $rdf.sym("http://www.w3.org/ns/ldp#contains")
+  let returned  = store.any( container, contains, null )
+  if(returned.value===c.fileUri){
+   show(`&nbsp;&nbsp;&nbsp;&nbsp;* ok load/query container.`)
+  }
+}
+async function webOpPost(c){
+  const store   = $rdf.graph()
+  const fetcher = $rdf.fetcher(store,{fetch:solid.auth.fetch})
+  try {
+    let res = await fetcher.webOperation( "POST",c.base,c.postOptions)
+    if(res.status==201) show(
+      "&nbsp;&nbsp;&nbsp;&nbsp;* ok webOperation post"
+    )
+  }catch(e){}
+}
+async function webOpDelete(c){
+  const store   = $rdf.graph()
+  const fetcher = $rdf.fetcher(store,{fetch:solid.auth.fetch})
+  await fetcher.webOperation( "DELETE",c.fileUri)
+  let res = await fetcher.webOperation( "DELETE",c.folderUri)
+  if(res.status==200) show(
+    "&nbsp;&nbsp;&nbsp;&nbsp;* ok webOperation delete"
+  )
+}
+async function run(backend){
+  let cfg = getConfig(backend)
+  let subhead = ""
+  if(backend.match("HTML5FS")) subhead = "- native file system API"
+  if(backend.match("Dropbox")) subhead = "- in progress but should work"
+  show(`<br>&nbsp;&nbsp;<b>${backend}</b> ${subhead}`)
+  await webOpPost(cfg)
+  await addAndPutBack(cfg)
+  await loadAndQueryResource(cfg)
+  await loadAndQueryContainer(cfg)
+  await webOpDelete(cfg)
+}
+function getConfig(backend){
+const base = `app://bfs/${backend}/`
+    c={}
+c.base       = base
+c.folderName = "test-folder"
+c.fileName   = "test-file.ttl"
+c.folderUri  = base + c.folderName + "/"
+c.fileUri    = base + c.folderName + "/"+ c.fileName
+c.message    = "hello new world"
+c.ldp        = 'http://www.w3.org/ns/ldp#'
+c.postOptions = {
+    method:"POST",
+    contentType: "text/turtle",
+    slug: c.folderName,
+    headers: {
+        link: `${c.ldp}BasicContainer>; rel="type"`
+    },
+}
+return c
+}
+
+function show(msg){
+  let elm = document.getElementById('results')
+  elm.innerHTML = elm.innerHTML + msg+"<br>"
+}
+</script></body></html>
