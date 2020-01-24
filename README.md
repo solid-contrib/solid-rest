@@ -22,7 +22,7 @@ async function init(){
   /*
     add browserFS configs here
     if all you need is LocalStorage, it is included by default
-    and you can skip this step
+    and you call initBackends() with no arguments
   */
   fs = await solid.rest.storage("bfs").initBackends({
       '/HTML5FS'   : { fs: "HTML5FS"  , options:{size:5} },
@@ -41,7 +41,7 @@ async function init(){
      is patched.
   */  
 }
-
-
 ```
+See [BrowserFS Readme](https://github.com/jvilk/BrowserFS) for an overview of options and see [BrowserFS API](https://jvilk.com/browserfs/2.0.0-beta/index.html) for details of the config settings for other backends.
+
 copyright &copy; 2019, Jeff Zucker, may be freely distributed with the MIT license
