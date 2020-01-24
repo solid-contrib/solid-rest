@@ -17,10 +17,16 @@ storage(options){
   if(!this.storageHandlers[prefix]) throw "Did not recognize prefix "+prefix
   return this.storageHandlers[prefix]
 }
-
+toUrlString(url){
+  if (typeof url !== 'string') {
+    url = 'url' in url ? url.url : url.toString()
+  }
+  return new URL(url).toString()
+}
 async fetch(uri, options) {
   let self = this
   options = options || {}
+  uri = this.toUrlString(uri)
   let pathname = decodeURIComponent(Url.parse(uri).pathname)
   let scheme = Url.parse(uri).protocol
   let prefix = scheme.match("file") ? 'file' : uri.replace(scheme+'//','').replace(/\/.*/,'')
