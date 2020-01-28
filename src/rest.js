@@ -5,7 +5,8 @@ const contentTypeLookup = require('mime-types').contentType
 
 class SolidRest {
 
-constructor( handlers ) {
+constructor( handlers,options ) {
+  this.fileRoot = (options&&options.fileRoot) ? options.fileRoot : ""
   this.storageHandlers = {}
   handlers.forEach( handler => {
      this.storageHandlers[handler.prefix] = handler
@@ -27,8 +28,11 @@ async fetch(uri, options) {
   let self = this
   options = options || {}
   uri = this.toUrlString(uri)
-  let pathname = decodeURIComponent(Url.parse(uri).pathname)
   let scheme = Url.parse(uri).protocol
+  let pathname = decodeURIComponent(Url.parse(uri).pathname)
+  if(scheme.match("file")){
+      pathname = this.fileRoot + pathname
+  }
   let prefix = scheme.match("file") ? 'file' : uri.replace(scheme+'//','').replace(/\/.*/,'')
   options.scheme = scheme
   options.rest_prefix = prefix
@@ -43,6 +47,7 @@ async fetch(uri, options) {
   options = Object.assign({}, options)
   options.headers = options.headers || {}
   options.url = decodeURIComponent(uri)
+  
   const [objectType,objectExists] = 
     await self.storage(options).getObjectType(pathname,options)
   options.objectType = objectType
@@ -161,10 +166,10 @@ async fetch(uri, options) {
         let fn = filenames[i]
         let [ftype,e] =  await self.storage(options).getObjectType(pathname + fn)
         if(ftype==="Container" && !fn.endsWith("/")) fn = fn + "/"
-//        let prefix = options.rest_prefix==="file" ? "" : options.rest_prefix
-//        fn = options.scheme+"//"+prefix+pathname + fn
+        // if we allow spaces, the container turtle will be invalid
+        if(fn.match(/\s/)) fn = encodeURIComponent(fn)
         str = str + `  <${fn}>,\n`
-        let ctype = _getContentType(_getExtension(fn),options.objectType)
+        let ctype = _getContentType(_getExtension(fn),ftype)
         ftype = ftype==="Container" ? "ldp:Container; a ldp:BasicContainer" : "ldp:Resource"
         str2 = str2 + `<${fn}> a ${ftype}.\n`
         str2 = str2 + `<${fn}> :type "${ctype}".\n`
@@ -193,7 +198,9 @@ async fetch(uri, options) {
       return 'text/turtle'
     }
     else {
-      return contentTypeLookup(ext)
+      ext = ext.replace(/~$/,'')
+      ext = contentTypeLookup(ext)
+      return ext || "text/turtle"
     }
   }
   /* DEFAULT HEADER

@@ -42,7 +42,8 @@ async  getObjectType(fn,options){
 }
 
 async getResource(pathname,options,objectType){
-  const bodyData = fs.createReadStream(pathname)
+  //  const bodyData = await fs.createReadStream(pathname)
+  const bodyData = await fs.readFile(pathname)
   return [
     200,
     bodyData
@@ -110,7 +111,7 @@ async makeContainers(pathname,options){
       return Promise.resolve([200])
 }
 async getContainer(pathname,options) {
-  return fs.readdirSync(pathname)
+  return await fs.readdirSync(pathname)
 }
 
 }
