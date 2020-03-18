@@ -22,9 +22,9 @@ async fetch(uri, options) {
   options = Object.assign({}, options)
   options.headers = options.headers || {}
   options.url = decodeURIComponent(uri)
-  let pathname = decodeURIComponent(Url.parse(uri).pathname)
+  let pathname = Url.fileURLToPath(options.url)
   options.method = (options.method || options.Method || 'GET').toUpperCase()
-  let scheme = Url.parse(uri).protocol
+  let scheme = new URL(options.url).protocol
   let prefix = scheme.match("file") ? 'file' : uri.replace(scheme+'//','').replace(/\/.*/,'')
   options.scheme = scheme
   options.rest_prefix = prefix
@@ -137,7 +137,7 @@ async fetch(uri, options) {
     let filenames=contentsArray.filter( item => {
       if(!item.endsWith('.acl') && !item.endsWith('.meta')){ return item }
     })
-    if (!pathname.endsWith("/")) pathname += "/"
+    if (!pathname.endsWith("/") && !pathname.endsWith("\\")) pathname += path.sep
     let str2 = ""
     let str = "@prefix : <#>. @prefix ldp: <http://www.w3.org/ns/ldp#>.\n"
             + "<> a ldp:BasicContainer, ldp:Container"
