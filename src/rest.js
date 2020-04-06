@@ -30,6 +30,7 @@ async fetch(uri, options) {
   options.rest_prefix = prefix
   const [objectType,objectExists] = 
     await self.storage(options).getObjectType(pathname,options)
+  if (objectType === "Container" && !options.url.endsWith('/')) options.url = `${options.url}/`
   options.objectType = objectType
   options.objectExists = objectExists
   const notFoundMessage = '404 Not Found'
