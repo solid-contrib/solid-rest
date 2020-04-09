@@ -1,5 +1,5 @@
 const Url      = require('url')
-const path     = require("path");
+const libPath     = require("path");
 const { Response }  = require('node-fetch')
 const contentTypeLookup = require('mime-types').contentType
 
@@ -21,20 +21,31 @@ async fetch(uri, options) {
   const self = this
   options = Object.assign({}, options)
   options.headers = options.headers || {}
-  options.url = decodeURIComponent(uri)
-  let pathname = Url.fileURLToPath(options.url)
   options.method = (options.method || options.Method || 'GET').toUpperCase()
-  let scheme = new URL(options.url).protocol
-  let prefix = scheme.match("file") ? 'file' : uri.replace(scheme+'//','').replace(/\/.*/,'')
-  options.scheme = scheme
-  options.rest_prefix = prefix
+
+  const url = new URL(uri)
+  options.scheme = url.protocol	
+
+  let pathname, path
+  if (options.scheme.startsWith('file')) {
+    options.url =  Url.format(url)
+    pathname =  Url.fileURLToPath(options.url)
+    options.rest_prefix = 'file'
+    path = libPath
+  }
+  else {
+    options.url = decodeURIComponent(uri)
+    pathname = Url.parse(options.url).pathname
+    options.rest_prefix = uri.replace(options.scheme+'//','').replace(/\/.*/,'')
+    path = libPath.posix
+  }	
+
   const [objectType,objectExists] = 
     await self.storage(options).getObjectType(pathname,options)
-  if (objectType === "Container" && !options.url.endsWith('/')) options.url = `${options.url}/`
   options.objectType = objectType
   options.objectExists = objectExists
   const notFoundMessage = '404 Not Found'
-
+  if (objectType === "Container" && !options.url.endsWith('/')) options.url = `${options.url}/`
   const resOptions = Object.assign({}, options)
   resOptions.headers = {}
 
@@ -138,7 +149,7 @@ async fetch(uri, options) {
     let filenames=contentsArray.filter( item => {
       if(!item.endsWith('.acl') && !item.endsWith('.meta')){ return item }
     })
-    if (!pathname.endsWith("/") && !pathname.endsWith("\\")) pathname += path.sep
+    if (!pathname.endsWith(path.sep)) pathname += path.sep
     let str2 = ""
     let str = "@prefix : <#>. @prefix ldp: <http://www.w3.org/ns/ldp#>.\n"
             + "<> a ldp:BasicContainer, ldp:Container"
@@ -189,7 +200,7 @@ async fetch(uri, options) {
        date from nodejs Date
   */
   function _getHeaders(pathname,options){    
-    let fn = pathname.replace(/.*\//,'');    
+    const fn = path.basename(pathname);
     let headers = (typeof self.storage(options).getHeaders != "undefined")
       ? self.storage(options).getHeaders(pathname,options)
       : {}
