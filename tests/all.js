@@ -74,8 +74,8 @@ async function run(scheme){
   let cfg = await getConfig(scheme)
   let res
 
-  try { res = await PUT("app://ls/test-folder/dummy.txt") } catch{}
-  try { res = await PUT("file://"+process.cwd()+"/test-folder/dummy.txt") }catch{}
+  try {res=await PUT("app://ls/test-folder/dummy.txt") } catch{}
+  try {res=await PUT("file://"+process.cwd()+"/test-folder/dummy.txt") }catch{}
 
   if(scheme==="app:") {
     cfg.base += "/";
@@ -97,6 +97,7 @@ async function run(scheme){
   res = await postFolder( cfg.missingFolder,cfg.c2name )
   ok( "404 post container, parent not found", res.status==404,res)
 
+rest.storage('ls').dump()
   res = await postFile( cfg.folder1,cfg.r1name,cfg.text )
   ok( "201 post resource", res.status==201,res)
 

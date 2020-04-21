@@ -56,7 +56,6 @@ async fetch(uri, options) {
   }
 */
 
-  self = self || this
   if(!self.storage){
     if(self.storageHandler) {
       self.storage=()=>{return self.storageHandlers[prefix]}    
