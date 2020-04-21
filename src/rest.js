@@ -31,7 +31,7 @@ async fetch(uri, options) {
 
   // cxRes
    options.url = decodeURIComponent(uri)
-console.log(options.url)
+
    let pathname = decodeURIComponent(Url.parse(uri).pathname)
    let scheme = Url.parse(uri).protocol
    let prefix = scheme.match("file") 
