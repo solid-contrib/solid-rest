@@ -80,7 +80,6 @@ clear() {
      * returns [status,undefined,optionalHeader]
 */
 async putResource(pathname,options){
-console.log(pathname)
   options = options || {};
   options.body = options.body || "";
   try { 
