@@ -75,8 +75,8 @@ async fetch(uri, options) {
   options.method = (options.method || options.Method || 'GET').toUpperCase()
 
   // cxRes
-  if (objectType==="Container" && !options.url.endsWith('/')) 
-    options.url = `${options.url}/`
+//  if (objectType==="Container" && !options.url.endsWith('/')) 
+//    options.url = `${options.url}/`
 
   const resOptions = Object.assign({}, options)
   resOptions.headers = {}
