@@ -1,124 +1,197 @@
 const SolidRest         = require('../src/rest.js')
 const SolidLocalStorage = require('../src/localStorage.js')
-//const SolidBrowserFsStorage = require('../src/bfs.js')
-//const SolidBrowserFsStorage = require('../src/browserFS.js')
 const SolidFileStorage  = require('../src/file.js')
-
-let [tests,fails,passes] = [0,0,0]
 
 const rest = new SolidRest([
   new SolidLocalStorage(),
-//  new SolidBrowserFsStorage('InMemory'),
   new SolidFileStorage()
-  // anything can go here, it doesn't need to be pre-registered or known
-  // as long as it defines a prefix app://thatPrefix will use that storage handler
 ])
 
 
-console.log(`\n`)
-run( "localStorage" ).then( ()=>{ run("file")  })
+let [tests,fails,passes,res] = [0,0,0]
+let allfails = 0
 
-async function run(storageType){
+async function main(){
+  await run("app:")
+  await run("file:")
+  // await run("https:")
+  if(allfails>0){
+    process.exit(1)
+  }
+  else{
+    process.exit(0)
+  }
+}
+main()
+
+async function getConfig(scheme){
+  if(scheme==="app:")       scheme = "app://ls"
+  else if(scheme==="file:") scheme = "file://" + process.cwd()
+
+  else if(scheme==="https:") {
+
+   let session = await auth.login()
+   let webId = session.webId
+   if(! webId ) throw "Couldn't login!"
+    scheme = webId.replace("/profile/card#me",'')+"/public"
+  }
+
+  /*
+   * we assume that test-folder exists and is empty
+  */
+  let  base   = scheme + "/test-folder"
+  let  c1name = "rest/"
+  let  c2name = "deep-folder"
+  let  r1name = "test1.ttl"
+  let  r2name = "test2.ttl"
+  let  folder1 = base +"/"+ c1name
+  let  folder2 =  folder1 + c2name + "/"
+  let  deepR  =  folder2 +"test-file2.ttl"
+  let  file1  = folder1 + r1name
+  let  file2  = folder2 + r2name
+  let  missingFolder = base + "/noSuchThing/norThis/"
+  let cfg =  {
+    base   : base,
+    c1name : c1name,
+    c2name : c2name,
+    r1name : r1name,
+    r2name : r2name,
+    folder1 : folder1,
+    folder2 : folder2,
+    deepR  :  deepR,
+    file1  : file1,
+    file2  : file2,
+    missingFolder : missingFolder,
+    text   : "<> a <#test>.",
+  }
+  return(cfg)
+}
+
+async function run(scheme){
+
 
   [tests,fails,passes] = [0,0,0]
-  let cfg = getConfig(storageType)
+  let cfg = await getConfig(scheme)
+  let res
 
-  console.log(`Testing ${cfg.folder} ...`)
+  try { res = await PUT("app://ls/test-folder/dummy.txt") } catch{}
+  try { res = await PUT("file://"+process.cwd()+"/test-folder/dummy.txt") }catch{}
 
-  let res = await rest.fetch( cfg.file,{method:"PUT",body:cfg.text} )
-  ok( "put resource", res.status==201,res)
+  if(scheme==="app:") {
+    cfg.base += "/";
+  }
 
-  res = await rest.fetch( cfg.deepR,{method:"PUT",body:cfg.text} )
-  ok( "put resource with recursive create containers", res.status==201)
+  console.log(`\nTesting ${cfg.base} ...`)
 
-  res = await rest.fetch( cfg.folder,{method:"PUT"} )
-  ok( "409 on put container (method not allowed)", res.status==409)
+  res = await postFolder( cfg.base,cfg.c1name )
+  ok( "400 post container with trailing slash on slug", res.status==400,res)
 
+  cfg.c1name = cfg.c1name.replace(/\/$/,'')
 
-  let link='<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"';
-  res = await rest.fetch( cfg.folder,{
-    method:"POST",
-    headers:{slug:cfg.fo,link:link,"content-type":"text/turtle"},
-    body:cfg.txt
-  })
-  ok( "post container", res.status==201)
+  res = await postFolder( cfg.base,cfg.c1name )
+  ok( "201 post container", res.status==201,res)
 
-  link='<http://www.w3.org/ns/ldp#Resource>; rel="type"';
-  res = await rest.fetch( cfg.folder,{
-    method:"POST",
-    headers:{slug:cfg.fn,link:link,"content-type":"text/turtle"},
-    body:cfg.txt
-  })
-  ok( "post resource", (res.status==201||res.status==200))
+  res = await postFolder( cfg.base,cfg.c1name )
+  ok( "201 post container, container found", res.status==201,res)
 
-  res = await rest.fetch( cfg.deepR )
-  ok( 'get resource', res.status==200  && cfg.text===await res.text() ) 
+  res = await postFolder( cfg.missingFolder,cfg.c2name )
+  ok( "404 post container, parent not found", res.status==404,res)
 
-  res = await rest.fetch( cfg.folder )
-  ok( 'get container', res.status==200 ) 
+  res = await postFile( cfg.folder1,cfg.r1name,cfg.text )
+  ok( "201 post resource", res.status==201,res)
 
-  res = await rest.fetch( cfg.noR )
-  ok( '404 on attempt to get non-existant resource', res.status==404 ) 
+  res = await postFile( cfg.folder1,cfg.r1name,cfg.txt )
+  ok( "201 post resource, resource found", res.status==201,res)
 
-  res = await rest.fetch( cfg.noC ) 
-  ok( '404 on attempt to get non-existant container', res.status==404 ) 
+  res = await postFile( cfg.missingFolder,cfg.file2 )
+  ok( "404 post resource, parent not found", res.status==404,res)
 
-  res = await rest.fetch( cfg.file, {method:"HEAD"} )
-  ok( "head resource", res.status == 200 )
+  res = await PUT( cfg.folder1 )
+  ok( "409 put container (method not allowed)", res.status==409,res)
 
-  res = await rest.fetch( cfg.folder, {method:"HEAD"} )
-  ok( "head container", res.status == 200 )
+  res = await PUT( cfg.file1,cfg.text )
+  ok( "201 put resource", res.status==201,res)
 
-  res = await rest.fetch( cfg.folder,{method:"DELETE"} )
-  ok( "409 on attempt to delete non-empty container", res.status == 409 )
+  res = await PUT( cfg.file1,cfg.text )
+  ok( "201 put resource, resource found", res.status==201,res)
 
-  await rest.fetch( cfg.file,{method:"DELETE"} )
-  await rest.fetch( cfg.deepR,{method:"DELETE"} )
-  await rest.fetch( cfg.folder + cfg.fn,{method:"DELETE"} )
-  await rest.fetch( cfg.file,{method:"DELETE"} )
+  res = await PUT( cfg.deepR,cfg.text )
+  ok("201 put resource, parent not found (recursive creation)",res.status==201)
 
-  res = await rest.fetch( cfg.file )
-  ok( "delete resource", res.status == 404 )
+  res = await HEAD( cfg.deepR )
+  ok("200 head",res.status==200 && res.headers.get("allow"),res )
 
-  res = await rest.fetch( cfg.deepC,{method:"DELETE"} )
-  res = await rest.fetch( cfg.folder+cfg.fo+"/",{method:"DELETE"} )
-  res = await rest.fetch( cfg.folder,{method:"DELETE"} )
-  res = await rest.fetch( cfg.folder )
-  ok( "delete container", res.status == 404 )
+  res = await HEAD( cfg.missingFolder )
+  ok("404 head resource, not found",res.status==404,res )
 
-  // rest.storageHandlers["ls"].dump()
+  res = await GET( cfg.missingFolder )
+  ok("404 get container, not found",res.status==404,res )
 
+  res = await GET( cfg.file1 )
+  ok("200 get resource",res.status==200 && await res.text()===cfg.text)
+
+  res = await GET( cfg.folder1 )
+  let type = res.headers.get("content-type")
+  ok("200 get container",res.status==200 && type==="text/turtle",res)
+
+  res = await DELETE( cfg.folder1 )
+  ok("409 delete container, not empty",res.status==409,res)
+
+  res = await DELETE( cfg.base+'/dummy.txt' )
+  res = await DELETE( cfg.base+'dummy.txt' )
+  res = await DELETE( cfg.file1 )
+  res = await DELETE( cfg.deepR )
+  ok("200 delete resource",res.status==200,res)
+
+  if(scheme != "https:"){
+    res = await DELETE( cfg.folder2 )
+    res = await DELETE( cfg.folder1 )
+    res = await DELETE( cfg.base )
+    ok("200 delete container",res.status==200,res)
+  }
   console.log(`${passes}/${tests} tests passed, ${fails} failed\n`)
+  allfails = allfails + fails
+}
+/* =========================================================== */
+/* REST METHODS                                                */
+/* =========================================================== */
+async function GET(url){
+  return await rest.fetch( url, {method:"GET"} )
+}
+async function HEAD(url){
+  return await rest.fetch( url, {method:"HEAD"} )
+}
+async function PUT(url,text){
+  return await rest.fetch( url, {method:"PUT",body:text,headers:{"content-type":"text/turtle"}} )
+}
+async function DELETE(url){
+  return await rest.fetch( url, {method:"DELETE"} )
+}
+async function POST(parent,item,content,link){
+  return await rest.fetch( parent,{
+    method:"POST",
+    headers:{slug:item,link:link,"content-type":"text/turtle"},
+    body:content
+  })
+}
+async function postFile(parent,file,content){
+  let link = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
+  return POST(parent,file,content,link)
+}
+async function postFolder(parent,folder){
+  let link ='<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"'
+  return POST(parent,folder,'',link)
+}
 
-}
-function getConfig(storageType){
-  let scheme
-  if(storageType==="localStorage"){
-    scheme = "app://ls"
-  }
-  else if(storageType==="bfs"){
-    scheme = "app://bfs"
-  }
-  else if(storageType==="file"){
-    scheme = "file://" + process.cwd()
-  }
-  return  {
-    folder : scheme + "/test-folder/",
-    file   : scheme + "/test-folder/" + "test-file.ttl",
-    deepC  : scheme + "/test-folder/deep-folder/",
-    deepR  : scheme + "/test-folder/deep-folder/" + "test-file2.ttl",
-    noR    : scheme + "/test-folder/noSuchFile",
-    noC    : scheme + "/test-folder/noSuchFolder/",
-    fn     : "test-file3.ttl",
-    fo     : "otherFolder",
-    text   : "<> a <#test>."
-  }
-}
+/* ============================================== */
+
 function ok( label, success,res ){
    tests = tests + 1;   
    if(success) passes = passes + 1
    else fails = fails+1
    let msg = success ? "ok " : "FAIL "
    console.log( "  " + msg + label)
-   if(!success) console.log(res)
+   if(!success && res ) console.log(res.status,res.statusText)
+   return success
 }
+
