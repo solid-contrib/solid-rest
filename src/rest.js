@@ -1,5 +1,5 @@
 const Url      = require('url')
-const path     = require("path");
+const libPath     = require("path");
 const { Response }  = require('cross-fetch')
 const contentTypeLookup = require('mime-types').contentType
 
@@ -24,11 +24,33 @@ storage(options){
 async fetch(uri, options) {
   let self = this
   options = options || {}
-  let pathname = decodeURIComponent(Url.parse(uri).pathname)
-  let scheme = Url.parse(uri).protocol
-  let prefix = scheme.match("file") ? 'file' : uri.replace(scheme+'//','').replace(/\/.*/,'')
-  options.scheme = scheme
-  options.rest_prefix = prefix
+
+  // cxRes
+  // options.url = decodeURIComponent(uri)
+  // let pathname = decodeURIComponent(Url.parse(uri).pathname)
+  // let scheme = Url.parse(uri).protocol
+  // let prefix = scheme.match("file") 
+  //   ? 'file' 
+  //   : uri.replace(scheme+'//','').replace(/\/.*/,'')
+  // options.scheme = scheme
+  // options.rest_prefix = prefix
+  const url = new URL(uri)
+    options.scheme = url.protocol
+  let pathname, path
+  if (options.scheme.startsWith('file')) {
+    options.url =  Url.format(url)
+    pathname =  Url.fileURLToPath(options.url)
+    options.rest_prefix = 'file'
+    path = libPath
+  }
+  else {
+    options.url = decodeURIComponent(uri)
+    pathname = Url.parse(options.url).pathname
+    options.rest_prefix=uri.replace(options.scheme+'//','').replace(/\/.*/,'')
+    path = libPath.posix
+  }
+
+
   if(!self.storage){
     if(self.storageHandler) {
       self.storage=()=>{return self.storageHandlers[prefix]}    
@@ -39,13 +61,18 @@ async fetch(uri, options) {
   }
   options = Object.assign({}, options)
   options.headers = options.headers || {}
-  options.url = decodeURIComponent(uri)
   const [objectType,objectExists] = 
     await self.storage(options).getObjectType(pathname,options)
+
   options.objectType = objectType
   options.objectExists = objectExists
   const notFoundMessage = '404 Not Found'
   options.method = (options.method || options.Method || 'GET').toUpperCase()
+
+  // cxRes
+ if (objectType==="Container" && !options.url.endsWith('/')) 
+    options.url = `${options.url}/`
+
   const resOptions = Object.assign({}, options)
   resOptions.headers = {}
 
@@ -148,7 +175,12 @@ async fetch(uri, options) {
     let filenames=contentsArray.filter( item => {
       if(!item.endsWith('.acl') && !item.endsWith('.meta')){ return item }
     })
-    if (!pathname.endsWith("/")) pathname += "/"
+
+    // cxRes
+    if ( !pathname.endsWith(path.sep) ) pathname += path.sep
+
+    // if (!pathname.endsWith("/")) pathname += "/"
+
     let str2 = ""
     let str = "@prefix : <#>. @prefix ldp: <http://www.w3.org/ns/ldp#>.\n"
             + "<> a ldp:BasicContainer, ldp:Container"
@@ -199,8 +231,11 @@ async fetch(uri, options) {
        date from nodejs Date
   */
   function _getHeaders(pathname,options){    
-    // let fn = pathname.replace(/.*\//,'');    
-    let fn = encodeURI(pathname.replace(/.*\//,''))  
+
+    // cxRes
+    const fn = path.basename(pathname)
+    // let fn = encodeURI(pathname.replace(/.*\//,''))  
+
     let headers = (typeof self.storage(options).getHeaders != "undefined")
       ? self.storage(options).getHeaders(pathname,options)
       : {}
