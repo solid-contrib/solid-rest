@@ -1,15 +1,14 @@
 const SolidRest         = require('../src/rest.js')
 const SolidLocalStorage = require('../src/localStorage.js')
+//const SolidBrowserFsStorage = require('../src/bfs.js')
+//const SolidBrowserFsStorage = require('../src/browserFS.js')
 const SolidFileStorage  = require('../src/file.js')
-/*
-const SolidLocalStorage = require('../')
-const SolidLocalStorage = require('../ls/')
-const SolidFileStorage  = require('../file/')
-*/
+
 let [tests,fails,passes] = [0,0,0]
 
 const rest = new SolidRest([
   new SolidLocalStorage(),
+//  new SolidBrowserFsStorage('InMemory'),
   new SolidFileStorage()
   // anything can go here, it doesn't need to be pre-registered or known
   // as long as it defines a prefix app://thatPrefix will use that storage handler
@@ -39,7 +38,7 @@ async function run(storageType){
   let link='<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"';
   res = await rest.fetch( cfg.folder,{
     method:"POST",
-    headers:{slug:cfg.fo,link:link,body:cfg.txt},
+    headers:{slug:cfg.fo,link:link,"content-type":"text/turtle"},
     body:cfg.txt
   })
   ok( "post container", res.status==201)
@@ -47,10 +46,10 @@ async function run(storageType){
   link='<http://www.w3.org/ns/ldp#Resource>; rel="type"';
   res = await rest.fetch( cfg.folder,{
     method:"POST",
-    headers:{slug:cfg.fn,link:link,body:cfg.txt},
+    headers:{slug:cfg.fn,link:link,"content-type":"text/turtle"},
     body:cfg.txt
   })
-  ok( "post resource", res.status==201)
+  ok( "post resource", (res.status==201||res.status==200))
 
   res = await rest.fetch( cfg.deepR )
   ok( 'get resource', res.status==200  && cfg.text===await res.text() ) 
@@ -96,6 +95,9 @@ function getConfig(storageType){
   let scheme
   if(storageType==="localStorage"){
     scheme = "app://ls"
+  }
+  else if(storageType==="bfs"){
+    scheme = "app://bfs"
   }
   else if(storageType==="file"){
     scheme = "file://" + process.cwd()

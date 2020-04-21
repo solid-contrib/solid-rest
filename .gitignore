@@ -2,6 +2,7 @@
 #*
 drafts
 node_modules
+bundles
 dist
 coverage
 lib

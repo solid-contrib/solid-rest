@@ -1,4 +1,4 @@
-<script src="../src/localStorage.js"></script>
+<script src="../src/localStorage.js"></script>  
 <script src="../dist/main.js"></script>
 <div id="results"></div>
 <script>
@@ -7,18 +7,24 @@ runStorage( "/test-folder/test-file.ttl","<> a <#test>." ).then( ()=>{
   runRest( "/test-folder/test-file.ttl","<> a <#test>." )
 })
 
+
+/* This runs using src/localStorage directly
+*/
 async function runStorage(file,text){
   const storage = new SolidLocalStorage()
   let response = await storage.putResource( file,{body:text} )
   response = await storage.getResource( file )
   show(await response)
 }
+
+/* This runs using src/localStorage via transpiled version of src/rest
+*/
 async function runRest(file,text){
-  const rest = new SolidRest( new SolidLocalStorage() )
-  show(rest.storage.name)
+  file = "app://ls"+file
+  const rest = new SolidRest([ new SolidLocalStorage() ])
   let response = await rest.fetch( file,{method:"PUT",body:text} )
   response = await rest.fetch( file )
-  show(await response.text())
+  show(response.status+","+await response.text())
 }
 function show(msg){
   let display = document.getElementById("results")

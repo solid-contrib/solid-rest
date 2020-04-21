@@ -1,6 +1,6 @@
 const Url      = require('url')
 const path     = require("path");
-const { Response }  = require('node-fetch')
+const { Response }  = require('cross-fetch')
 const contentTypeLookup = require('mime-types').contentType
 
 class SolidRest {
@@ -8,32 +8,44 @@ class SolidRest {
 constructor( handlers ) {
   this.storageHandlers = {}
   handlers.forEach( handler => {
+     console.log(`
+       Installing Rest Handler ${handler.name} using prefix ${handler.prefix}
+     `)
      this.storageHandlers[handler.prefix] = handler
   })
 }
 
 storage(options){
-  if(!this.storageHandlers[options.rest_prefix]) throw "Did not recognize prefix "+options.rest_prefix
-  return this.storageHandlers[options.rest_prefix]
+  const prefix = (typeof options==="string") ? options : options.rest_prefix
+  if(!this.storageHandlers[prefix]) throw "Did not recognize prefix "+prefix
+  return this.storageHandlers[prefix]
 }
 
 async fetch(uri, options) {
-  const self = this
-  options = Object.assign({}, options)
-  options.headers = options.headers || {}
-  options.url = decodeURIComponent(uri)
+  let self = this
+  options = options || {}
   let pathname = decodeURIComponent(Url.parse(uri).pathname)
-  options.method = (options.method || options.Method || 'GET').toUpperCase()
   let scheme = Url.parse(uri).protocol
   let prefix = scheme.match("file") ? 'file' : uri.replace(scheme+'//','').replace(/\/.*/,'')
   options.scheme = scheme
   options.rest_prefix = prefix
+  if(!self.storage){
+    if(self.storageHandler) {
+      self.storage=()=>{return self.storageHandlers[prefix]}    
+    }
+    else {
+        self=new SolidRest([ new SolidBrowserFS() ])
+    }
+  }
+  options = Object.assign({}, options)
+  options.headers = options.headers || {}
+  options.url = decodeURIComponent(uri)
   const [objectType,objectExists] = 
     await self.storage(options).getObjectType(pathname,options)
   options.objectType = objectType
   options.objectExists = objectExists
   const notFoundMessage = '404 Not Found'
-
+  options.method = (options.method || options.Method || 'GET').toUpperCase()
   const resOptions = Object.assign({}, options)
   resOptions.headers = {}
 
@@ -85,7 +97,7 @@ async fetch(uri, options) {
   if( options.method==="POST"){
     if( !objectExists ) return _response(notFoundMessage, resOptions, 404)
     let link = options.headers.Link || options.headers.link
-    let slug = options.headers.Slug || options.headers.slug
+    let slug = options.headers.Slug || options.headers.slug || options.slug
     if(slug.match(/\//)) return _response(null, resOptions, 400) // Now returns 400 instead of 404
     pathname = path.join(pathname,slug);
     if( link && link.match("Container") ) {
@@ -105,7 +117,6 @@ async fetch(uri, options) {
   */
   if (options.method === 'PUT' ) {
     if(objectType==="Container") return _response(null, resOptions, 409)
-
     const [status, undefined, headers] = await self.storage(options).makeContainers(pathname,options) 
     Object.assign(resOptions.headers, headers)
 
@@ -144,11 +155,10 @@ async fetch(uri, options) {
     if(filenames.length){
       str = str + "; ldp:contains\n";
       for(var i=0;i<filenames.length;i++){
-        let fn = filenames[i]
+        // let fn = filenames[i]
+        let fn = encodeURI(filenames[i])
         let [ftype,e] =  await self.storage(options).getObjectType(pathname + fn)
         if(ftype==="Container" && !fn.endsWith("/")) fn = fn + "/"
-//        let prefix = options.rest_prefix==="file" ? "" : options.rest_prefix
-//        fn = options.scheme+"//"+prefix+pathname + fn
         str = str + `  <${fn}>,\n`
         let ctype = _getContentType(_getExtension(fn),options.objectType)
         ftype = ftype==="Container" ? "ldp:Container; a ldp:BasicContainer" : "ldp:Resource"
@@ -171,7 +181,8 @@ async fetch(uri, options) {
     return ext
   }
   function _getContentType(ext,type) {
-    if( ext==='.ttl'
+    if( !ext
+     || ext==='.ttl'
      || ext==='.acl'
      || ext==='.meta'
      || type==="Container"
@@ -188,11 +199,12 @@ async fetch(uri, options) {
        date from nodejs Date
   */
   function _getHeaders(pathname,options){    
-    let fn = pathname.replace(/.*\//,'');    
+    // let fn = pathname.replace(/.*\//,'');    
+    let fn = encodeURI(pathname.replace(/.*\//,''))  
     let headers = (typeof self.storage(options).getHeaders != "undefined")
       ? self.storage(options).getHeaders(pathname,options)
       : {}
-    headers.location = headers.location || options.url
+    headers.location = headers.url = headers.location || options.url
     headers.date = headers.date || 
       new Date(Date.now()).toISOString()
     headers.allow = headers.allow || 
