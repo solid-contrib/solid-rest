@@ -1,5 +1,9 @@
 const Url      = require('url')
-const libPath     = require("path");
+
+// cxRes
+// const libPath     = require("path");
+const path   = require("path");
+
 const { Response }  = require('cross-fetch')
 const contentTypeLookup = require('mime-types').contentType
 
@@ -47,7 +51,7 @@ async fetch(uri, options) {
   else {
     options.url = decodeURIComponent(uri)
     pathname = Url.parse(options.url).pathname
-    options.rest_prefix=uri.replace(options.scheme+'//','').replace(/\/.*/,'')
+    options.rest_prefix=uri.replace(options.scheme+'//','').replace(/\/.*$/,'')
     path = libPath.posix
   }
 */
