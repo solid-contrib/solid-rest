@@ -31,6 +31,7 @@ async fetch(uri, options) {
 
   // cxRes
    options.url = decodeURIComponent(uri)
+console.log(options.url)
    let pathname = decodeURIComponent(Url.parse(uri).pathname)
    let scheme = Url.parse(uri).protocol
    let prefix = scheme.match("file") 
@@ -75,8 +76,8 @@ async fetch(uri, options) {
   options.method = (options.method || options.Method || 'GET').toUpperCase()
 
   // cxRes
-//  if (objectType==="Container" && !options.url.endsWith('/')) 
-//    options.url = `${options.url}/`
+  if (objectType==="Container" && !options.url.endsWith('/')) 
+    options.url = `${options.url}/`
 
   const resOptions = Object.assign({}, options)
   resOptions.headers = {}
