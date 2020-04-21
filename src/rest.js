@@ -134,6 +134,7 @@ async fetch(uri, options) {
     if(slug.match(/\//)) return _response(null, resOptions, 400) // Now returns 400 instead of 404
     pathname = path.join(pathname,slug);
     if( pathname.match("/") ) pathname = pathname.replace(/\\/,'/')
+console.log(pathname)
     if( link && link.match("Container") ) {
       const [status, , headers] =  await self.storage(options).postContainer(pathname,options)
       Object.assign(resOptions.headers, headers)
