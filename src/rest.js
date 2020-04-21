@@ -26,14 +26,15 @@ async fetch(uri, options) {
   options = options || {}
 
   // cxRes
-  // options.url = decodeURIComponent(uri)
-  // let pathname = decodeURIComponent(Url.parse(uri).pathname)
-  // let scheme = Url.parse(uri).protocol
-  // let prefix = scheme.match("file") 
-  //   ? 'file' 
-  //   : uri.replace(scheme+'//','').replace(/\/.*/,'')
-  // options.scheme = scheme
-  // options.rest_prefix = prefix
+   options.url = decodeURIComponent(uri)
+   let pathname = decodeURIComponent(Url.parse(uri).pathname)
+   let scheme = Url.parse(uri).protocol
+   let prefix = scheme.match("file") 
+     ? 'file' 
+     : uri.replace(scheme+'//','').replace(/\/.*/,'')
+   options.scheme = scheme
+   options.rest_prefix = prefix
+/*
   const url = new URL(uri)
     options.scheme = url.protocol
   let pathname, path
@@ -49,7 +50,7 @@ async fetch(uri, options) {
     options.rest_prefix=uri.replace(options.scheme+'//','').replace(/\/.*/,'')
     path = libPath.posix
   }
-
+*/
 
   if(!self.storage){
     if(self.storageHandler) {
@@ -70,8 +71,8 @@ async fetch(uri, options) {
   options.method = (options.method || options.Method || 'GET').toUpperCase()
 
   // cxRes
- if (objectType==="Container" && !options.url.endsWith('/')) 
-    options.url = `${options.url}/`
+// if (objectType==="Container" && !options.url.endsWith('/')) 
+//    options.url = `${options.url}/`
 
   const resOptions = Object.assign({}, options)
   resOptions.headers = {}
@@ -177,9 +178,8 @@ async fetch(uri, options) {
     })
 
     // cxRes
-    if ( !pathname.endsWith(path.sep) ) pathname += path.sep
-
-    // if (!pathname.endsWith("/")) pathname += "/"
+//    if ( !pathname.endsWith(path.sep) ) pathname += path.sep
+     if (!pathname.endsWith("/")) pathname += "/"
 
     let str2 = ""
     let str = "@prefix : <#>. @prefix ldp: <http://www.w3.org/ns/ldp#>.\n"
@@ -233,8 +233,8 @@ async fetch(uri, options) {
   function _getHeaders(pathname,options){    
 
     // cxRes
-    const fn = path.basename(pathname)
-    // let fn = encodeURI(pathname.replace(/.*\//,''))  
+//    const fn = path.basename(pathname)
+     let fn = encodeURI(pathname.replace(/.*\//,''))  
 
     let headers = (typeof self.storage(options).getHeaders != "undefined")
       ? self.storage(options).getHeaders(pathname,options)
