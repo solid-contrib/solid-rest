@@ -88,7 +88,6 @@ async function run(scheme){
 
   cfg.c1name = cfg.c1name.replace(/\/$/,'')
 
-console.log(cfg.base,cfg.c1name)
   res = await postFolder( cfg.base,cfg.c1name )
   ok( "201 post container", res.status==201,res)
 
@@ -98,6 +97,7 @@ console.log(cfg.base,cfg.c1name)
   res = await postFolder( cfg.missingFolder,cfg.c2name )
   ok( "404 post container, parent not found", res.status==404,res)
 
+console.log(cfg.folder1)
   res = await postFile( cfg.folder1,cfg.r1name,cfg.text )
   ok( "201 post resource", res.status==201,res)
 
