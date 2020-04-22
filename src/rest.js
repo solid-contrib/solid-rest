@@ -252,6 +252,8 @@ async fetch(uri, options = {}) {
     headers.allow = headers.allow ||
       [ 'HEAD, GET, POST, PUT, DELETE' ]
       //   [ 'OPTIONS, HEAD, GET, PATCH, POST, PUT, DELETE' ]
+    headers['wac-allow'] = headers['wac-allow'] ||
+      `user="read write append control",public="read"`
     headers['x-powered-by'] = headers['x-powered-by'] ||
       self.storage(options).name
 /*
