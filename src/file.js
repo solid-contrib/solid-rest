@@ -153,20 +153,19 @@ postContainer(fn,options){
     });
   });
 }
-async makeContainers(pathname,options){
-
-      let filename   = path.basename(pathname)
-      let foldername = path.dirname(pathname) + path.sep
-
-      let [t,exists] = await this.getObjectType(foldername);
-      if(t==="Resource") return Promise.resolve([200])
-      if(exists) return Promise.resolve([200])
-      foldername = foldername.replace(/\/$/,'');
-      await fs.mkdirpSync( foldername, {}, (err) => {
-        if(err) return Promise.resolve( 500 )
-        else    return Promise.resolve( 201 )
-      })
-      return Promise.resolve([200])
+async makeContainers(pathname, options){
+  const foldername = path.dirname(pathname)
+  const [type, exists] = await this.getObjectType(foldername);
+  if (!exists) {
+    try {
+      fs.mkdirpSync(foldername);
+      return Promise.resolve([201])
+    }
+    catch {
+      return Promise.resolve([500])
+    }
+  }
+  return Promise.resolve([200])
 }
 async getContainer(pathname,options) {
   return await fs.readdirSync(pathname)
