@@ -166,7 +166,9 @@ async makeContainers(pathname,options){
       if(t==="Resource") return Promise.resolve([200])
       if(exists) return Promise.resolve([200])
       foldername = foldername.replace(/\/$/,'');
-console.log(88,foldername)
+      if(process.platform==="win32")
+           foldername = foldername.replace(/^\//,'')
+console.log(77,foldername)
       await fs.mkdirpSync( foldername, {}, (err) => {
         if(err) return Promise.resolve( 500 )
         else    return Promise.resolve( 201 )
