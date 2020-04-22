@@ -30,11 +30,11 @@ async function getConfig(scheme){
 
   // cxRes
   // else if(scheme==="file:") scheme = "file://" + process.cwd()
-  else if(scheme==="file:") scheme = libUrl.pathToFileURL(process.cwd())
-console.log(scheme)
+  else if(scheme==="file:") {
+     scheme = libUrl.pathToFileURL(process.cwd()).href
+  }
 
   else if(scheme==="https:") {
-
    let session = await auth.login()
    let webId = session.webId
    if(! webId ) throw "Couldn't login!"
@@ -57,6 +57,7 @@ console.log(scheme)
   let  missingFolder = base + "/noSuchThing/norThis/"
   let cfg =  {
     base   : base,
+    dummy  : base + "/dummy.txt",
     c1name : c1name,
     c2name : c2name,
     r1name : r1name,
@@ -79,16 +80,8 @@ async function run(scheme){
   let cfg = await getConfig(scheme)
   let res
 
-  try {res=await PUT("app://ls/test-folder/dummy.txt") } catch{}
-
-  // cxRes
-  //
-  try {res=await PUT("file://"+process.cwd()+"/test-folder/dummy.txt") }catch{}
-  try {res=await PUT(libUrl.pathToFileURL(process.cwd())+"/test-folder/dummy.txt") }catch{}
-
-  if(scheme==="app:") {
-    cfg.base += "/";
-  }
+  if(scheme==="app:")  cfg.base += "/"
+  try {res=await PUT(cfg.dummy)}catch{}
 
   console.log(`\nTesting ${cfg.base} ...`)
 
