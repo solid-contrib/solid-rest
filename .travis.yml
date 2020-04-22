@@ -2,8 +2,6 @@ language: node_js
 node_js:
   - 10
 os:
-  - linux
-  - osx
   - windows
 script:
   - node tests/all.js

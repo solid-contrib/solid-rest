@@ -154,9 +154,10 @@ postContainer(fn,options){
   });
 }
 async makeContainers(pathname,options){
-      let filename = path.basename(pathname);
-      let reg = new RegExp(filename+"\$")
-      let foldername = pathname.replace(reg,'');
+
+      let filename   = path.basename(pathname)
+      let foldername = path.dirname(pathname) + path.sep
+
       let [t,exists] = await this.getObjectType(foldername);
       if(t==="Resource") return Promise.resolve([200])
       if(exists) return Promise.resolve([200])
@@ -174,3 +175,10 @@ async getContainer(pathname,options) {
 }
 module.exports = SolidFileStorage
 
+/*
+  linux
+    /home/travis/build/jeff-zucker/solid-rest/test-folder/rest/deep-folder
+
+  osx
+    /Users/travis/build/jeff-zucker/solid-rest/test-folder/rest/deep-folder
+*/
