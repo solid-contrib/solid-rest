@@ -164,6 +164,8 @@ console.log(filename)
       if(t==="Resource") return Promise.resolve([200])
       if(exists) return Promise.resolve([200])
       foldername = foldername.replace(/\/$/,'');
+console.log(filename)
+return Promise.resolve([200])
       await fs.mkdirpSync( foldername, {}, (err) => {
         if(err) return Promise.resolve( 500 )
         else    return Promise.resolve( 201 )
