@@ -32,6 +32,7 @@ async function getConfig(scheme){
   // else if(scheme==="file:") scheme = "file://" + process.cwd()
   else if(scheme==="file:") {
      scheme = libUrl.pathToFileURL(process.cwd()).href
+console.log(scheme)
   }
 
   else if(scheme==="https:") {
