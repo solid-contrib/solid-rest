@@ -166,9 +166,6 @@ async makeContainers(pathname,options){
       if(t==="Resource") return Promise.resolve([200])
       if(exists) return Promise.resolve([200])
       foldername = foldername.replace(/\/$/,'');
-      if(process.platform==="win32")
-           foldername = foldername.replace(/^\//,'')
-console.log(77,foldername)
       await fs.mkdirpSync( foldername, {}, (err) => {
         if(err) return Promise.resolve( 500 )
         else    return Promise.resolve( 201 )
@@ -182,3 +179,10 @@ async getContainer(pathname,options) {
 }
 module.exports = SolidFileStorage
 
+/*
+  linux
+    /home/travis/build/jeff-zucker/solid-rest/test-folder/rest/deep-folder
+
+  osx
+    /Users/travis/build/jeff-zucker/solid-rest/test-folder/rest/deep-folder
+*/
