@@ -155,12 +155,8 @@ postContainer(fn,options){
 }
 async makeContainers(pathname,options){
 
-//      let filename = pathname.replace(/.*\//,'')
-//      let foldername = pathname.replace(/\/[^\/]*$/,'/')
-
-       let filename = path.basename(pathname);
-       let reg = new RegExp(filename+"\$")
-       let foldername = pathname.replace(reg,'');
+      let filename   = path.basename(pathname)
+      let foldername = path.dirname(pathname) + path.sep
 
       let [t,exists] = await this.getObjectType(foldername);
       if(t==="Resource") return Promise.resolve([200])
