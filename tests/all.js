@@ -31,6 +31,7 @@ async function getConfig(scheme){
   // cxRes
   // else if(scheme==="file:") scheme = "file://" + process.cwd()
   else if(scheme==="file:") scheme = libUrl.pathToFileURL(process.cwd())
+console.log(scheme)
 
   else if(scheme==="https:") {
 
