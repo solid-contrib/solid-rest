@@ -1,6 +1,7 @@
 const SolidRest         = require('../src/rest.js')
 const SolidLocalStorage = require('../src/localStorage.js')
 const SolidFileStorage  = require('../src/file.js')
+const libUrl = require('url')
 
 const rest = new SolidRest([
   new SolidLocalStorage(),
@@ -26,7 +27,10 @@ main()
 
 async function getConfig(scheme){
   if(scheme==="app:")       scheme = "app://ls"
-  else if(scheme==="file:") scheme = "file://" + process.cwd()
+
+  // cxRes
+  // else if(scheme==="file:") scheme = "file://" + process.cwd()
+  else if(scheme==="file:") scheme = libUrl.pathToFileURL(process.cwd())
 
   else if(scheme==="https:") {
 
@@ -75,7 +79,11 @@ async function run(scheme){
   let res
 
   try {res=await PUT("app://ls/test-folder/dummy.txt") } catch{}
+
+  // cxRes
+  //
   try {res=await PUT("file://"+process.cwd()+"/test-folder/dummy.txt") }catch{}
+  try {res=await PUT(libUrl.pathToFileURL(process.cwd())+"/test-folder/dummy.txt") }catch{}
 
   if(scheme==="app:") {
     cfg.base += "/";
