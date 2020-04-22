@@ -154,7 +154,10 @@ postContainer(fn,options){
   });
 }
 async makeContainers(pathname,options){
+console.log(pathname)
       let filename = path.basename(pathname);
+console.log(filename)
+
       let reg = new RegExp(filename+"\$")
       let foldername = pathname.replace(reg,'');
       let [t,exists] = await this.getObjectType(foldername);
