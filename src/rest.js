@@ -25,7 +25,7 @@ storage(options){
   return this.storageHandlers[prefix]
 }
 
-async fetch(uri, options) {
+async fetch(uri, options = {}) {
   let self = this
   options = options || {}
 
@@ -43,11 +43,12 @@ async fetch(uri, options) {
 */
 /**/
   const url = new URL(uri)
-    options.scheme = url.protocol
+  options.scheme = url.protocol
+
   let pathname, path
   if (options.scheme.startsWith('file')) {
-    options.url =  Url.format(url)
-    pathname =  Url.fileURLToPath(options.url)
+    options.url = Url.format(url)
+    pathname = Url.fileURLToPath(options.url)
     options.rest_prefix = 'file'
     path = libPath
   }
@@ -57,30 +58,26 @@ async fetch(uri, options) {
     options.rest_prefix=uri.replace(options.scheme+'//','').replace(/\/.*$/,'')
     path = libPath.posix
   }
-/**/
-
+  /**/
+  
   if(!self.storage){
     if(self.storageHandler) {
-      self.storage=()=>{return self.storageHandlers[prefix]}    
+      self.storage=()=>{return self.storageHandlers[prefix]}
     }
     else {
         self=new SolidRest([ new SolidBrowserFS() ])
     }
   }
-  options = Object.assign({}, options)
+  
+  options.method = (options.method || options.Method || 'GET').toUpperCase()
   options.headers = options.headers || {}
-  const [objectType,objectExists] = 
+  const [objectType,objectExists] =
     await self.storage(options).getObjectType(pathname,options)
 
   options.objectType = objectType
   options.objectExists = objectExists
   const notFoundMessage = '404 Not Found'
-  options.method = (options.method || options.Method || 'GET').toUpperCase()
-
-  // cxRes
-  if (objectType==="Container" && !options.url.endsWith('/')) 
-    options.url = `${options.url}/`
-
+  if (objectType === "Container" && !options.url.endsWith('/')) options.url = `${options.url}/`
   const resOptions = Object.assign({}, options)
   resOptions.headers = {}
 
@@ -154,7 +151,7 @@ async fetch(uri, options) {
   */
   if (options.method === 'PUT' ) {
     if(objectType==="Container") return _response(null, resOptions, 409)
-    const [status, undefined, headers] = await self.storage(options).makeContainers(pathname,options) 
+    const [status, undefined, headers] = await self.storage(options).makeContainers(pathname,options)
     Object.assign(resOptions.headers, headers)
 
     if(status !== 200 && status !== 201) return _response(null, resOptions, status)
@@ -169,8 +166,8 @@ async fetch(uri, options) {
   }
 
   /**
-   * @param {RequestInfo} body 
-   * @param {RequestInit} options 
+   * @param {RequestInfo} body
+   * @param {RequestInit} options
    * @param {Number} status - Overrules options.status
    */
   function _response(body, options, status = options.status) {
@@ -181,14 +178,14 @@ async fetch(uri, options) {
 
   async function _container2turtle( pathname, options, contentsArray ){
     if(typeof self.storage(options).container2turtle != "undefined")
-      return self.storage(options).container2turtle(pathname,options,contentsArray)  
+      return self.storage(options).container2turtle(pathname,options,contentsArray)
     let filenames=contentsArray.filter( item => {
       if(!item.endsWith('.acl') && !item.endsWith('.meta')){ return item }
     })
 
     // cxRes
     if ( !pathname.endsWith(path.sep) ) pathname += path.sep
-//     if (!pathname.endsWith("/")) pathname += "/"
+    // if (!pathname.endsWith("/")) pathname += "/"
 
     let str2 = ""
     let str = "@prefix : <#>. @prefix ldp: <http://www.w3.org/ns/ldp#>.\n"
@@ -235,37 +232,38 @@ async fetch(uri, options) {
     }
   }
   /* DEFAULT HEADER
-       link created using .meta and .acl appended to uri 
+       link created using .meta and .acl appended to uri
        content-type assigned by mime-types.lookup
        date from nodejs Date
   */
+
   function _getHeaders(pathname,options){    
 
     // cxRes
     const fn = path.basename(pathname)
-//     let fn = encodeURI(pathname.replace(/.*\//,''))  
+    // let fn = encodeURI(pathname.replace(/.*\//,''))  
 
     let headers = (typeof self.storage(options).getHeaders != "undefined")
       ? self.storage(options).getHeaders(pathname,options)
       : {}
     headers.location = headers.url = headers.location || options.url
-    headers.date = headers.date || 
+    headers.date = headers.date ||
       new Date(Date.now()).toISOString()
-    headers.allow = headers.allow || 
+    headers.allow = headers.allow ||
       [ 'HEAD, GET, POST, PUT, DELETE' ]
       //   [ 'OPTIONS, HEAD, GET, PATCH, POST, PUT, DELETE' ]
-    headers['x-powered-by'] = headers['x-powered-by'] || 
+    headers['x-powered-by'] = headers['x-powered-by'] ||
       self.storage(options).name
 /*
     const ext = ( path.basename(pathname).startsWith('.') )
               ? path.basename(pathname)
               : path.extname(pathname)
 */
-  
+
     const ext = _getExtension(pathname)
 
-    headers['content-type'] 
-       = headers['content-type'] 
+    headers['content-type']
+       = headers['content-type']
       || _getContentType(ext,options.objectType)
     if(!headers['content-type']){
        delete headers['content-type']
@@ -296,7 +294,7 @@ async fetch(uri, options) {
     }
     return headers
 /*
-    headers.link = headers.link || 
+    headers.link = headers.link ||
       options.objectType==="Container"
         ? `<.meta>; rel="describedBy", <.acl>; rel="acl",`
           +`<http://www.w3.org/ns/ldp#Container>; rel="type",`
