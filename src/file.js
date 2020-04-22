@@ -154,18 +154,21 @@ postContainer(fn,options){
   });
 }
 async makeContainers(pathname,options){
-console.log(pathname)
-      let filename = path.basename(pathname);
-console.log(filename)
 
-      let reg = new RegExp(filename+"\$")
-      let foldername = pathname.replace(reg,'');
+      let filename = pathname.replace(/.*\//,'')
+      let foldername = pathname.replace(/\/[^\/]*$/,'/')
+console.log(filename,foldername)
+
+      // let filename = path.basename(pathname);
+
+      // let reg = new RegExp(filename+"\$")
+      // let foldername = pathname.replace(reg,'');
+     
+
       let [t,exists] = await this.getObjectType(foldername);
       if(t==="Resource") return Promise.resolve([200])
       if(exists) return Promise.resolve([200])
       foldername = foldername.replace(/\/$/,'');
-console.log(filename)
-return Promise.resolve([200])
       await fs.mkdirpSync( foldername, {}, (err) => {
         if(err) return Promise.resolve( 500 )
         else    return Promise.resolve( 201 )
