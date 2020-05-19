@@ -6,12 +6,16 @@
 [![NPM](https://nodei.co/npm/solid-rest.png)](https://nodei.co/npm/solid-rest/)
 -->
 
-This package sits between auth modules like solid-auth-client and solid-auth-cli to handle requests for file:// and app:// URIs. and then uses the appropriate storage module to do the work.  Doing it this way means that any app that uses those auth modules (which AFAIK is all Solid apps) can make use of the extended storage spaces.  The file:// portion is already working in rdflib in nodejs.  So far I have backends working for a file-system and for localStorage.  Files work only in node; localStorage works either in browser or node (using a simulated in-memory localStorage).  Otto_A_A is working on a cache backend which will use web-workers to dynamically update a mini-pod in the browser's cache.  
+This package provides Solid access to local file systems and other storage spaces. It recieves standard Solid REST requests and returns the same kind of response a Solid server sends.  This means that libraries and apps can make a file:// or app:// request in the same way they make an https request without having to know anything about the backend and without needing a server on the backend.
 
-<img src="https://github.com/jeff-zucker/solid-rest/blob/master/sold-rest.png" alt="diagram of solid-rest">
+So far, in addition to the local file system, solid-rest works in-memory (handy for testing), and with any of the dozen or so storage mechanisms supported by [BrowserFS](https://github.com/jvilk/BrowserFS) - Dropbox, browser Local Storage, browser indexedDB, browser Native File Api, and more.
 
-**For those who want to use file:// or app:// URLs** Soon, solid-rest will be included in the auth modules.  At that point, in a nodejs app, you simply require solid-rest and then use the extra URLs and in a browser app you supply script tags for solid-rest and for whichever of the app:// handlers you want.
+The package supports plugins, so new backends may be added by supplying the storage system specific commands without having to reinvent the wheel of receiving REST requests and responding to them in a Solid manner.
 
-**For those who want to create other storage handlers:** This package provides request routing, header handling, response preparation, and a test framework.  Storage modules can leverage all of that and/or over-ride what they want.  I am preparing an API guide, in the meantime there is documentation in the [localStorage](./src/localStorage.js) file.
+<img src="https://github.com/jeff-zucker/solid-rest/blob/master/solid-rest.png" alt="diagram of solid-rest">
 
-copyright &copy; 2019, Jeff Zucker, may be freely distributed with the MIT license
+### Acknowledgements
+
+Thanks to [Otto-AA](https://github.com/Otto-AA) and [CxRes](https://github.com/CxRes) for advice and patches.
+
+copyright &copy; 2019, [Jeff Zucker](https://github.com/jeff-zucker), may be freely distributed with the MIT license
