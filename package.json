@@ -32,7 +32,7 @@
   "dependencies": {
     "concat-stream": "^2.0.0",
     "cross-fetch": "^3.0.5",
-    "fs-extra": "^8.1.0",
+    "fs-extra": "^9.0.1",
     "mime-types": "^2.1.27"
   },
   "peerDependencies": {
@@ -46,8 +46,8 @@
     "kind-of": ">=6.0.3",
     "minimist": ">=1.2.5",
     "rdflib": "^1.2.3",
-    "rimraf": "^2.7.1",
-    "webpack": "^4.43.0",
+    "rimraf": "^3.0.2",
+    "webpack": "^4.44.0",
     "webpack-cli": "^3.3.12"
   }
 }
