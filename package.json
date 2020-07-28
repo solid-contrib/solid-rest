@@ -31,9 +31,9 @@
   "homepage": "https://github.com/jeff-zucker/solid-rest#readme",
   "dependencies": {
     "concat-stream": "^2.0.0",
-    "cross-fetch": "^3.0.4",
-    "fs-extra": "^8.0.1",
-    "mime-types": "^2.1.24"
+    "cross-fetch": "^3.0.5",
+    "fs-extra": "^9.0.1",
+    "mime-types": "^2.1.27"
   },
   "peerDependencies": {
     "browserfs": "^1.4.3"
@@ -45,9 +45,9 @@
     "babel-preset-stage-0": "^6.24.1",
     "kind-of": ">=6.0.3",
     "minimist": ">=1.2.5",
-    "rdflib": "^1.0.6",
-    "rimraf": "^2.6.3",
-    "webpack": "^4.30.0",
-    "webpack-cli": "^3.3.2"
+    "rdflib": "^1.2.3",
+    "rimraf": "^3.0.2",
+    "webpack": "^4.44.0",
+    "webpack-cli": "^3.3.12"
   }
 }
