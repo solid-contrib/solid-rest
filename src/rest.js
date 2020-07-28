@@ -11,6 +11,7 @@ class SolidRest {
 
 constructor( handlers ) {
   this.storageHandlers = {}
+  if( typeof handlers ==="undefined") return
   handlers.forEach( handler => {
      console.log(`
        Installing Rest Handler ${handler.name} using prefix ${handler.prefix}
@@ -240,6 +241,7 @@ async fetch(uri, options = {}) {
   function _getHeaders(pathname,options){    
 
     // cxRes
+    path = path || libPath
     const fn = path.basename(pathname)
     // let fn = encodeURI(pathname.replace(/.*\//,''))  
 

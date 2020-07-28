@@ -3,13 +3,15 @@
    by default this will be added to the x-powered-by header of all responses
 */
 
+let zFs
+
 class SolidBrowserFS {
 
   constructor(backends) {
     this.prefix = "bfs"
-    this.name = "solid-rest-browserFS-1.0.0"
+    this.name = "solid-rest-browserFS-1.1.0"
     BrowserFS.install(window);
-    if(typeof backend !="undefined") this.initBackends( backends )    
+    this.initBackends( backends )    
   }
 
   async initBackends( backends ){
@@ -26,7 +28,7 @@ class SolidBrowserFS {
     return new Promise( async (resolve,reject) => {
       try {
           this._fsInit( backends, async (fs)=>{
-              this.fs = fs
+              zFs = this.fs = fs
               return resolve(this.fs)
           })
       } catch(e){console.warn(e)}
@@ -34,14 +36,15 @@ class SolidBrowserFS {
   }
   _fsInit( userMountpoints, callback ) {
       let mountpoints = Object.assign( userMountpoints, {
-          '/LocalStorage' :{fs:"LocalStorage",options:{}}
+          '/LocalStorage' :{fs:"LocalStorage",options:{}},
+          '/IndexedDB':{fs:"IndexedDB", options:{storeName:"bfs"}},
       })
       BrowserFS.configure({
           fs: "MountableFileSystem", options: mountpoints
       }, (e) => {
          if(e) throw "BrowserFS.configure error : " + e 
          else {
-             this.fs = BrowserFS.BFSRequire('fs') 
+             zFs = this.fs = BrowserFS.BFSRequire('fs') 
              callback(this.fs)
          }
      })
@@ -194,6 +197,13 @@ async makeContainers(pathname,options){
   return [201]
 }
 /* UTILITY FUNCTIONS */
+dump(pathname,options) {
+  let keys = Object.keys(localStorage).filter(k=>{
+    if(!k.match(/(setItem|getItem|removeItem)/)) return k
+  }).map(m=>{
+    console.log( m, localStorage.getItem(m) )
+  })
+}
   prom(fn,...args){
     return new Promise( async (resolve, reject) => {
       try {
@@ -207,6 +217,8 @@ async makeContainers(pathname,options){
   writeFile(pathname,content){
     return new Promise( async (resolve, reject) => {
       try {
+        this.fs = this.fs || zFs
+        if(typeof this.fs === "undefined") await this.initBackends()
         this.fs.writeFile(pathname,content, (err,response)=>{
           if(err){ console.warn(err); return resolve([404]) }
           else {
@@ -290,6 +302,6 @@ if(typeof window==="undefined") {
   }
 }
 
-module.exports = SolidBrowserFS
+if(typeof module !="undefined") module.exports = SolidBrowserFS
 
 /* END FILE */
