@@ -51,7 +51,9 @@ async function getConfig(scheme){
   let  r2name = "test2.ttl"
   let  folder1 = base +"/"+ c1name
   let  folder2 =  folder1 + c2name + "/"
+  let  folder2acl = folder2 + '.acl'
   let  deepR  =  folder2 +"test-file2.ttl"
+  let  deepRacl = folder2 + "test-file2.ttl.acl"
   let  file1  = folder1 + r1name
   let  file2  = folder2 + r2name
   let  missingFolder = base + "/noSuchThing/norThis/"
@@ -64,7 +66,9 @@ async function getConfig(scheme){
     r2name : r2name,
     folder1 : folder1,
     folder2 : folder2,
+    folder2acl : folder2acl,
     deepR  :  deepR,
+    deepRacl : deepRacl,
     file1  : file1,
     file2  : file2,
     missingFolder : missingFolder,
@@ -119,6 +123,12 @@ async function run(scheme){
 
   res = await PUT( cfg.deepR,cfg.text )
   ok("201 put resource, parent not found (recursive creation)",res.status==201)
+
+  res = await PUT( cfg.folder2acl,cfg.text )
+  ok("201 put container acl",res.status==201)
+
+  res = await PUT( cfg.deepRacl,cfg.text )
+  ok("201 put resource acl",res.status==201)
 
   res = await HEAD( cfg.deepR )
   ok("200 head",res.status==200 && res.headers.get("allow"),res )
