@@ -47,6 +47,8 @@ async fetch(uri, options = {}) {
   options.scheme = url.protocol
 
   let pathname, path
+  /* mungedPath = USE default path() for file and posix.path for others)
+  */
   if (options.scheme.startsWith('file')) {
     options.url = Url.format(url)
     pathname = Url.fileURLToPath(options.url)
@@ -59,6 +61,7 @@ async fetch(uri, options = {}) {
     options.rest_prefix=uri.replace(options.scheme+'//','').replace(/\/.*$/,'')
     path = libPath.posix
   }
+  options.mungedPath = path
   /**/
   
   if(!self.storage){
@@ -132,7 +135,7 @@ async fetch(uri, options = {}) {
     let link = options.headers.Link || options.headers.link
     let slug = options.headers.Slug || options.headers.slug || options.slug
     if(slug.match(/\//)) return _response(null, resOptions, 400) // Now returns 400 instead of 404
-    pathname = path.join(pathname,slug);
+    pathname = options.mungedPath.join(pathname,slug);
     if( pathname.startsWith('\\') ) pathname = pathname.replace(/\\/g,'/')
 
     if( link && link.match("Container") ) {
@@ -185,7 +188,7 @@ async fetch(uri, options = {}) {
     })
 
     // cxRes
-    if ( !pathname.endsWith(path.sep) ) pathname += path.sep
+    if ( !pathname.endsWith(options.mungedPath.sep) ) pathname += options.mungedPath.sep
     // if (!pathname.endsWith("/")) pathname += "/"
 
     let str2 = ""
@@ -214,9 +217,9 @@ async fetch(uri, options = {}) {
   /* treats filename ".acl" and ".meta" as extensions
   */
   function _getExtension(pathname) {
-    let ext = ( path.basename(pathname).startsWith('.') )
-            ? path.basename(pathname)
-            : path.extname(pathname)
+    let ext = ( options.mungedPath.basename(pathname).startsWith('.') )
+            ? options.mungedPath.basename(pathname)
+            : options.mungedPath.extname(pathname)
     return ext
   }
   function _getContentType(ext,type) {
@@ -241,8 +244,8 @@ async fetch(uri, options = {}) {
   function _getHeaders(pathname,options){    
 
     // cxRes
-    path = path || libPath
-    const fn = path.basename(pathname)
+    // path = path || libPath
+    const fn = options.mungedPath.basename(pathname)
     // let fn = encodeURI(pathname.replace(/.*\//,''))  
 
     let headers = (typeof self.storage(options).getHeaders != "undefined")
