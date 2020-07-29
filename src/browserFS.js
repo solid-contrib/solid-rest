@@ -1,5 +1,5 @@
 /* 
-   constructor should define the pacakage's name 
+   constructor should define the package's name 
    by default this will be added to the x-powered-by header of all responses
 */
 
@@ -138,11 +138,27 @@ async postContainer(pathname,options){
 
 /*
   deleteResource(pathname,options)
-    * deletes a resource
+    * deletes a resource with links
     * on success, returns [200,undefined,optionalHeader]
     * on failure, returns [500,undefined,optionalHeader]
 */
 async deleteResource(pathname,options){
+  const folderLinks = pathname.endsWith('/') ? pathname : _getParent(pathname)
+  let files = await this.getContainer(folderLinks,options)
+  let fileName = pathname.replace(folderLinks, '')
+  let links = files.filter(file => (file.endsWith(fileName + '.meta') || file.endsWith(fileName + '.acl')))
+  links = links.map(file => folderLinks + file)
+  if (links.length) links.map(async link => await this.deleteItem(link,options))
+  return await this.deleteItem(pathname,options)
+}
+
+/*
+  deleteItem(pathname,options)
+    * deletes a resource
+    * on success, returns [200,undefined,optionalHeader]
+    * on failure, returns [500,undefined,optionalHeader]
+*/
+async deleteItem(pathname,options){
   try {
     let res = await this.prom(this.fs.unlink,pathname)
     if(res && res.code) { 
@@ -152,7 +168,6 @@ async deleteResource(pathname,options){
   }
   catch(e){ console.warn(e); return Promise.resolve( [500] ) }    
 }
-
 /*
   deleteContainer(pathname,options)
     * if container is not empty, returns [409,undefined,optionalHeader]
@@ -160,20 +175,24 @@ async deleteResource(pathname,options){
     * on success, returns [200,undefined,optionalHeader]
     * on failure, returns [500,undefined,optionalHeader]
 */
-async deleteContainer(pathname,options){
+async deleteContainer(pathname){
+  let files = await this.getContainer(pathname)
+  let links = files.filter(file => (file.endsWith('.meta') || file.endsWith('.acl')))
+  links = links.map(file => pathname + file)
+  files = files.filter(file => (!file.endsWith('.meta') && !file.endsWith('.acl')))
+  if( files.length ){ return Promise.resolve( [409] ) }
+  if (links.length) links.map(async link => await this.deleteItem(link))
+  return this.deleteDir(pathname)
+}
+async deleteDir(pathname,options){
   try {
-      let files = await this.getContainer(pathname,options)
-      if( files.length ){ return Promise.resolve( [409] ) }
-      try {
-          let res = await this.prom(this.fs.rmdir,pathname)
-          if(res && res.code) { 
-              console.warn(pathname, res.code)
-              return Promise.reject(res.code) 
-          }
-          return Promise.resolve([200])
-      }catch(e){console.warn(e); Promise.resolve([500])}
-  }
-  catch(err) { console.warn(err); return Promise.resolve([500]) }
+      let res = await this.prom(this.fs.rmdir,pathname)
+      if(res && res.code) { 
+          console.warn(pathname, res.code)
+          return Promise.reject(res.code) 
+      }
+      return Promise.resolve([200])
+  }catch(e){console.warn(e); Promise.resolve([500])}
 }
 
 async makeContainers(pathname,options){
