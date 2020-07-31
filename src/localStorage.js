@@ -53,16 +53,7 @@ async getContainer(pathname,options) {
     .filter(path => path.startsWith(pathname) && path != pathname) // Only children
     .map(path => path.substr(pathname.length))
     .filter(path => !path.slice(0, -1).includes("/")) // Only include direct children
-//console.log(files)
     return files
-}
-
-async getLinks(pathname, options) {
-  let folderLinks = pathname.endsWith('/') ? pathname : getParent(pathname)
-  let links = await this.getContainer(folderLinks, options)
-  links = links.filter(file => (file.endsWith('.meta') || file.endsWith('.acl')))
-    .map(file => folderLinks + file)
-  return links
 }
 
 dump(pathname,options) {
@@ -109,49 +100,26 @@ async postContainer(pathname,options){
   return this.putResource(pathname,options)
 }
 
-/*
-  deleteResource(pathname,options)
-    * deletes a resource with links
+/**
+ * deleteFile(pathname, options)
     * on success, returns [200,undefined,optionalHeader]
     * on failure, returns [500,undefined,optionalHeader]
-*/
-async deleteResource(pathname,options){
-  const folderLinks = pathname.endsWith('/') ? pathname : getParent(pathname)
-  let files = await this.getContainer(folderLinks,options)
-  let fileName = pathname.replace(folderLinks, '')
-  let links = files.filter(file => (file.endsWith(fileName + '.meta') || file.endsWith(fileName + '.acl')))
-  links = links.map(file => folderLinks + file)
-  if (links.length) links.map(async link => await this.deleteItem(link,options))
-  return await this.deleteItem(pathname,options)
-}
-
-/**
- * deleteItem(pathname, options)
- * @param {*} pathname 
- * @param {*} options 
  */
-async deleteItem(pathname,options){
+async deleteFile(pathname,options){
   try {
     localStorage.removeItem(pathname)
     return Promise.resolve( [200] )
   }
   catch(e){ return Promise.resolve( [500] ) }    
 }
-/*
-  deleteContainer(pathname,options)
-    * if container is not empty, returns [409,undefined,optionalHeader]
-    * else deletes container
+
+/**
+ * deleteFile(pathname, options)
     * on success, returns [200,undefined,optionalHeader]
     * on failure, returns [500,undefined,optionalHeader]
-*/
-async deleteContainer(pathname,options){
-  let files = await this.getContainer(pathname,options)
-  let links = files.filter(file => (file.endsWith('.meta') || file.endsWith('.acl')))
-  links = links.map(file => pathname + file)
-  files = files.filter(file => (!file.endsWith('.meta') && !file.endsWith('.acl')))
-  if( files.length ){ return Promise.resolve( [409] ) }
-  if (links.length) links.map(async link => await this.deleteItem(link,options))
-  return await this.deleteItem(pathname,options)
+ */
+async deleteDir (pathname, options) {
+  return await this.deleteFile(pathname, options)
 }
 
 async makeContainers(pathname,options){

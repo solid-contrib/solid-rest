@@ -49,9 +49,10 @@ async function getConfig(scheme){
   let  c2name = "deep-folder"
   let  r1name = "test1.ttl"
   let  r2name = "test2.ttl"
+  let  meta = '.meta'
   let  folder1 = base +"/"+ c1name
   let  folder2 =  folder1 + c2name + "/"
-  let  folder2acl = folder2 + '.acl'
+  let  folder2meta = folder2 + meta
   let  deepR  =  folder2 +"test-file2.ttl"
   let  deepRacl = folder2 + "test-file2.ttl.acl"
   let  file1  = folder1 + r1name
@@ -64,9 +65,10 @@ async function getConfig(scheme){
     c2name : c2name,
     r1name : r1name,
     r2name : r2name,
+    meta : meta,
     folder1 : folder1,
     folder2 : folder2,
-    folder2acl : folder2acl,
+    folder2meta : folder2meta,
     deepR  :  deepR,
     deepRacl : deepRacl,
     file1  : file1,
@@ -103,6 +105,9 @@ async function run(scheme){
   res = await postFolder( cfg.missingFolder,cfg.c2name )
   ok( "404 post container, parent not found", res.status==404,res)
 
+  res = await postFile( cfg.folder2meta,cfg.meta )
+  ok( "403 post link resource", res.status==404,res)
+
   res = await postFile( cfg.folder1,cfg.r1name,cfg.text )
   ok( "201 post resource", res.status==201,res)
 
@@ -124,7 +129,7 @@ async function run(scheme){
   res = await PUT( cfg.deepR,cfg.text )
   ok("201 put resource, parent not found (recursive creation)",res.status==201)
 
-  res = await PUT( cfg.folder2acl,cfg.text )
+  res = await PUT( cfg.folder2meta,cfg.text )
   ok("201 put container acl",res.status==201)
 
   res = await PUT( cfg.deepRacl,cfg.text )
@@ -153,6 +158,7 @@ async function run(scheme){
   res = await DELETE( cfg.base+'dummy.txt' )
   res = await DELETE( cfg.file1 )
   res = await DELETE( cfg.deepR )
+  res = await DELETE( cfg.folder2meta)
   ok("200 delete resource",res.status==200,res)
 
   if(scheme != "https:"){
