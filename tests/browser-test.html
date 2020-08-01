@@ -1,9 +1,11 @@
 <script src="../bundles/browserfs.min.js"></script>
-<!-- <script src="../src/localStorage.js"></script>   -->
 <script src="../src/browserFS.js"></script>  
-<script src="../dist/main.js"></script>
+<script src="../dist/browser/solid-rest.js"></script>
 <div id="results"></div>
 <script>
+
+/* NOTE : sorry this doesn't work at the moment, hope to fix it sometime 
+*/
 
 runStorage( "/test-folder/test-file.ttl","<> a <#test>." ).then( ()=>{
   runRest( "/test-folder/test-file.ttl","<> a <#test>." )
@@ -15,7 +17,9 @@ runStorage( "/test-folder/test-file.ttl","<> a <#test>." ).then( ()=>{
 async function runStorage(file,text){
   // const storage = new SolidLocalStorage()
   const storage = new SolidBrowserFS()
+  file = "app://bfs/IndexedDB"+file
   let response = await storage.putResource( file,{body:text} )
+  show(response)
   response = await storage.getResource( file )
   show(await response)
 }
@@ -23,7 +27,7 @@ async function runStorage(file,text){
 /* This runs using src/localStorage via transpiled version of src/rest
 */
 async function runRest(file,text){
-  file = "app://bfs"+file
+  file = "app://bfs/IndexedDB"+file
   // const rest = new SolidRest([ new SolidLocalStorage() ])
   const rest = new SolidRest([new SolidBrowserFS])
   let response = await rest.fetch( file,{method:"PUT",body:text} )
