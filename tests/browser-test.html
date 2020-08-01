@@ -4,40 +4,66 @@
 <div id="results"></div>
 <script>
 
-/* NOTE : sorry this doesn't work at the moment, hope to fix it sometime 
+/* instantiate a rest object 
 */
+const rest = new SolidRest([new SolidBrowserFS()])
 
-runStorage( "/test-folder/test-file.ttl","<> a <#test>." ).then( ()=>{
-  runRest( "/test-folder/test-file.ttl","<> a <#test>." )
+/* initialize backends for Native File API and IndexedDB 
+   could also initialize others e.g. Dropbox here, see BrowserFS docs
+   initialized backends can be addressed with the root folders as 
+   shown, e.g. app://bfs/IndexedDB/ is the root of the IndexedDB storage
+*/
+rest.storage("bfs").initBackends({
+      '/HTML5FS'   : { fs: "HTML5FS"  , options:{size:5} },
+      '/IndexedDB' : { fs: "IndexedDB", options:{storeName:"bfs"} }
 })
 
+const base = "app://bfs/IndexedDB"
+const file = base + "/test-file.ttl"
+const text = "<> a <#test>."
+runRest( file, text )
 
-/* This runs using src/localStorage directly
-*/
-async function runStorage(file,text){
-  // const storage = new SolidLocalStorage()
-  const storage = new SolidBrowserFS()
-  file = "app://bfs/IndexedDB"+file
-  let response = await storage.putResource( file,{body:text} )
-  show(response)
-  response = await storage.getResource( file )
-  show(await response)
-}
-
-/* This runs using src/localStorage via transpiled version of src/rest
-*/
 async function runRest(file,text){
-  file = "app://bfs/IndexedDB"+file
-  // const rest = new SolidRest([ new SolidLocalStorage() ])
-  const rest = new SolidRest([new SolidBrowserFS])
-  let response = await rest.fetch( file,{method:"PUT",body:text} )
+  response = await rest.fetch( file,{method:"PUT",body:text} )
   response = await rest.fetch( file )
-  show(response.status+","+await response.text())
+  if(response.status==200 && await response.text()==text) show("OK!")
+  else show("FAIL!")
 }
 function show(msg){
   let display = document.getElementById("results")
   display.innerHTML = display.innerHTML + `<p>${msg}</p>`  
 }
+/* =========================================================== */
+/* REST METHODS                                                */
+/* =========================================================== */
+async function GET(url){
+  return await rest.fetch( url, {method:"GET"} )
+}
+async function HEAD(url){
+  return await rest.fetch( url, {method:"HEAD"} )
+}
+async function PUT(url,text){
+  return await rest.fetch( url, {method:"PUT",body:text,headers:{"content-type":"text/turtle"}} )
+}
+async function DELETE(url){
+  return await rest.fetch( url, {method:"DELETE"} )
+}
+async function POST(parent,item,content,link){
+  return await rest.fetch( parent,{
+    method:"POST",
+    headers:{slug:item,link:link,"content-type":"text/turtle"},
+    body:content
+  })
+}
+async function postFile(parent,file,content){
+  let link = '<http://www.w3.org/ns/ldp#Resource>; rel="type"'
+  return POST(parent,file,content,link)
+}
+async function postFolder(parent,folder){
+  let link ='<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"'
+  return POST(parent,folder,'',link)
+}
+
 </script>
 
 

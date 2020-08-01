@@ -62,7 +62,8 @@ async fetch(uri, options = {}) {
     options.rest_prefix=uri.replace(options.scheme+'//','').replace(/\/.*$/,'')
     path = libPath.posix
   }
-  options.mungedPath = path
+  options.mungedPath = path || libPath
+
   /**/
   
   if(!self.storage){

@@ -19,9 +19,13 @@ Solid-Rest can be used with any other libraries capable of operating either outs
 
 ### Backends
 
-**Currently supported backends** : file:// - the local file system; and app://ls/ - an in-memory local storage.  These are both available in command-line and nodejs scripts. They do not work in a browser unless running the browser within a local process such as nodejs express.
+**file://** - the local file system; works on command-line or in a browser within an electron process
 
-**Currently experimental backends** : app://bfs/* - any of the dozen or so storage mechanisms supported by [BrowserFS](https://github.com/jvilk/BrowserFS) - Dropbox, browser Local Storage, browser indexedDB, browser Native File Api, and more.  The code is there but I can't commit to providing examples or documentation at this time. Contact me with questions.
+**app://ls/** - an in-memory local storage; works on command-line or in a browser within an electron process
+
+**app://bfs/** - any of the dozen or so storage mechanisms supported by [BrowserFS](https://github.com/jvilk/BrowserFS) - Dropbox, browser Local Storage, browser indexedDB, browser Native File Api, and more; works in a browser.
+
+The file and in-memory storage are initialized automatically with the creation of the rest object.  The BrowserFS backends need to be initialized explicitly.  Please see tests/browser-test.html in the distribution for an example and details.
 
 ### Plugins
 
