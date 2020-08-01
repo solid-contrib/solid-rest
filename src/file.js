@@ -162,7 +162,7 @@ async makeContainers(pathname, options){
       fs.mkdirpSync(foldername);
       return Promise.resolve([201])
     }
-    catch {
+    catch (err) {
       return Promise.resolve([500])
     }
   }

@@ -5,8 +5,7 @@
   "license": "MIT",
   "description": "treat any storage as a mini Solid server",
   "main": "./src/rest.js",
-  "browser": "./dist/browser/solid-rest.js",
-  "module": "lib/rest.js",
+  "module": "./dist/main.js",
   "scripts": {
     "prepublish": "npm run build",
     "build": "npm run build:window",
