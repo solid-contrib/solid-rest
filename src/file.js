@@ -118,31 +118,13 @@ async putResource(pathname,options){
         }
     })
 }
-async deleteResource (pathname, options) {
-  const folderLinks = pathname.endsWith('/') ? pathname : getParent(pathname)
-  let files = await this.getContainer(folderLinks,options)
-  let fileName = pathname.replace(folderLinks, '')
-  let links = files.filter(file => (file.endsWith(fileName + '.meta') || file.endsWith(fileName + '.acl')))
-  links = links.map(file => folderLinks + file)
-  if (links.length) links.map(async link => await this.deleteItem(link,options))
-  return await this.deleteItem(pathname,options)
-}
-async deleteItem(fn){
+async deleteFile(fn){
     return new Promise(function(resolve) {
         fs.unlink( fn, function(err) {
             if(err)  resolve( [409] );
             else     resolve( [200] );
         });
     });
-}
-async deleteContainer(pathname){
-  let files = await this.getContainer(pathname)
-  let links = files.filter(file => (file.endsWith('.meta') || file.endsWith('.acl')))
-  links = links.map(file => pathname + file)
-  files = files.filter(file => (!file.endsWith('.meta') && !file.endsWith('.acl')))
-  if( files.length ){ return Promise.resolve( [409] ) }
-  if (links.length) links.map(async link => await this.deleteItem(link))
-  return this.deleteDir(pathname)
 }
 
 deleteDir(fn) {

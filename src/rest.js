@@ -6,7 +6,8 @@ const libPath     = require("path");
 
 const { Response }  = require('cross-fetch')
 const contentTypeLookup = require('mime-types').contentType
-
+const linkExt = ['.acl', '.meta']
+const linksExt = linkExt.concat('.meta.acl')
 class SolidRest {
 
 constructor( handlers ) {
@@ -114,13 +115,13 @@ async fetch(uri, options = {}) {
   if( options.method==="DELETE" ){
     if(!objectExists) return _response(notFoundMessage, resOptions, 404)
     if( objectType==="Container" ){
-      const [status, , headers] = await self.storage(options).deleteContainer(pathname,options)
+      const [status, , headers] = await _deleteContainer(pathname,options)
       Object.assign(resOptions.headers, headers)
 
       return _response(null, resOptions, status)
     }
     else if (objectType === 'Resource' ) {
-      const [status, , headers] = await self.storage(options).deleteResource(pathname,options)
+      const [status, , headers] = await _deleteResource(pathname,options)
       Object.assign(resOptions.headers, headers)
 
       return _response(null, resOptions, status)
@@ -145,6 +146,7 @@ async fetch(uri, options = {}) {
       return _response(null, resOptions, status)
     }
     else if( link && link.match("Resource")){
+      if (isLink(pathname)) return _response(null, resOptions, 403)
       const [status, , headers] = await self.storage(options).putResource( pathname, options)
       Object.assign(resOptions.headers, headers)
 
@@ -235,6 +237,9 @@ async fetch(uri, options = {}) {
       return contentTypeLookup(ext)
     }
   }
+  function isLink(pathname) {
+    return linkExt.find(ext => _getExtension(pathname) === ext)
+  }
   /* DEFAULT HEADER
        link created using .meta and .acl appended to uri
        content-type assigned by mime-types.lookup
@@ -311,6 +316,39 @@ async fetch(uri, options = {}) {
 */
 
   } // end of getHeaders()
+/*
+  _deleteContainer(pathname,options)
+    * deletes a container with links
+*/
+async function _deleteContainer(pathname,options){
+  let files = await self.storage(options).getContainer(pathname, options)
+  files = files.filter(file =>  !isLink(file)) // linkExt.find(ext => _getExtension(file) === ext))
+  if (files.length) return [409]
+  const links = await getLinks(pathname, options)
+  if (links.length) links.map(async link => await self.storage(options).deleteFile(link,options))
+  return await self.storage(options).deleteDir(pathname,options)
+}
+
+/*
+  _deleteResource(pathname,options)
+    * deletes a resource with links
+*/
+async function _deleteResource(pathname,options){
+  const links = await getLinks(pathname, options)
+  if (links.length) links.map(async link => await self.storage(options).deleteFile(link,options))
+  return await self.storage(options).deleteFile(pathname,options)
+}
+
+/**
+ * getLinks for item
+ * @param {*} pathname 
+ * @param {*} options 
+ */
+async function getLinks (pathname, options) {
+  let linksExists = linksExt.filter(async ext => await self.storage(options).getObjectType(pathname + ext)[1])
+  const links = linksExists.map( ext => pathname + ext)
+  return links
+}
  } // end of fetch()
 } // end of SolidRest()
 
