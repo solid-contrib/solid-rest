@@ -132,6 +132,7 @@ async fetch(uri, options = {}) {
   /* POST
   */
   if( options.method==="POST"){
+    if (isLink(pathname,options)) return _response(null, resOptions, 403)
     if( !objectExists ) return _response(notFoundMessage, resOptions, 404)
     let link = options.headers.Link || options.headers.link
     let slug = options.headers.Slug || options.headers.slug || options.slug
@@ -146,7 +147,8 @@ async fetch(uri, options = {}) {
       return _response(null, resOptions, status)
     }
     else if( link && link.match("Resource")){
-      if (isLink(pathname)) return _response(null, resOptions, 403)
+      // ab had it here, jz moved it above to preceed 404
+      // if (isLink(pathname,options)) return _response(null, resOptions, 403)
       const [status, , headers] = await self.storage(options).putResource( pathname, options)
       Object.assign(resOptions.headers, headers)
 
@@ -204,7 +206,7 @@ async fetch(uri, options = {}) {
         let [ftype,e] =  await self.storage(options).getObjectType(pathname + fn)
         if(ftype==="Container" && !fn.endsWith("/")) fn = fn + "/"
         str = str + `  <${fn}>,\n`
-        let ctype = _getContentType(_getExtension(fn),options.objectType)
+        let ctype = _getContentType(_getExtension(fn,options),options.objectType)
         ftype = ftype==="Container" ? "ldp:Container; a ldp:BasicContainer" : "ldp:Resource"
         str2 = str2 + `<${fn}> a ${ftype}.\n`
         str2 = str2 + `<${fn}> :type "${ctype}".\n`
@@ -218,7 +220,7 @@ async fetch(uri, options = {}) {
 
   /* treats filename ".acl" and ".meta" as extensions
   */
-  function _getExtension(pathname) {
+  function _getExtension(pathname,options) {
     let ext = ( options.mungedPath.basename(pathname).startsWith('.') )
             ? options.mungedPath.basename(pathname)
             : options.mungedPath.extname(pathname)
@@ -237,8 +239,8 @@ async fetch(uri, options = {}) {
       return contentTypeLookup(ext)
     }
   }
-  function isLink(pathname) {
-    return linkExt.find(ext => _getExtension(pathname) === ext)
+  function isLink(pathname,options) {
+    return linkExt.find(ext => _getExtension(pathname,options) === ext)
   }
   /* DEFAULT HEADER
        link created using .meta and .acl appended to uri
@@ -272,7 +274,7 @@ async fetch(uri, options = {}) {
               : path.extname(pathname)
 */
 
-    const ext = _getExtension(pathname)
+    const ext = _getExtension(pathname,options)
 
     headers['content-type']
        = headers['content-type']
@@ -322,11 +324,11 @@ async fetch(uri, options = {}) {
 */
 async function _deleteContainer(pathname,options){
   let files = await self.storage(options).getContainer(pathname, options)
-  files = files.filter(file =>  !isLink(file)) // linkExt.find(ext => _getExtension(file) === ext))
+  files = files.filter(file =>  !isLink(file,options)) // linkExt.find(ext => _getExtension(file,options) === ext))
   if (files.length) return [409]
   const links = await getLinks(pathname, options)
-  if (links.length) links.map(async link => await self.storage(options).deleteFile(link,options))
-  return await self.storage(options).deleteDir(pathname,options)
+  if (links.length) links.map(async link => await self.storage(options).deleteResource(link,options))
+  return await self.storage(options).deleteContainer(pathname,options)
 }
 
 /*
@@ -335,8 +337,8 @@ async function _deleteContainer(pathname,options){
 */
 async function _deleteResource(pathname,options){
   const links = await getLinks(pathname, options)
-  if (links.length) links.map(async link => await self.storage(options).deleteFile(link,options))
-  return await self.storage(options).deleteFile(pathname,options)
+  if (links.length) links.map(async link => await self.storage(options).deleteResource(link,options))
+  return await self.storage(options).deleteResource(pathname,options)
 }
 
 /**

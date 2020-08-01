@@ -101,11 +101,11 @@ async postContainer(pathname,options){
 }
 
 /**
- * deleteFile(pathname, options)
+ * deleteResource(pathname, options)
     * on success, returns [200,undefined,optionalHeader]
     * on failure, returns [500,undefined,optionalHeader]
  */
-async deleteFile(pathname,options){
+async deleteResource(pathname,options){
   try {
     localStorage.removeItem(pathname)
     return Promise.resolve( [200] )
@@ -114,12 +114,12 @@ async deleteFile(pathname,options){
 }
 
 /**
- * deleteFile(pathname, options)
+ * deleteContrainer(pathname, options)
     * on success, returns [200,undefined,optionalHeader]
     * on failure, returns [500,undefined,optionalHeader]
  */
-async deleteDir (pathname, options) {
-  return await this.deleteFile(pathname, options)
+async deleteContainer (pathname, options) {
+  return await this.deleteResource(pathname, options)
 }
 
 async makeContainers(pathname,options){

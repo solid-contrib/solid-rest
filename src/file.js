@@ -118,7 +118,7 @@ async putResource(pathname,options){
         }
     })
 }
-async deleteFile(fn){
+async deleteResource(fn){
     return new Promise(function(resolve) {
         fs.unlink( fn, function(err) {
             if(err)  resolve( [409] );
@@ -127,7 +127,7 @@ async deleteFile(fn){
     });
 }
 
-deleteDir(fn) {
+deleteContainer(fn) {
   return new Promise(function(resolve) {
         fs.rmdir( fn, function(err) {
             if(err) {
