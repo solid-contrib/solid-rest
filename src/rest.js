@@ -1,13 +1,14 @@
 const Url      = require('url')
-
 // cxRes
 const libPath     = require("path");
 //const path   = require("path");
-
 const { Response }  = require('cross-fetch')
+const uuid = require('uuid')
 const contentTypeLookup = require('mime-types').contentType
+
 const linkExt = ['.acl', '.meta']
 const linksExt = linkExt.concat('.meta.acl')
+
 class SolidRest {
 
 constructor( handlers ) {
@@ -136,22 +137,24 @@ async fetch(uri, options = {}) {
     let link = options.headers.Link || options.headers.link
     let slug = options.headers.Slug || options.headers.slug || options.slug
     if(slug.match(/\//)) return _response(null, resOptions, 400) // Now returns 400 instead of 404
-    pathname = options.mungedPath.join(pathname,slug);
-    if( pathname.startsWith('\\') ) pathname = pathname.replace(/\\/g,'/')
 
     if( link && link.match("Container") ) {
+      pathname = _mungePath(pathname, slug, options)
       const [status, , headers] =  await self.storage(options).postContainer(pathname,options)
       Object.assign(resOptions.headers, headers)
 
       return _response(null, resOptions, status)
     }
     else if( link && link.match("Resource")){
+      slug = await _getAvailableUrl(pathname, slug, options)
+      pathname = _mungePath(pathname, slug, options)
       if (isLink(pathname)) return _response(null, resOptions, 403)
-      const [status, , headers] = await self.storage(options).putResource( pathname, options)
+      const [status, , headers] = await self.storage(options).putResource( pathname, options) 
+      Object.assign(resOptions.headers, { slug: slug })
       Object.assign(resOptions.headers, headers)
 
       return _response(null, resOptions, status)
-    }
+    } 
   }
   /* PUT
   */
@@ -325,18 +328,18 @@ async function _deleteContainer(pathname,options){
   files = files.filter(file =>  !isLink(file)) // linkExt.find(ext => _getExtension(file) === ext))
   if (files.length) return [409]
   const links = await getLinks(pathname, options)
-  if (links.length) links.map(async link => await self.storage(options).deleteFile(link,options))
-  return await self.storage(options).deleteDir(pathname,options)
+  if (links.length) links.map(async link => await self.storage(options).deleteResource(link,options))
+  return await self.storage(options).deleteContainer(pathname,options)
 }
 
 /*
   _deleteResource(pathname,options)
     * deletes a resource with links
 */
-async function _deleteResource(pathname,options){
+async function _deleteResource(pathname, options){
   const links = await getLinks(pathname, options)
-  if (links.length) links.map(async link => await self.storage(options).deleteFile(link,options))
-  return await self.storage(options).deleteFile(pathname,options)
+  if (links.length) links.map(async link => await self.storage(options).deleteResource(link,options))
+  return await self.storage(options).deleteResource(pathname,options)
 }
 
 /**
@@ -349,6 +352,21 @@ async function getLinks (pathname, options) {
   const links = linksExists.map( ext => pathname + ext)
   return links
 }
+
+async function _getAvailableUrl (pathname, slug = uuid.v1(), options) {
+  let requestUrl = _mungePath(pathname, slug, options)
+  let urlExists = (await self.storage(options).getObjectType(requestUrl, options))[1]
+  if (urlExists) { slug = `${uuid.v1()}-${slug}` }
+
+  return slug
+}
+
+function _mungePath(pathname, slug, options) {
+  pathname = options.mungedPath.join(pathname, slug);
+  if (pathname.startsWith('\\')) pathname = pathname.replace(/\\/g, '/');
+  return pathname;
+}
+
  } // end of fetch()
 } // end of SolidRest()
 

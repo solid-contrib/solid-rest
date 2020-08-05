@@ -137,12 +137,12 @@ async postContainer(pathname,options){
 }
 
 /*
-  deleteFile(pathname,options)
+  deleteResource(pathname,options)
     * deletes a fle
     * on success, returns [200,undefined,optionalHeader]
     * on failure, returns [500,undefined,optionalHeader]
 */
-async deleteFile(pathname,options){
+async deleteResource(pathname,options){
   try {
     let res = await this.prom(this.fs.unlink,pathname)
     if(res && res.code) { 
@@ -154,12 +154,12 @@ async deleteFile(pathname,options){
 }
 
 /*
-  deleteDir(pathname,options)
+  deleteContainer(pathname,options)
     * deletes a folder
     * on success, returns [200,undefined,optionalHeader]
     * on failure, returns [500,undefined,optionalHeader]
 */
-async deleteDir(pathname,options){
+async deleteContainer(pathname,options){
   try {
       let res = await this.prom(this.fs.rmdir,pathname)
       if(res && res.code) { 

@@ -112,7 +112,8 @@ async function run(scheme){
   ok( "201 post resource", res.status==201,res)
 
   res = await postFile( cfg.folder1,cfg.r1name,cfg.txt )
-  ok( "201 post resource, resource found", res.status==201,res)
+  let slug = res.headers.get('slug')
+  ok( "201 post resource, resource found", res.status==201 && slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
 
   res = await postFile( cfg.missingFolder,cfg.file2 )
   ok( "404 post resource, parent not found", res.status==404,res)
@@ -151,12 +152,16 @@ async function run(scheme){
   let type = res.headers.get("content-type")
   ok("200 get container",res.status==200 && type==="text/turtle",res)
 
-  res = await DELETE( cfg.folder1 )
+  res = await DELETE( cfg.file1 )  // delete r1.name
+  ok("409 delete resource",res.status==200,res)
+
+  res = await DELETE( cfg.folder1 )  // folder contains a file with server created slug
   ok("409 delete container, not empty",res.status==409,res)
 
   res = await DELETE( cfg.base+'/dummy.txt' )
   res = await DELETE( cfg.base+'dummy.txt' )
-  res = await DELETE( cfg.file1 )
+  //res = await DELETE( cfg.file1 )
+  res = await DELETE( cfg.folder1+slug )
   res = await DELETE( cfg.deepR )
   res = await DELETE( cfg.folder2meta)
   ok("200 delete resource",res.status==200,res)
