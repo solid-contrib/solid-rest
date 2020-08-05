@@ -27,7 +27,7 @@
     - [ ] create default META
     - [ ] must end with / (add if missing)
  5. [ ] slug without extension add ext to slug : slug = slug + ext
- 6. [ ] Resource (path + slug) exists Resource name is server created (path+uuid.V1()+slug)
+ 6. [x] Resource (path + slug) exists Resource name is server created (path+uuid.V1()+slug)
 ## PUT
  - [x] Container : 409 not supported by PUT
  - Resource :
@@ -60,7 +60,7 @@
     - [x] actually : ACL (.acl), META (.meta), only META can have ACL
     - [x] RDF content (actually text/turtle)
 
-    3.2 [ ] Resource name should not be parent folder name (not implemented)
+    3.2 [ ] Resource name should map to only one url (not implemented in NSS)
     
     3.3 [ ] Resource URL with extension (.ext) : recommended
 
