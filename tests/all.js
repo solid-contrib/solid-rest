@@ -106,7 +106,7 @@ async function run(scheme){
   ok( "404 post container, parent not found", res.status==404,res)
 
   res = await postFile( cfg.folder2meta,cfg.meta )
-  ok( "403 post link resource", res.status==404,res)
+  ok( "403 post aux resource", res.status==403,res)
 
   res = await postFile( cfg.folder1,cfg.r1name,cfg.text )
   ok( "201 post resource", res.status==201,res)

@@ -113,8 +113,7 @@ async deleteResource(pathname,options){
   catch(e){ return Promise.resolve( [500] ) }    
 }
 
-/**
- * deleteContainer(pathname, options)
+ /* deleteContainer(pathname, options)
     * on success, returns [200,undefined,optionalHeader]
     * on failure, returns [500,undefined,optionalHeader]
  */
