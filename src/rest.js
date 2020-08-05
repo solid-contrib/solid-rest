@@ -5,9 +5,12 @@ const libPath     = require("path");
 //const path   = require("path");
 
 const { Response }  = require('cross-fetch')
+const uuid = require('uuid')
 const contentTypeLookup = require('mime-types').contentType
+
 const linkExt = ['.acl', '.meta']
 const linksExt = linkExt.concat('.meta.acl')
+
 class SolidRest {
 
 constructor( handlers ) {
@@ -133,24 +136,27 @@ async fetch(uri, options = {}) {
   /* POST
   */
   if( options.method==="POST"){
-    if (isLink(pathname,options)) return _response(null, resOptions, 403)
+    //jz put it here : this is too early it needs slug which is not defined
+    //if (isLink(pathname + slug, options)) return _response(null, resOptions, 403)
     if( !objectExists ) return _response(notFoundMessage, resOptions, 404)
     let link = options.headers.Link || options.headers.link
     let slug = options.headers.Slug || options.headers.slug || options.slug
     if(slug.match(/\//)) return _response(null, resOptions, 400) // Now returns 400 instead of 404
-    pathname = options.mungedPath.join(pathname,slug);
-    if( pathname.startsWith('\\') ) pathname = pathname.replace(/\\/g,'/')
 
     if( link && link.match("Container") ) {
+      pathname = _mungePath(pathname, slug, options)
       const [status, , headers] =  await self.storage(options).postContainer(pathname,options)
       Object.assign(resOptions.headers, headers)
 
       return _response(null, resOptions, status)
     }
     else if( link && link.match("Resource")){
-      // ab had it here, jz moved it above to preceed 404
-      // if (isLink(pathname,options)) return _response(null, resOptions, 403)
+      slug = await _getAvailableUrl(pathname, slug, options)
+      pathname = _mungePath(pathname, slug, options)
+      if (isLink(pathname, options)) return _response(null, resOptions, 403)
       const [status, , headers] = await self.storage(options).putResource( pathname, options)
+      // not to be kept. this is a way to find the name of the resource created
+      Object.assign(resOptions.headers, { slug: slug })
       Object.assign(resOptions.headers, headers)
 
       return _response(null, resOptions, status)
@@ -352,6 +358,21 @@ async function getLinks (pathname, options) {
   const links = linksExists.map( ext => pathname + ext)
   return links
 }
+
+async function _getAvailableUrl (pathname, slug = uuid.v1(), options) {
+  let requestUrl = _mungePath(pathname, slug, options)
+  let urlExists = (await self.storage(options).getObjectType(requestUrl, options))[1]
+  if (urlExists) { slug = `${uuid.v1()}-${slug}` }
+
+  return slug
+}
+
+function _mungePath(pathname, slug, options) {
+  pathname = options.mungedPath.join(pathname, slug);
+  if (pathname.startsWith('\\')) pathname = pathname.replace(/\\/g, '/');
+  return pathname;
+}
+
  } // end of fetch()
 } // end of SolidRest()
 
