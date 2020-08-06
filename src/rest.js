@@ -30,6 +30,11 @@ storage(options){
   return this.storageHandlers[prefix]
 }
 
+async itemExists(pathname,options){
+  return (await this.storage(options).getObjectType(pathname, options))[1]
+}
+
+
 async fetch(uri, options = {}) {
   let self = this
   options = options || {}
@@ -136,31 +141,30 @@ async fetch(uri, options = {}) {
   /* POST
   */
   if( options.method==="POST"){
-    //jz put it here : this is too early it needs slug which is not defined
-    //if (isLink(pathname + slug, options)) return _response(null, resOptions, 403)
     if( !objectExists ) return _response(notFoundMessage, resOptions, 404)
     let link = options.headers.Link || options.headers.link
     let slug = options.headers.Slug || options.headers.slug || options.slug
-    if(slug.match(/\//)) return _response(null, resOptions, 400) // Now returns 400 instead of 404
-
+    if(slug.match(/\//)) return _response(null, resOptions, 400)
     if( link && link.match("Container") ) {
+      options.resourceType="Container"
+      slug = await _getAvailableUrl(pathname, slug, options) // jz add
       pathname = _mungePath(pathname, slug, options)
       const [status, , headers] =  await self.storage(options).postContainer(pathname,options)
+      Object.assign(resOptions.headers, { location:pathname + options.mungedPath.sep }) //jz
       Object.assign(resOptions.headers, headers)
-
       return _response(null, resOptions, status)
     }
     else if( link && link.match("Resource")){
+      options.resourceType="Resource"
       slug = await _getAvailableUrl(pathname, slug, options)
       pathname = _mungePath(pathname, slug, options)
-      if (isLink(pathname, options)) return _response(null, resOptions, 403)
+      if (isLink(pathname, options)) return _response(null, resOptions, 405)
       const [status, , headers] = await self.storage(options).putResource( pathname, options)
-      // not to be kept. this is a way to find the name of the resource created
-      Object.assign(resOptions.headers, { slug: slug })
+      Object.assign(resOptions.headers, { location:pathname })
       Object.assign(resOptions.headers, headers)
-
       return _response(null, resOptions, status)
     }
+   
   }
   /* PUT
   */
@@ -361,9 +365,9 @@ async function getLinks (pathname, options) {
 
 async function _getAvailableUrl (pathname, slug = uuid.v1(), options) {
   let requestUrl = _mungePath(pathname, slug, options)
-  let urlExists = (await self.storage(options).getObjectType(requestUrl, options))[1]
+  if(options.resourceType==='Container' && !requestUrl.endsWith(options.mungedPath.sep)) requestUrl = requestUrl + options.mungedPath.sep 
+ let urlExists = (await self.storage(options).getObjectType(requestUrl, options))[1]
   if (urlExists) { slug = `${uuid.v1()}-${slug}` }
-
   return slug
 }
 

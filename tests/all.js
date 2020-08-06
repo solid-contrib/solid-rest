@@ -26,11 +26,15 @@ async function main(){
 main()
 
 async function getConfig(scheme){
-  if(scheme==="app:")       scheme = "app://ls"
+  let protocol
+  if(scheme==="app:"){
+    scheme = protocol = "app://ls"
+  }
 
   // cxRes
   // else if(scheme==="file:") scheme = "file://" + process.cwd()
   else if(scheme==="file:") {
+     protocol = "file://"
      scheme = libUrl.pathToFileURL(process.cwd()).href
   }
 
@@ -59,6 +63,7 @@ async function getConfig(scheme){
   let  file2  = folder2 + r2name
   let  missingFolder = base + "/noSuchThing/norThis/"
   let cfg =  {
+    protocol : protocol,
     base   : base,
     dummy  : base + "/dummy.txt",
     c1name : c1name,
@@ -99,8 +104,14 @@ async function run(scheme){
   res = await postFolder( cfg.base,cfg.c1name )
   ok( "201 post container", res.status==201,res)
 
+  let loc = res.headers.get('location')
+  ok( "post container returns location header",  cfg.folder1===(cfg.protocol+loc), loc) 
+
+  // post same thing a second time
   res = await postFolder( cfg.base,cfg.c1name )
-  ok( "201 post container, container found", res.status==201,res)
+  let cSlug = res.headers.get('location')
+  ok( "post container returns location header (new slug generated)",  cfg.folder1!=(cfg.protocol+cSlug) && cSlug.match('-'+cfg.c1name)) 
+  cSlug = (cfg.protocol+cSlug)
 
   res = await postFolder( cfg.missingFolder,cfg.c2name )
   ok( "404 post container, parent not found", res.status==404,res)
@@ -108,12 +119,17 @@ async function run(scheme){
   res = await postFile( cfg.folder1,cfg.r1name,cfg.text )
   ok( "201 post resource", res.status==201,res)
 
+  loc = res.headers.get('location')
+  ok( "post resource returns location header",  (cfg.folder1+cfg.r1name).match(loc), loc) 
+
   res = await postFile( cfg.folder1,cfg.meta )
-  ok( "403 post aux resource", res.status==403,res)
+  ok( "405 post aux resource", res.status==405,res)
 
   res = await postFile( cfg.folder1,cfg.r1name,cfg.txt )
-  let slug = res.headers.get('slug')
-  ok( "201 post resource, resource found", res.status==201 && slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
+  ok( "201 post resource, resource found", res.status==201 )
+
+  let slug = res.headers.get('location')
+  ok( "post resource returns location (new slug generated)", slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
 
   res = await postFile( cfg.missingFolder,cfg.file2 )
   ok( "404 post resource, parent not found", res.status==404,res)
@@ -153,22 +169,26 @@ async function run(scheme){
   ok("200 get container",res.status==200 && type==="text/turtle",res)
 
   res = await DELETE( cfg.file1 )  // delete r1.name
-  ok("409 delete resource",res.status==200,res)
+  ok("200 delete resource",res.status==200,res)
 
   res = await DELETE( cfg.folder1 )
   ok("409 delete container, not empty",res.status==409,res)
 
   res = await DELETE( cfg.base+'/dummy.txt' )
   res = await DELETE( cfg.base+'dummy.txt' )
-  //res = await DELETE( cfg.file1 )
-  res = await DELETE( cfg.folder1+slug )
+  // res = await DELETE( cfg.file1 )
+  let slugFile = scheme + "//"
+  slugFile = (scheme.match('app')) ? slugFile + "ls" + slug : slugFile + slug
+  res = await DELETE( slugFile )
   res = await DELETE( cfg.deepR )
   res = await DELETE( cfg.folder2meta)
-  ok("200 delete resource",res.status==200,res)
+  // ok("200 delete resource",res.status==200,res)
 
   if(scheme != "https:"){
     res = await DELETE( cfg.folder2 )
     res = await DELETE( cfg.folder1 )
+    res = await DELETE( cSlug )
+    cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
     res = await DELETE( cfg.base )
     ok("200 delete container",res.status==200,res)
   }
