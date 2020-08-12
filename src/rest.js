@@ -5,7 +5,7 @@ const libPath     = require("path");
 //const path   = require("path");
 
 const { Response }  = require('cross-fetch')
-const uuid = require('uuid')
+const { v1: uuidv1 } = require('uuid')
 const contentTypeLookup = require('mime-types').contentType
 
 const linkExt = ['.acl', '.meta']
@@ -363,11 +363,11 @@ async function getLinks (pathname, options) {
   return links
 }
 
-async function _getAvailableUrl (pathname, slug = uuid.v1(), options) {
+async function _getAvailableUrl (pathname, slug = uuidv1(), options) {
   let requestUrl = _mungePath(pathname, slug, options)
   if(options.resourceType==='Container' && !requestUrl.endsWith(options.mungedPath.sep)) requestUrl = requestUrl + options.mungedPath.sep 
  let urlExists = (await self.storage(options).getObjectType(requestUrl, options))[1]
-  if (urlExists) { slug = `${uuid.v1()}-${slug}` }
+  if (urlExists) { slug = `${uuidv1()}-${slug}` }
   return slug
 }
 
