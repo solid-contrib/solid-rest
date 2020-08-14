@@ -1,9 +1,5 @@
 const Url      = require('url')
-
-// cxRes
 const libPath     = require("path");
-//const path   = require("path");
-
 const { Response }  = require('cross-fetch')
 const { v1: uuidv1 } = require('uuid')
 const contentTypeLookup = require('mime-types').contentType
