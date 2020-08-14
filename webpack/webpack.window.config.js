@@ -6,12 +6,13 @@ const { context, mode, entry, module: _module, devtool } = require('./webpack.co
 
 const outputDir = './dist/browser';
 
-//  entry: ['./src/rest.js'],
+//    "babel-cli": "^6.26.0",
 
 module.exports = {
   context,
   mode,
-  entry: ['babel-polyfill', './src/rest.js'],
+//  entry: ['babel-polyfill', './src/rest.js'],
+  entry: ['./src/rest.js'],
   externals : {
     "fs" : "fs"
   },
