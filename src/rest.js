@@ -17,13 +17,13 @@ constructor( handlers ) {
   this.storageHandlers = {}
   if( typeof handlers ==="undefined") {
     if( typeof window ==="undefined") {
-      let File = require('solid-rest/src/file.js');
-      let Mem = require('solid-rest/src/localStorage.js');
+      let File = require('./file.js');
+      let Mem = require('./localStorage.js');
       handlers = [ new File(), new Mem() ]
     }
     else {
       try {
-        let Bfs = require('solid-rest/src/browserFS.js');
+        let Bfs = require('./browserFS.js');
         handlers = [ new Bfs() ]
       }
       catch{}
