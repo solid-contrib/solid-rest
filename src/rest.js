@@ -15,7 +15,20 @@ class SolidRest {
 
 constructor( handlers ) {
   this.storageHandlers = {}
-  if( typeof handlers ==="undefined") return
+  if( typeof handlers ==="undefined") {
+    if( typeof window ==="undefined") {
+      let File = require('solid-rest/src/file.js');
+      let Mem = require('solid-rest/src/localStorage.js');
+      handlers = [ new File(), new Mem() ]
+    }
+    else {
+      try {
+        let Bfs = require('solid-rest/src/browserFS.js');
+        handlers = [ new Bfs() ]
+      }
+      catch{}
+    }
+  }
   handlers.forEach( handler => {
      console.log(`
        Installing Rest Handler ${handler.name} using prefix ${handler.prefix}
@@ -75,12 +88,22 @@ async fetch(uri, options = {}) {
   /**/
   
   if(!self.storage){
-    if(self.storageHandler) {
+    if(self.storageHandlers) {
       self.storage=()=>{return self.storageHandlers[prefix]}
     }
     else {
-        self=new SolidRest([ new SolidBrowserFS() ])
+      self.storage=()=>{return self.storageHandlers[options.rest_prefix]}
+
+/*
+      self.storage=(options)=>{return self.storageHandlers[options.rest_prefix]}
+        self = (typeof window === "undefined") 
+          ? self.storage=()=>{return self.storageHandlers['file']}
+self.storage=()=>{return new SolidRest([new SolidFileStorage()])
+          : new SolidRest([ new SolidBrowserFS() ])
+*/
     }
+  }
+  else {
   }
   
   options.method = (options.method || options.Method || 'GET').toUpperCase()
@@ -367,7 +390,7 @@ async function _getAvailableUrl (pathname, slug = uuidv1(), options) {
   let requestUrl = _mungePath(pathname, slug, options)
   if(options.resourceType==='Container' && !requestUrl.endsWith(options.mungedPath.sep)) requestUrl = requestUrl + options.mungedPath.sep 
  let urlExists = (await self.storage(options).getObjectType(requestUrl, options))[1]
-  if (urlExists) { slug = `${uuidv1()}-${slug}` }
+ if (urlExists) { slug = `${uuidv1()}-${slug}` }
   return slug
 }
 

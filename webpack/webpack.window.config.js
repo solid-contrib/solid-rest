@@ -6,10 +6,15 @@ const { context, mode, entry, module: _module, devtool } = require('./webpack.co
 
 const outputDir = './dist/browser';
 
+//  entry: ['./src/rest.js'],
+
 module.exports = {
   context,
   mode,
   entry: ['babel-polyfill', './src/rest.js'],
+  externals : {
+    "fs" : "fs"
+  },
   output: {
     filename: 'solid-rest.js',
     path: path.resolve(outputDir),

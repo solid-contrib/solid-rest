@@ -1,4 +1,5 @@
 const SolidRest         = require('../src/rest.js')
+//const SolidRest         = require('../dist/browser/solid-rest.js')
 const SolidLocalStorage = require('../src/localStorage.js')
 const SolidFileStorage  = require('../src/file.js')
 const libUrl = require('url')
