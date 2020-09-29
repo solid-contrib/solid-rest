@@ -257,7 +257,7 @@ self.storage=()=>{return new SolidRest([new SolidFileStorage()])
     return ext
   }
   function _getContentType(ext,type) {
-    if( !ext
+     if( !ext
      || ext==='.ttl'
      || ext==='.acl'
      || ext==='.meta'
@@ -266,20 +266,20 @@ self.storage=()=>{return new SolidRest([new SolidFileStorage()])
       return 'text/turtle'
     }
     else {
-      return contentTypeLookup(ext)
+      let ctype = contentTypeLookup(ext)
+      return( ctype ? ctype : 'text/turtle' )
     }
   }
   function isLink(pathname,options) {
     return linkExt.find(ext => _getExtension(pathname,options) === ext)
   }
+
   /* DEFAULT HEADER
        link created using .meta and .acl appended to uri
        content-type assigned by mime-types.lookup
        date from nodejs Date
   */
-
   function _getHeaders(pathname,options){    
-
     // cxRes
     // path = path || libPath
     const fn = options.mungedPath.basename(pathname)
@@ -308,7 +308,7 @@ self.storage=()=>{return new SolidRest([new SolidFileStorage()])
 
     headers['content-type']
        = headers['content-type']
-      || _getContentType(ext,options.objectType)
+	  || _getContentType(ext,options.objectType)
     if(!headers['content-type']){
        delete headers['content-type']
     }
