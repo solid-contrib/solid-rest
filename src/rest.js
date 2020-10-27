@@ -1,6 +1,7 @@
 const Url      = require('url')
 const libPath     = require("path");
 const { Response }  = require('cross-fetch')
+const crossFetch  = require('cross-fetch')
 const { v1: uuidv1 } = require('uuid')
 const contentTypeLookup = require('mime-types').contentType
 
@@ -9,9 +10,9 @@ const linksExt = linkExt.concat('.meta.acl')
 
 class SolidRest {
 
-constructor( handlers ) {
+constructor( handlers,auth,sessionId ) {
   this.storageHandlers = {}
-  if( typeof handlers ==="undefined") {
+  if( typeof handlers ==="undefined" || handlers.length===0) {
     if( typeof window ==="undefined") {
       let File = require('./file.js');
       let Mem = require('./localStorage.js');
@@ -22,15 +23,44 @@ constructor( handlers ) {
         let Bfs = require('./browserFS.js');
         handlers = [ new Bfs() ]
       }
-      catch{}
+      catch{(e)=>{alert(e)}}
     }
   }
   handlers.forEach( handler => {
-     console.log(`
-       Installing Rest Handler ${handler.name} using prefix ${handler.prefix}
-     `)
+//     console.log(`
+//       Installing Rest Handler ${handler.name} using prefix ${handler.prefix}
+//     `)
      this.storageHandlers[handler.prefix] = handler
   })
+  return this.addFetch(auth,sessionId)
+}
+
+/* auth can be solid-auth-cli or solid-client-authn, or (default) cross-fetch
+   rest attaches itself to auth's fetch such that htpp* requests are
+   handled by the auth's fetch and others are handled by rest
+*/
+addFetch( auth,sessionId ) {
+  let self = this
+  auth = auth || crossFetch
+  if(typeof auth.Session === 'function'){
+    auth = new auth.Session(
+      {
+        clientAuthentication :
+          auth.getClientAuthenticationWithDependencies({})
+      },
+      sessionId
+    );
+  }
+  let originalFetch = auth.fetch
+  auth.fetch = (uri,options) => {
+    if(uri.startsWith('http') ){
+      return originalFetch(uri,options)
+    }
+    else {
+      return self.fetch(uri,options)
+    }
+  }
+  return auth
 }
 
 storage(options){
@@ -63,7 +93,6 @@ async fetch(uri, options = {}) {
 /**/
   const url = new URL(uri)
   options.scheme = url.protocol
-
   let pathname, path
   /* mungedPath = USE default path() for file and posix.path for others)
   */
@@ -82,24 +111,14 @@ async fetch(uri, options = {}) {
   options.mungedPath = path || libPath
 
   /**/
-  
+
   if(!self.storage){
     if(self.storageHandlers) {
       self.storage=()=>{return self.storageHandlers[prefix]}
     }
     else {
       self.storage=()=>{return self.storageHandlers[options.rest_prefix]}
-
-/*
-      self.storage=(options)=>{return self.storageHandlers[options.rest_prefix]}
-        self = (typeof window === "undefined") 
-          ? self.storage=()=>{return self.storageHandlers['file']}
-self.storage=()=>{return new SolidRest([new SolidFileStorage()])
-          : new SolidRest([ new SolidBrowserFS() ])
-*/
     }
-  }
-  else {
   }
   
   options.method = (options.method || options.Method || 'GET').toUpperCase()
@@ -236,10 +255,13 @@ self.storage=()=>{return new SolidRest([new SolidFileStorage()])
         let [ftype,e] =  await self.storage(options).getObjectType(pathname + fn)
         if(ftype==="Container" && !fn.endsWith("/")) fn = fn + "/"
         str = str + `  <${fn}>,\n`
-        let ctype = _getContentType(_getExtension(fn,options),options.objectType)
+
+        let ctype = _getContentType(_getExtension(fn,options),'Resource')
+        ctype = ctype.replace(/;.*/,'')	  
         ftype = ftype==="Container" ? "ldp:Container; a ldp:BasicContainer" : "ldp:Resource"
         str2 = str2 + `<${fn}> a ${ftype}.\n`
-        str2 = str2 + `<${fn}> :type "${ctype}".\n`
+        str2 = str2 + `<${fn}> a <http://www.w3.org/ns/iana/media-types/${ctype}#Resource>.\n`
+        // str2 = str2 + `<${fn}> :type "${ctype}".\n`
       }
       str = str.replace(/,\n$/,"")
     }

@@ -4,10 +4,14 @@ const SolidLocalStorage = require('../src/localStorage.js')
 const SolidFileStorage  = require('../src/file.js')
 const libUrl = require('url')
 
+/*
+These are now loaded automatically in node context
 const rest = new SolidRest([
   new SolidLocalStorage(),
   new SolidFileStorage()
 ])
+*/
+const rest = new SolidRest()
 
 
 let [tests,fails,passes,res] = [0,0,0]
