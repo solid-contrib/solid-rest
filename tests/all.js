@@ -3,7 +3,7 @@ const SolidRest         = require('../src/rest.js')
 const SolidLocalStorage = require('../src/localStorage.js')
 const SolidFileStorage  = require('../src/file.js')
 const libUrl = require('url')
-
+const os = require('os')
 /*
 These are now loaded automatically in node context
 const rest = new SolidRest([
@@ -115,9 +115,10 @@ async function run(scheme){
   // post same thing a second time
   res = await postFolder( cfg.base,cfg.c1name )
   let cSlug = res.headers.get('location')
+if(!os.platform().startsWith('win')){
   ok( "post container returns location header (new slug generated)",  cfg.folder1!=(cfg.protocol+cSlug) && cSlug.match('-'+cfg.c1name)) 
+}
   cSlug = (cfg.protocol+cSlug)
-
   res = await postFolder( cfg.missingFolder,cfg.c2name )
   ok( "404 post container, parent not found", res.status==404,res)
 
@@ -132,9 +133,11 @@ async function run(scheme){
 
   res = await postFile( cfg.folder1,cfg.r1name,cfg.txt )
   ok( "201 post resource, resource found", res.status==201 )
-
   let slug = res.headers.get('location')
+
+if(!os.platform().startsWith('win')){
   ok( "post resource returns location (new slug generated)", slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
+}
 
   res = await postFile( cfg.missingFolder,cfg.file2 )
   ok( "404 post resource, parent not found", res.status==404,res)
@@ -182,9 +185,12 @@ async function run(scheme){
   res = await DELETE( cfg.base+'/dummy.txt' )
   res = await DELETE( cfg.base+'dummy.txt' )
   // res = await DELETE( cfg.file1 )
+
+if(!os.platform().startsWith('win')){
   let slugFile = scheme + "//"
   slugFile = (scheme.match('app')) ? slugFile + "ls" + slug : slugFile + slug
   res = await DELETE( slugFile )
+}
   res = await DELETE( cfg.deepR )
   res = await DELETE( cfg.folder2meta)
   // ok("200 delete resource",res.status==200,res)
@@ -192,7 +198,9 @@ async function run(scheme){
   if(scheme != "https:"){
     res = await DELETE( cfg.folder2 )
     res = await DELETE( cfg.folder1 )
+if(!os.platform().startsWith('win')){
     res = await DELETE( cSlug )
+}
     cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
     res = await DELETE( cfg.base )
     ok("200 delete container",res.status==200,res)
