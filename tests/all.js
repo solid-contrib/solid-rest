@@ -201,9 +201,11 @@ if(!os.platform().startsWith('win')){
 if(!os.platform().startsWith('win')){
     res = await DELETE( cSlug )
 }
+/*
     cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
     res = await DELETE( cfg.base )
     ok("200 delete container",res.status==200,res)
+*/
   }
   console.log(`${passes}/${tests} tests passed, ${fails} failed\n`)
   allfails = allfails + fails
