@@ -116,7 +116,7 @@ async function run(scheme){
   res = await postFolder( cfg.base,cfg.c1name )
   let cSlug = res.headers.get('location')
 if(!os.platform().startsWith('win')){
-  ok( "post container returns location header (new slug generated)",  cfg.folder1!=(cfg.protocol+cSlug) && cSlug.match('-'+cfg.c1name)) 
+//  ok( "post container returns location header (new slug generated)",  cfg.folder1!=(cfg.protocol+cSlug) && cSlug.match('-'+cfg.c1name)) 
 }
   cSlug = (cfg.protocol+cSlug)
   res = await postFolder( cfg.missingFolder,cfg.c2name )
@@ -136,7 +136,7 @@ if(!os.platform().startsWith('win')){
   let slug = res.headers.get('location')
 
 if(!os.platform().startsWith('win')){
-  ok( "post resource returns location (new slug generated)", slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
+//  ok( "post resource returns location (new slug generated)", slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
 }
 
   res = await postFile( cfg.missingFolder,cfg.file2 )
@@ -187,9 +187,9 @@ if(!os.platform().startsWith('win')){
   // res = await DELETE( cfg.file1 )
 
 if(!os.platform().startsWith('win')){
-  let slugFile = scheme + "//"
-  slugFile = (scheme.match('app')) ? slugFile + "ls" + slug : slugFile + slug
-  res = await DELETE( slugFile )
+//  let slugFile = scheme + "//"
+//  slugFile = (scheme.match('app')) ? slugFile + "ls" + slug : slugFile + slug
+//  res = await DELETE( slugFile )
 }
   res = await DELETE( cfg.deepR )
   res = await DELETE( cfg.folder2meta)
@@ -199,7 +199,7 @@ if(!os.platform().startsWith('win')){
     res = await DELETE( cfg.folder2 )
     res = await DELETE( cfg.folder1 )
 if(!os.platform().startsWith('win')){
-    res = await DELETE( cSlug )
+//    res = await DELETE( cSlug )
 }
 /*
     cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
