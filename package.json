@@ -48,7 +48,7 @@
     "node-forge": "0.10.0",
     "rdflib": "2.1.1",
     "rimraf": "3.0.2",
-    "webpack": "4.44.2",
+    "webpack": "5.3.2",
     "webpack-cli": "3.3.12"
   }
 }
