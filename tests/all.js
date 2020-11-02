@@ -275,23 +275,23 @@ if(!os.platform().startsWith('win')){
   res = await DELETE( cfg.base+'/dummy.txt' )
   res = await DELETE( cfg.base+'dummy.txt' )
 
-if(!os.platform().startsWith('win')){
-//  let slugFile = scheme + "//"
-//  slugFile = (scheme.match('app')) ? slugFile + "ls" + slug : slugFile + slug
-//  res = await DELETE( slugFile )
-}
+  if(!os.platform().startsWith('win')){
+    let slugFile = scheme + "//"
+    slugFile = (scheme.match('app')) ? slugFile + "ls" + slug : slugFile + slug
+    res = await DELETE( slugFile )
+  }
 
   if(scheme != "https:"){
     res = await DELETE( cfg.folder2 )
     res = await DELETE( cfg.folder1 )
-if(!os.platform().startsWith('win')){
-//    res = await DELETE( cSlug )
-}
-/*
-    cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
-    res = await DELETE( cfg.base )
-    ok("200 delete container",res.status==200,res)
-*/
+  if(!os.platform().startsWith('win')){
+    res = await DELETE( cSlug )
+  }
+
+  cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
+  res = await DELETE( cfg.base )
+  ok("200 delete container",res.status==200,res)
+
   }
   console.log(`${passes}/${tests} tests passed, ${fails} failed\n`)
   allfails = allfails + fails
