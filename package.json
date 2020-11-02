@@ -34,7 +34,7 @@
     "cross-fetch": "^3.0.6",
     "fs-extra": "^9.0.1",
     "mime-types": "^2.1.27",
-    "uuid": "3.4.0"
+    "uuid": "8.3.1"
   },
   "peerDependencies": {
     "browserfs": "^1.4.3"
