@@ -12,7 +12,7 @@ const PATCH_PARSERS = {
 
 class RestPatch {
 
-  async patchContent (path, content, contentType, options) {
+  async patchContent (content, contentType, options) {
     const url = options.url
     const resource = { 
       contentType: contentType,
@@ -92,7 +92,7 @@ async function parsePatchN3 (targetURI, patchURI, patchText) {
   try {
     $rdf.parse(patchText, patchGraph, patchURI, 'text/n3')
   } catch (err) {
-    throw new Error(`400: Patch document syntax error: ${err}`) // error(400, `Patch document syntax error: ${err}`)
+    throw new Error(`400: Patch document syntax error: ${err}`)
   }
 
   // Query the N3 document for insertions and deletions
@@ -106,7 +106,7 @@ async function parsePatchN3 (targetURI, patchURI, patchText) {
       OPTIONAL { ?patch solid:where   ?where.  }
     }`)
   } catch (err) {
-    throw new Error(`400 : No patch for ${targetURI} found. ${err}`) //error(400, `No patch for ${targetURI} found.`, err)
+    throw new Error(`400 : No patch for ${targetURI} found. ${err}`)
   }
 
   // Return the insertions and deletions as an rdflib patch document

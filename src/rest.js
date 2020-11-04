@@ -236,7 +236,7 @@ async fetch(uri, options = {}) {
 
     // patch content
     try {
-      const [patchStatus, resContent] = await patch.patchContent(pathname, content, contentType, options)
+      const [patchStatus, resContent] = await patch.patchContent(content, contentType, options)
       if ( patchStatus !== 200) return _response(resContent, resOptions, patchStatus)
       options.body = resContent
       options.headers['Content-Type'] = contentType
