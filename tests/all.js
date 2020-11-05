@@ -1,6 +1,5 @@
 const SolidRest = require('../src/rest.js')
 const libUrl = require('url')
-const os = require('os')
 
 global.$rdf = require('rdflib') 
 const rest = new SolidRest()
@@ -22,15 +21,13 @@ async function main(){
 main()
 
 async function getConfig(scheme){
-  let protocol
   if(scheme==="app:"){
-    scheme = protocol = "app://ls"
+    scheme = "app://ls" // = protocol 
   }
 
   // cxRes
   // else if(scheme==="file:") scheme = "file://" + process.cwd()
   else if(scheme==="file:") {
-     protocol = "file://"
      scheme = libUrl.pathToFileURL(process.cwd()).href
   }
 
@@ -139,7 +136,6 @@ const resPatchN3_2 = [`@prefix : <#>.
     schem:temp1 :245.
 `]
   let cfg =  {
-    protocol : protocol,
     base   : base,
     dummy  : base + "/dummy.txt",
     c1name : c1name,
@@ -193,7 +189,7 @@ async function run(scheme){
 
   res = await postFolder( cfg.base,cfg.c1name )
   let cSlug = res.headers.get('location')
-  ok( "post container returns location header (new slug generated)",  cfg.folder1!=(cfg.protocol+cSlug) && cSlug.match('-'+cfg.c1name)) 
+  ok( "post container returns location header (new slug generated)",  cfg.folder1!=cSlug && cSlug.match('-'+cfg.c1name)) 
   
   res = await postFolder( cfg.missingFolder,cfg.c2name )
   ok( "404 post container, parent not found", res.status==404,res)
@@ -287,27 +283,21 @@ async function run(scheme){
   res = await DELETE( cfg.folder2meta)
   ok("200 delete folder with meta", res.status===200, res)
 
-/** Cleaning */
-  res = await DELETE( cfg.base+'/dummy.txt' )
-  res = await DELETE( cfg.base+'dummy.txt' )
   res = await DELETE( slug )
-  // res = await DELETE( slug )
-  // res = await DELETE( cfg.deepR )
-  // res = await DELETE( cfg.folder2meta)
   ok("200 delete resource",res.status==200,res)
 
+  /** Cleaning */
+  res = await DELETE( cfg.base+'/dummy.txt' )
+  res = await DELETE( cfg.base+'dummy.txt' )
+
+  res = await DELETE( cfg.folder2 )
+  res = await DELETE( cfg.folder1 )
+  res = await DELETE( cSlug )
+
   if(scheme != "https:"){
-    res = await DELETE( cfg.folder2 )
-    res = await DELETE( cfg.folder1 )
-
-  if(!os.platform().startsWith('win')){
-    res = await DELETE( cSlug )
-  }
-
-  cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
-  res = await DELETE( cfg.base )
-  ok("200 delete container",res.status==200,res)
-
+    cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
+    res = await DELETE( cfg.base )
+    ok("200 delete container",res.status==200,res)
   }
   console.log(`${passes}/${tests} tests passed, ${fails} failed\n`)
   allfails = allfails + fails
