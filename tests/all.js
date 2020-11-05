@@ -197,18 +197,13 @@ async function run(scheme){
   res = await postFolder( cfg.base,cfg.c1name )
   ok( "201 post container", res.status==201,res)
 
-/* uuid problems
   let loc = res.headers.get('location')
-  ok( "post container returns location header",  cfg.folder1===(cfg.protocol+loc), loc) 
-*/
+  ok( "post container returns location header",  cfg.folder1===loc) 
 
-  // post same thing a second time
   res = await postFolder( cfg.base,cfg.c1name )
   let cSlug = res.headers.get('location')
-if(!os.platform().startsWith('win')){
-//  ok( "post container returns location header (new slug generated)",  cfg.folder1!=(cfg.protocol+cSlug) && cSlug.match('-'+cfg.c1name)) 
-}
-  cSlug = (cfg.protocol+cSlug)
+  ok( "post container returns location header (new slug generated)",  cfg.folder1!=(cfg.protocol+cSlug) && cSlug.match('-'+cfg.c1name)) 
+  
   res = await postFolder( cfg.missingFolder,cfg.c2name )
   ok( "404 post container, parent not found", res.status==404,res)
 
@@ -216,8 +211,7 @@ if(!os.platform().startsWith('win')){
   ok( "201 post resource", res.status==201,res)
 
   loc = res.headers.get('location')
-  ok( "post resource returns location header",  typeof loc != "undefined", loc) 
-//  ok( "post resource returns location header",  (cfg.folder1+cfg.r1name).match(loc), loc) 
+  ok( "post resource returns location header",  (cfg.folder1+cfg.r1name).match(loc), loc) 
 
   res = await postFile( cfg.folder1,cfg.meta )
   ok( "405 post aux resource", res.status==405,res)
@@ -225,10 +219,7 @@ if(!os.platform().startsWith('win')){
   res = await postFile( cfg.folder1,cfg.r1name,cfg.txt )
   ok( "201 post resource, resource found", res.status==201, res )
   let slug = res.headers.get('location')
-
-if(!os.platform().startsWith('win')){
-//  ok( "post resource returns location (new slug generated)", slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
-}
+  ok( "post resource returns location (new slug generated)", slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
 
   res = await postFile( cfg.missingFolder,cfg.file2 )
   ok( "404 post resource, parent not found", res.status==404,res)
@@ -314,10 +305,15 @@ if(!os.platform().startsWith('win')){
     slugFile = (scheme.match('app')) ? slugFile + "ls" + slug : slugFile + slug
     res = await DELETE( slugFile )
   }
+  // res = await DELETE( slug )
+  // res = await DELETE( cfg.deepR )
+  // res = await DELETE( cfg.folder2meta)
+  ok("200 delete resource",res.status==200,res)
 
   if(scheme != "https:"){
     res = await DELETE( cfg.folder2 )
     res = await DELETE( cfg.folder1 )
+
   if(!os.platform().startsWith('win')){
     res = await DELETE( cSlug )
   }

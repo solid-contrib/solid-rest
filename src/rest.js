@@ -190,7 +190,7 @@ async fetch(uri, options = {}) {
       slug = await _getAvailableUrl(pathname, slug, options) // jz add
       pathname = _mungePath(pathname, slug, options)
       const [status, , headers] =  await self.storage(options).postContainer(pathname,options)
-      Object.assign(resOptions.headers, { location:pathname + options.mungedPath.sep }) //jz
+      Object.assign(resOptions.headers, { location: mapPathToUrl(pathname, options) + '/' })
       Object.assign(resOptions.headers, headers)
       return _response(null, resOptions, status)
     }
@@ -200,7 +200,7 @@ async fetch(uri, options = {}) {
       pathname = _mungePath(pathname, slug, options)
       if (isLink(pathname, options)) return _response(null, resOptions, 405)
       const [status, , headers] = await self.storage(options).putResource( pathname, options)
-      Object.assign(resOptions.headers, { location:pathname })
+      Object.assign(resOptions.headers, { location: mapPathToUrl(pathname, options) })
       Object.assign(resOptions.headers, headers)
       return _response(null, resOptions, status)
     }
@@ -453,8 +453,16 @@ async function _getAvailableUrl (pathname, slug = uuidv1(), options) {
 
 function _mungePath(pathname, slug, options) {
   pathname = options.mungedPath.join(pathname, slug);
-  if (pathname.startsWith('\\')) pathname = pathname.replace(/\\/g, '/');
+  if (pathname.includes('\\')) pathname = pathname.replace(/\\/g, '/');
   return pathname;
+}
+
+function mapPathToUrl (pathname, options) {
+  if (options.rest_prefix === 'file') {
+    // windows file starts with a letter, linux file starts with a '/'
+    options.rest_prefix = pathname.includes(':/') ? options.rest_prefix = '/' : '' // windows or linux
+  }
+  return options.scheme + '//' + options.rest_prefix + pathname
 }
 
  } // end of fetch()
