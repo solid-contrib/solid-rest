@@ -5,14 +5,19 @@ const crossFetch  = require('cross-fetch')
 const { v1: uuidv1 } = require('uuid')
 const contentTypeLookup = require('mime-types').contentType
 const RestPatch = require('./rest-patch')
-const patch = new RestPatch()
 
 const linkExt = ['.acl', '.meta']
 const linksExt = linkExt.concat('.meta.acl')
+let patch;
 
 class SolidRest {
 
 constructor( handlers,auth,sessionId ) {
+  const Global = (typeof window !="undefined") ? window
+               : (typeof global !="undefined") ? global
+               : {};
+  const $rdf = Global.$rdf
+  patch = Global.$rdf ? new RestPatch() : null;
   this.storageHandlers = {}
   if( typeof handlers ==="undefined" || handlers.length===0) {
     if( typeof window ==="undefined") {
@@ -223,6 +228,11 @@ async fetch(uri, options = {}) {
   /* PATCH
   */
   if (options.method === 'PATCH' ) {
+
+    if(!patch){
+       console.log( 'TO USE PATCH, YOU MUST IMPORT rdflib IN YOUR MAIN SCRIPT AND SET global.$rdf = $rdf');
+       return _response( null, resOptions, 405);
+    }
 
     // check pathname and 'text/turtle'. TODO see if NSS allows other RDF
     if(objectType==="Container") return _response(null, resOptions, 409)
@@ -458,11 +468,12 @@ function _mungePath(pathname, slug, options) {
 }
 
 function mapPathToUrl (pathname, options) {
-  if (options.rest_prefix === 'file') {
+  let prefix = options.rest_prefix;
+  if (prefix === 'file') {
     // windows file starts with a letter, linux file starts with a '/'
-    options.rest_prefix = pathname.includes(':/') ? options.rest_prefix = '/' : '' // windows or linux
+    prefix = pathname.includes(':/') ? '/' : '' // windows or linux
   }
-  return options.scheme + '//' + options.rest_prefix + pathname
+  return options.scheme + '//' + prefix + pathname
 }
 
  } // end of fetch()

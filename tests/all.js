@@ -1,18 +1,9 @@
-const SolidRest         = require('../src/rest.js')
-//const SolidRest         = require('../dist/browser/solid-rest.js')
-const SolidLocalStorage = require('../src/localStorage.js')
-const SolidFileStorage  = require('../src/file.js')
+const SolidRest = require('../src/rest.js')
 const libUrl = require('url')
 const os = require('os')
-/*
-These are now loaded automatically in node context
-const rest = new SolidRest([
-  new SolidLocalStorage(),
-  new SolidFileStorage()
-])
-*/
-const rest = new SolidRest()
 
+global.$rdf = require('rdflib') 
+const rest = new SolidRest()
 
 let [tests,fails,passes,res] = [0,0,0]
 let allfails = 0
@@ -299,12 +290,7 @@ async function run(scheme){
 /** Cleaning */
   res = await DELETE( cfg.base+'/dummy.txt' )
   res = await DELETE( cfg.base+'dummy.txt' )
-
-  if(!os.platform().startsWith('win')){
-    let slugFile = scheme + "//"
-    slugFile = (scheme.match('app')) ? slugFile + "ls" + slug : slugFile + slug
-    res = await DELETE( slugFile )
-  }
+  res = await DELETE( slug )
   // res = await DELETE( slug )
   // res = await DELETE( cfg.deepR )
   // res = await DELETE( cfg.folder2meta)
@@ -380,6 +366,7 @@ function ok( label, success,res ){
    return success
 }
 
-function testPatch (res, resPatch) {
-  return resPatch.find(string => string === res.statusText.toString())
+async function testPatch (res, resPatch) {
+  let content = await res.text();
+  return resPatch.find(string => string === content)
 }
