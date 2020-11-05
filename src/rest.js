@@ -4,6 +4,8 @@ const { Response }  = require('cross-fetch')
 const crossFetch  = require('cross-fetch')
 const { v1: uuidv1 } = require('uuid')
 const contentTypeLookup = require('mime-types').contentType
+const RestPatch = require('./rest-patch')
+const patch = new RestPatch()
 
 const linkExt = ['.acl', '.meta']
 const linksExt = linkExt.concat('.meta.acl')
@@ -218,6 +220,42 @@ async fetch(uri, options = {}) {
 
     return _response(null, resOptions, putStatus)
   }
+  /* PATCH
+  */
+  if (options.method === 'PATCH' ) {
+
+    // check pathname and 'text/turtle'. TODO see if NSS allows other RDF
+    if(objectType==="Container") return _response(null, resOptions, 409)
+    let content = ''
+    if (objectExists) {
+      const [status, contents, headers] = await self.storage(options).getResource(pathname,options)
+      content = typeof contents === 'string' ? contents : contents.toString()
+    }
+    const contentType = _getContentType(_getExtension(pathname, options))
+    if (contentType !== 'text/turtle') return _response('500 '+ pathname + ' is not a "text/turtle" file', resOptions, 500)
+
+    // patch content
+    try {
+      const [patchStatus, resContent] = await patch.patchContent(content, contentType, options)
+      if ( patchStatus !== 200) return _response(resContent, resOptions, patchStatus)
+      options.body = resContent
+      options.headers['Content-Type'] = contentType
+    } catch (e) { throw _response(e, resOptions, parseInt(e)) }
+
+    // PUT content to file
+    if (!objectExists) {
+      const [status, undefined, headers] = await self.storage(options).makeContainers(pathname,options)
+      // TODO add patchHeaders('MS-Author-Via', 'SPARQL')
+      Object.assign(resOptions.headers, headers)
+      if(status !== 200 && status !== 201) return _response(null, resOptions, status)
+    }
+    const [putStatus, , putHeaders] = await self.storage(options).putResource(pathname, options)
+
+    //Object.assign(resOptions.headers, putHeaders) // Note: The headers from makeContainers are also returned here
+
+    let returnStatus = (putStatus === 201)  ? 200 : putStatus
+    return _response(null, resOptions, returnStatus)
+  }
   else {
     return _response(null, resOptions, 405)
   }
@@ -229,6 +267,7 @@ async fetch(uri, options = {}) {
    */
   function _response(body, options, status = options.status) {
     options.status = status
+    if (body) options.statusText = body
     options.headers = Object.assign(_getHeaders(pathname, options), options.headers)
     return new Response(body, options)
   }
@@ -314,7 +353,7 @@ async fetch(uri, options = {}) {
     headers.date = headers.date ||
       new Date(Date.now()).toISOString()
     headers.allow = headers.allow ||
-      [ 'HEAD, GET, POST, PUT, DELETE' ]
+      [ 'HEAD, GET, PATCH, POST, PUT, DELETE' ]
       //   [ 'OPTIONS, HEAD, GET, PATCH, POST, PUT, DELETE' ]
     headers['wac-allow'] = headers['wac-allow'] ||
       `user="read write append control",public="read"`
