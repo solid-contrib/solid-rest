@@ -195,7 +195,8 @@ async fetch(uri, options = {}) {
       slug = await _getAvailableUrl(pathname, slug, options) // jz add
       pathname = _mungePath(pathname, slug, options)
       const [status, , headers] =  await self.storage(options).postContainer(pathname,options)
-      Object.assign(resOptions.headers, { location: mapPathToUrl(pathname, options) + '/' })
+//      Object.assign(resOptions.headers, { location: mapPathToUrl(pathname, options) + '/' })
+      Object.assign(resOptions.headers, { location: pathname + '/' })
       Object.assign(resOptions.headers, headers)
       return _response(null, resOptions, status)
     }
@@ -205,7 +206,8 @@ async fetch(uri, options = {}) {
       pathname = _mungePath(pathname, slug, options)
       if (isLink(pathname, options)) return _response(null, resOptions, 405)
       const [status, , headers] = await self.storage(options).putResource( pathname, options)
-      Object.assign(resOptions.headers, { location: mapPathToUrl(pathname, options) })
+//      Object.assign(resOptions.headers, { location: mapPathToUrl(pathname, options) })
+      Object.assign(resOptions.headers, { location: pathname })
       Object.assign(resOptions.headers, headers)
       return _response(null, resOptions, status)
     }
@@ -467,6 +469,8 @@ function _mungePath(pathname, slug, options) {
   return pathname;
 }
 
+/* not needed? location returns pathname, not URL
+
 function mapPathToUrl (pathname, options) {
   let prefix = options.rest_prefix;
   if (prefix === 'file') {
@@ -475,6 +479,7 @@ function mapPathToUrl (pathname, options) {
   }
   return options.scheme + '//' + prefix + pathname
 }
+*/
 
  } // end of fetch()
 } // end of SolidRest()
