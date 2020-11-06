@@ -1,8 +1,26 @@
-const SolidRest = require('../src/rest.js')
-const libUrl = require('url')
+"use strict";
 
 global.$rdf = require('rdflib') 
-const rest = new SolidRest()
+
+// SAME TEST SHOULD WORK FOR solid-rest AND solid-node-client
+//
+//const SolidNodeClient = require('../').SolidNodeClient
+//const client = new SolidNodeClient()
+const SolidRest = require('../')
+const client = new SolidRest()
+
+/** Silence rdflib chatty information about patch
+ *  Send console.log() to a logfile
+ *  Send console.error(), console.warn() and untrapped errors to screen
+ */
+const fs = require('fs');
+const logfile = `${process.cwd()}/log.txt`;
+console.log = function(msg) { fs.appendFileSync(logfile,msg.toString()) } 
+process.on('uncaughtException', function(err) {
+  console.error((err && err.stack) ? err.stack : err);
+});
+
+const libUrl = require('url')
 
 let [tests,fails,passes,res] = [0,0,0]
 let allfails = 0
@@ -21,22 +39,28 @@ async function main(){
 main()
 
 async function getConfig(scheme){
+  let host = scheme;
   if(scheme==="app:"){
     scheme = "app://ls" // = protocol 
+    host = scheme;
   }
 
   // cxRes
   // else if(scheme==="file:") scheme = "file://" + process.cwd()
   else if(scheme==="file:") {
+     host = scheme + "//";
      scheme = libUrl.pathToFileURL(process.cwd()).href
   }
 
   else if(scheme==="https:") {
-   let session = await auth.login()
+   let session = await client.login()
    let webId = session.webId
    if(! webId ) throw "Couldn't login!"
+    host   = webId.replace("/profile/card#me",'')
     scheme = webId.replace("/profile/card#me",'')+"/public"
   }
+  host = host || scheme;
+//  host = host || "";
 
   /*
    * we assume that test-folder exists and is empty
@@ -136,6 +160,7 @@ const resPatchN3_2 = [`@prefix : <#>.
     schem:temp1 :245.
 `]
   let cfg =  {
+    host   : host,
     base   : base,
     dummy  : base + "/dummy.txt",
     c1name : c1name,
@@ -169,11 +194,12 @@ async function run(scheme){
   [tests,fails,passes] = [0,0,0]
   let cfg = await getConfig(scheme)
   let res
+  let res1
 
   if(scheme==="app:")  cfg.base += "/"
   try {res=await PUT(cfg.dummy)}catch{}
 
-  console.log(`\nTesting ${cfg.base} ...`)
+  console.warn(`\nTesting ${cfg.base} ...`)
 
   /** POST */
   res = await postFolder( cfg.base,cfg.c1name )
@@ -185,12 +211,12 @@ async function run(scheme){
   ok( "201 post container", res.status==201,res)
 
   let loc = res.headers.get('location')
-  ok( "post container returns location header",  cfg.folder1===loc) 
+  ok( "post container returns location header",loc.match(`${cfg.c1name}/`))
 
   res = await postFolder( cfg.base,cfg.c1name )
   let cSlug = res.headers.get('location')
   ok( "post container returns location header (new slug generated)",  cfg.folder1!=cSlug && cSlug.match('-'+cfg.c1name)) 
-  
+
   res = await postFolder( cfg.missingFolder,cfg.c2name )
   ok( "404 post container, parent not found", res.status==404,res)
 
@@ -200,8 +226,9 @@ async function run(scheme){
   loc = res.headers.get('location')
   ok( "post resource returns location header",  (cfg.folder1+cfg.r1name).match(loc), loc) 
 
-  res = await postFile( cfg.folder1,cfg.meta )
-  ok( "405 post aux resource", res.status==405,res)
+//  NSS allows this and returns 201
+//  res = await postFile( cfg.folder1,cfg.meta )
+//  ok( "405 post aux resource", res.status==405,res)
 
   res = await postFile( cfg.folder1,cfg.r1name,cfg.txt )
   ok( "201 post resource, resource found", res.status==201, res )
@@ -257,17 +284,17 @@ async function run(scheme){
 
   res = await PATCH( cfg.file1,cfg.patchSparql, 'application/sparql-update' )
   res1 = await GET( cfg.file1 )
-  //console.log(res1.statusText.toString())
+  //console.warn(res1.statusText.toString())
   ok("200 patch sparql insert, delete to existing resource",res.status==200 && testPatch(res1, cfg.resPatchSparql), res1)
 
   res = await PATCH( cfg.file1,cfg.patchN3_1, 'text/n3' )
   res1 = await GET( cfg.file1 )
-  //console.log(res1.statusText.toString())
+  //console.warn(res1.statusText.toString())
   ok("200 patch n3 insert",res.status==200 && testPatch(res1, cfg.resPatchN3_1), res1)
 
   res = await PATCH( cfg.file1,cfg.patchN3_3, 'text/n3' )
   res1 = await GET( cfg.file1 )
-  //console.log(res1.statusText.toString())
+  //console.warn(res1.statusText.toString())
   ok("200 patch n3 delete, insert, where",res.status==200 && testPatch(res1, cfg.resPatchN3_2), res1)
 
   /** DELETE */
@@ -283,7 +310,7 @@ async function run(scheme){
   res = await DELETE( cfg.folder2meta)
   ok("200 delete folder with meta", res.status===200, res)
 
-  res = await DELETE( slug )
+  res = await DELETE( cfg.host + slug )
   ok("200 delete resource",res.status==200,res)
 
   /** Cleaning */
@@ -292,30 +319,28 @@ async function run(scheme){
 
   res = await DELETE( cfg.folder2 )
   res = await DELETE( cfg.folder1 )
-  res = await DELETE( cSlug )
+  res = await DELETE( cfg.host + cSlug )
+  cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
+  res = await DELETE( cfg.base )
+  ok("200 delete container",res.status==200,res)
 
-  if(scheme != "https:"){
-    cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
-    res = await DELETE( cfg.base )
-    ok("200 delete container",res.status==200,res)
-  }
-  console.log(`${passes}/${tests} tests passed, ${fails} failed\n`)
+  console.warn(`${passes}/${tests} tests passed, ${fails} failed\n`)
   allfails = allfails + fails
 }
 /* =========================================================== */
 /* REST METHODS                                                */
 /* =========================================================== */
 async function GET(url){
-  return await rest.fetch( url, {method:"GET"} )
+  return await client.fetch( url, {method:"GET"} )
 }
 async function HEAD(url){
-  return await rest.fetch( url, {method:"HEAD"} )
+  return await client.fetch( url, {method:"HEAD"} )
 }
 async function PUT(url,text){
-  return await rest.fetch( url, {method:"PUT",body:text,headers:{"content-type":"text/turtle"}} )
+  return await client.fetch( url, {method:"PUT",body:text,headers:{"content-type":"text/turtle"}} )
 }
 async function PATCH(url, patchContent, patchContentType){
-  return await rest.fetch(url, {
+  return await client.fetch(url, {
     method: 'PATCH',
     body:patchContent,
     headers:{
@@ -326,10 +351,10 @@ async function PATCH(url, patchContent, patchContentType){
   })
 } 
 async function DELETE(url){
-  return await rest.fetch( url, {method:"DELETE"} )
+  return await client.fetch( url, {method:"DELETE"} )
 }
 async function POST(parent,item,content,link){
-  return await rest.fetch( parent,{
+  return await client.fetch( parent,{
     method:"POST",
     headers:{slug:item,link:link,"content-type":"text/turtle"},
     body:content
@@ -351,8 +376,8 @@ function ok( label, success,res ){
    if(success) passes = passes + 1
    else fails = fails+1
    let msg = success ? "ok " : "FAIL "
-   console.log( "  " + msg + label)
-   if(!success && res ) console.log(res.status,res.statusText)
+   console.warn( "  " + msg + label)
+   if(!success && res ) console.warn(res.status,res.statusText)
    return success
 }
 

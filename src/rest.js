@@ -1,3 +1,4 @@
+"use strict";
 const Url      = require('url')
 const libPath     = require("path");
 const { Response }  = require('cross-fetch')
@@ -158,9 +159,9 @@ async fetch(uri, options = {}) {
       return _response(contents, resOptions, status)
     }
   }
-  /* HEAD
+  /* HEAD & OPTIONS // TBD : Should these be the same?
   */
-  if (options.method === 'HEAD') {
+  if (options.method === 'HEAD' || options.method === 'OPTIONS' ) {
     if(!objectExists) return _response(null, resOptions, 404)
     else return _response(null, resOptions, 200)
   }
@@ -365,8 +366,7 @@ async fetch(uri, options = {}) {
     headers.date = headers.date ||
       new Date(Date.now()).toISOString()
     headers.allow = headers.allow ||
-      [ 'HEAD, GET, PATCH, POST, PUT, DELETE' ]
-      //   [ 'OPTIONS, HEAD, GET, PATCH, POST, PUT, DELETE' ]
+      [ 'OPTIONS','HEAD,GET,PATCH,POST,PUT,DELETE' ]
     headers['wac-allow'] = headers['wac-allow'] ||
       `user="read write append control",public="read"`
     headers['x-powered-by'] = headers['x-powered-by'] ||
@@ -384,6 +384,10 @@ async fetch(uri, options = {}) {
 	  || _getContentType(ext,options.objectType)
     if(!headers['content-type']){
        delete headers['content-type']
+    }
+    if(patch) {
+     headers['ms-author-via']=["SPARQL"];
+     headers['accept-patch']=['application/sparql-update'];
     }
     headers.link = headers.link;
     if( !headers.link ) {
