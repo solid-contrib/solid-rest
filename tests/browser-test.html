@@ -4,19 +4,9 @@
 <div id="results"></div>
 <script>
 
-/* instantiate a rest object 
+/* instantiate a rest object with a BrowserFS object
 */
 const rest = new SolidRest([new SolidBrowserFS()])
-
-/* initialize backends for Native File API and IndexedDB 
-   could also initialize others e.g. Dropbox here, see BrowserFS docs
-   initialized backends can be addressed with the root folders as 
-   shown, e.g. app://bfs/IndexedDB/ is the root of the IndexedDB storage
-*/
-rest.storage("bfs").initBackends({
-      '/HTML5FS'   : { fs: "HTML5FS"  , options:{size:5} },
-      '/IndexedDB' : { fs: "IndexedDB", options:{storeName:"bfs"} }
-})
 
 const base = "app://bfs/IndexedDB"
 const file = base + "/test-file.ttl"
@@ -24,7 +14,7 @@ const text = "<> a <#test>."
 runRest( file, text )
 
 async function runRest(file,text){
-  response = await rest.fetch( file,{method:"PUT",body:text} )
+  let response = await rest.fetch( file,{method:"PUT",body:text} )
   response = await rest.fetch( file )
   if(response.status==200 && await response.text()==text) show("OK!")
   else show("FAIL!")
