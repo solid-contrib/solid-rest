@@ -1,4 +1,4 @@
-const $rdf = require('rdflib')
+const $rdf = global.$rdf;
 //const crypto = require('crypto') TODO may be
 
 const PATCH_NS = 'http://www.w3.org/ns/solid/terms#'
