@@ -1,4 +1,4 @@
-const $rdf = global.$rdf;
+let $rdf;
 //const crypto = require('crypto') TODO may be
 
 const PATCH_NS = 'http://www.w3.org/ns/solid/terms#'
@@ -11,6 +11,10 @@ const PATCH_PARSERS = {
 }
 
 class RestPatch {
+
+  constructor(passedRDF){
+    $rdf = passedRDF;
+  }
 
   async patchContent (content, contentType, options) {
     const url = options.url

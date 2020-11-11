@@ -17,8 +17,7 @@ constructor( handlers,auth,sessionId ) {
   const Global = (typeof window !="undefined") ? window
                : (typeof global !="undefined") ? global
                : {};
-  const $rdf = Global.$rdf
-  patch = Global.$rdf ? new RestPatch() : null;
+  patch = Global.$rdf ? new RestPatch(Global.$rdf) : null;
   this.storageHandlers = {}
   if( typeof handlers ==="undefined" || handlers.length===0) {
     if( typeof window ==="undefined") {
@@ -280,7 +279,7 @@ async fetch(uri, options = {}) {
    */
   function _response(body, options, status = options.status) {
     options.status = status
-    if (body) options.statusText = body
+    // if (body) options.statusText = body
     options.headers = Object.assign(_getHeaders(pathname, options), options.headers)
     return new Response(body, options)
   }
@@ -365,8 +364,9 @@ async fetch(uri, options = {}) {
     headers.location = headers.url = headers.location || options.url
     headers.date = headers.date ||
       new Date(Date.now()).toISOString()
-    headers.allow = headers.allow ||
-      [ 'OPTIONS','HEAD,GET,PATCH,POST,PUT,DELETE' ]
+    headers.allow = headers.allow || (typeof patch !="undefined")
+      ? 'OPTIONS,HEAD,GET,POST,PUT,PATCH,DELETE'
+      : 'OPTIONS,HEAD,GET,POST,PUT,DELETE'    
     headers['wac-allow'] = headers['wac-allow'] ||
       `user="read write append control",public="read"`
     headers['x-powered-by'] = headers['x-powered-by'] ||
