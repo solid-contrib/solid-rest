@@ -82,6 +82,8 @@ async function getConfig(scheme){
 
   const patchSparql = `INSERT { :new <#temp> <#245>; <temp1> "n0:240" .}
   DELETE { <> a :test.}`
+  const patchSparql1 = `INSERT { :new <#temp> <#245>; <temp1> "n0:240" .}
+  DELETE { <> a :test1.}`
 const patchN3_1 = (url) => `@prefix solid: <http://www.w3.org/ns/solid/terms#>.
   @prefix schem: <http://schema.org/>.
   @prefix : <#>.
@@ -181,6 +183,7 @@ const resPatchN3_2 = [`@prefix : <#>.
     patchN3_2 : patchN3_2(file1),
     patchN3_3 : patchN3_3(file1),
     patchSparql: patchSparql,
+    patchSparql1: patchSparql1,
     resPatchSparql: resPatchSparql,
     resPatchN3_1 : resPatchN3_1,
     resPatchN3_2 : resPatchN3_2
@@ -281,6 +284,9 @@ async function run(scheme){
 
   res = await PATCH( cfg.file1,cfg.text, 'application/sparql-update' )
   ok("400 patch erroneous patchContent",res.status==400, res)
+
+  res = await PATCH( cfg.file1,cfg.patchSparql1, 'application/sparql-update' )
+  ok("409 patch failed, cannot delete not existant triple",res.status==409, res)
 
   res = await PATCH( cfg.file1,cfg.patchSparql, 'application/sparql-update' )
   res1 = await GET( cfg.file1 )
