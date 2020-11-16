@@ -251,7 +251,7 @@ async fetch(uri, options = {}) {
       const [patchStatus, resContent] = await patch.patchContent(content, contentType, options)
       if ( patchStatus !== 200) return _response(resContent, resOptions, patchStatus)
       options.body = resContent
-      options.headers['Content-Type'] = contentType
+      options.headers['content-type'] = contentType
     } catch (e) { throw _response(e, resOptions, parseInt(e)) }
 
     // PUT content to file

@@ -58,7 +58,7 @@ class RestPatch {
       graph.applyPatch(patchObject, graph.sym(url), (err) => {
         if (err) {
           const message = err.message || err // returns string at the moment
-          return reject(`409 : The patch could not be applied. ${message}`) // is this correct : not tested
+          return reject(new Error(`409 : The patch could not be applied. ${message}`))
         }
         resolve(graph)
       })
@@ -122,7 +122,7 @@ async function parsePatchN3 (targetURI, patchURI, patchText) {
 }
 
 // Queries the store with the given SPARQL query and returns the first result
-queryForFirstResult = (store, sparql) => {
+function queryForFirstResult (store, sparql) {
   return new Promise((resolve, reject) => {
     const query = $rdf.SPARQLToQuery(sparql, false, store)
     store.query(query, resolve, null, () => reject(new Error('409 : No results.'))) // TODO check status
