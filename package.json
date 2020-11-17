@@ -1,6 +1,6 @@
 {
   "name": "solid-rest",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "author": "Jeff Zucker",
   "license": "MIT",
   "description": "treat any storage as a mini Solid server",

@@ -1,13 +1,17 @@
 "use strict";
 
-global.$rdf = require('rdflib') 
 
 // SAME TEST SHOULD WORK FOR solid-rest AND solid-node-client
 //
 //const SolidNodeClient = require('../').SolidNodeClient
 //const client = new SolidNodeClient()
 const SolidRest = require('../')
-const client = new SolidRest()
+
+
+// global.$rdf = require('rdflib') 
+// const client = new SolidRest()
+const $rdf = require('rdflib');
+const client = new SolidRest({ parser:$rdf })
 
 /** Silence rdflib chatty information about patch
  *  Send console.log() to a logfile
@@ -82,6 +86,8 @@ async function getConfig(scheme){
 
   const patchSparql = `INSERT { :new <#temp> <#245>; <temp1> "n0:240" .}
   DELETE { <> a :test.}`
+  const patchSparql1 = `INSERT { :new <#temp> <#245>; <temp1> "n0:240" .}
+  DELETE { <> a :NONEXISTANT.}`
 const patchN3_1 = (url) => `@prefix solid: <http://www.w3.org/ns/solid/terms#>.
   @prefix schem: <http://schema.org/>.
   @prefix : <#>.
@@ -181,6 +187,7 @@ const resPatchN3_2 = [`@prefix : <#>.
     patchN3_2 : patchN3_2(file1),
     patchN3_3 : patchN3_3(file1),
     patchSparql: patchSparql,
+    patchSparql1: patchSparql1,
     resPatchSparql: resPatchSparql,
     resPatchN3_1 : resPatchN3_1,
     resPatchN3_2 : resPatchN3_2
@@ -282,9 +289,11 @@ async function run(scheme){
   res = await PATCH( cfg.file1,cfg.text, 'application/sparql-update' )
   ok("400 patch erroneous patchContent",res.status==400, res)
 
+ res = await PATCH( cfg.file1,cfg.patchSparql1, 'application/sparql-update' )
+ ok("409 patch failed, cannot delete not existant triple",res.status==409, res)
+
   res = await PATCH( cfg.file1,cfg.patchSparql, 'application/sparql-update' )
   res1 = await GET( cfg.file1 )
-  //console.warn(res1.statusText.toString())
   ok("200 patch sparql insert, delete to existing resource",res.status==200 && testPatch(res1, cfg.resPatchSparql), res1)
 
   res = await PATCH( cfg.file1,cfg.patchN3_1, 'text/n3' )

@@ -13,13 +13,28 @@ let patch;
 
 class SolidRest {
 
-constructor( handlers,auth,sessionId ) {
-  const Global = (typeof window !="undefined") ? window
-               : (typeof global !="undefined") ? global
-               : {};
-  patch = Global.$rdf ? new RestPatch(Global.$rdf) : null;
+//constructor( handlers,auth,sessionId ) {
+constructor( options ) {
+  let handlers;
+  if(typeof options === "object"){
+    if( Object.keys(options)[0] === "0" ) {
+      handlers = options // ARRAY   
+      options = {}
+    }
+    else {
+      handlers = options.handlers || null
+    }
+  }
+  else {
+    options = {}
+  }
+  let $rdf = (options.parser) ? options.parser
+           : (typeof window !="undefined" && window.$rdf) ? window.$rdf
+           : (typeof global !="undefined" && global.$rdf) ? global.$rdf
+           : null;
+  patch = ($rdf) ? new RestPatch($rdf) : null;
   this.storageHandlers = {}
-  if( typeof handlers ==="undefined" || handlers.length===0) {
+  if( !handlers ) {
     if( typeof window ==="undefined") {
       let File = require('./file.js');
       let Mem = require('./localStorage.js');
@@ -39,7 +54,7 @@ constructor( handlers,auth,sessionId ) {
 //     `)
      this.storageHandlers[handler.prefix] = handler
   })
-  return this.addFetch(auth,sessionId)
+  // return this.addFetch(auth,sessionId)
 }
 
 /* auth can be solid-auth-cli or solid-client-authn, or (default) cross-fetch
@@ -83,21 +98,8 @@ async itemExists(pathname,options){
 
 async fetch(uri, options = {}) {
   let self = this
-  options = options || {}
-
-  // cxRes
-/*
-   options.url = decodeURIComponent(uri)
-
-   let pathname = decodeURIComponent(Url.parse(uri).pathname)
-   let scheme = Url.parse(uri).protocol
-   let prefix = scheme.match("file") 
-     ? 'file' 
-     : uri.replace(scheme+'//','').replace(/\/.*$/,'')
-   options.scheme = scheme
-   options.rest_prefix = prefix
-*/
-/**/
+  options = _normalizeOptions(options)
+  options.headers = _normalizeOptions(options.headers)
   const url = new URL(uri)
   options.scheme = url.protocol
   let pathname, path
@@ -116,7 +118,6 @@ async fetch(uri, options = {}) {
     path = libPath.posix
   }
   options.mungedPath = path || libPath
-
   /**/
 
   if(!self.storage){
@@ -127,9 +128,6 @@ async fetch(uri, options = {}) {
       self.storage=()=>{return self.storageHandlers[options.rest_prefix]}
     }
   }
-  
-  options.method = (options.method || options.Method || 'GET').toUpperCase()
-  options.headers = options.headers || {}
   const [objectType,objectExists] =
     await self.storage(options).getObjectType(pathname,options)
 
@@ -251,7 +249,7 @@ async fetch(uri, options = {}) {
       const [patchStatus, resContent] = await patch.patchContent(content, contentType, options)
       if ( patchStatus !== 200) return _response(resContent, resOptions, patchStatus)
       options.body = resContent
-      options.headers['Content-Type'] = contentType
+      options.headers['content-type'] = contentType
     } catch (e) { throw _response(e, resOptions, parseInt(e)) }
 
     // PUT content to file
@@ -473,19 +471,19 @@ function _mungePath(pathname, slug, options) {
   return pathname;
 }
 
-/* not needed? location returns pathname, not URL
-
-function mapPathToUrl (pathname, options) {
-  let prefix = options.rest_prefix;
-  if (prefix === 'file') {
-    // windows file starts with a letter, linux file starts with a '/'
-    prefix = pathname.includes(':/') ? '/' : '' // windows or linux
+/** Normalize content-type/Content-type and method/Method
+ */
+function _normalizeOptions(opts){
+  let newOpts = {};
+  for(var o in opts){
+    newOpts[o.toLowerCase()] = opts[o];
   }
-  return options.scheme + '//' + prefix + pathname
-}
-*/
+  newOpts.method  = newOpts.method ? newOpts.method.toUpperCase() : 'GET';
+  return newOpts;
+}  
 
  } // end of fetch()
+
 } // end of SolidRest()
 
 module.exports = exports = SolidRest
