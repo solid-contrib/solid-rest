@@ -6,6 +6,7 @@ const crossFetch  = require('cross-fetch')
 const { v1: uuidv1 } = require('uuid')
 const contentTypeLookup = require('mime-types').contentType
 const RestPatch = require('./rest-patch')
+const pod = require('./createServerlessPod.js')
 
 const linkExt = ['.acl', '.meta']
 const linksExt = linkExt.concat('.meta.acl')
@@ -13,7 +14,6 @@ let patch;
 
 class SolidRest {
 
-//constructor( handlers,auth,sessionId ) {
 constructor( options ) {
   let handlers;
   if(typeof options === "object"){
@@ -84,6 +84,30 @@ addFetch( auth,sessionId ) {
   }
   return auth
 }
+
+  async createServerlessPod( base ){
+    console.log(`Creating pod at <${base}>`);
+    base = base.replace(/\/$/,'');
+    await this.makeResource( base,"/.acl", pod.acl_content );
+    await this.makeResource( base,"/profile/card", pod.profile_content );
+    await this.makeResource( base,"/settings/prefs.ttl", pod.prefs_content );
+    await this.makeResource(base,"/settings/privateTypeIndex.ttl",pod.private_content );
+    await this.makeResource( base,"/settings/publicTypeIndex.ttl", pod.public_content );
+    await this.makeResource( base,"/private/.meta", "" );
+    await this.makeResource( base,"/.well-known/.meta", "" );
+    await this.makeResource( base,"/public/.meta", "" );
+    await this.makeResource( base,"/inbox/.meta", "" );
+  }
+  async makeResource( base, path, content ){
+    let url = base + path
+    console.log ( "  creating " + path )
+    await this.fetch( url, {
+      method:"PUT",
+      body:content,
+      headers:{"content-type":"text/turtle"}
+    })
+  }
+
 
 storage(options){
   const prefix = (typeof options==="string") ? options : options.rest_prefix
