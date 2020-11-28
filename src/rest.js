@@ -15,6 +15,7 @@ let patch;
 class SolidRest {
 
 constructor( options ) {
+  this.version = "1.2.9";
   let handlers;
   if(typeof options === "object"){
     if( Object.keys(options)[0] === "0" ) {
@@ -152,20 +153,24 @@ async fetch(uri, options = {}) {
       self.storage=()=>{return self.storageHandlers[options.rest_prefix]}
     }
   }
-  const [objectType,objectExists] =
-    await self.storage(options).getObjectType(pathname,options)
 
+  const [objectType,objectExists,mode] =
+    await self.storage(options).getObjectType(pathname,options)
   options.objectType = objectType
   options.objectExists = objectExists
+  options.objectMode = mode ? mode : {read:true,write:true};
+
   const notFoundMessage = '404 Not Found'
   if (objectType === "Container" && !options.url.endsWith('/')) options.url = `${options.url}/`
   const resOptions = Object.assign({}, options)
   resOptions.headers = {}
 
+
   /* GET
   */
   if (options.method === 'GET') {
-    if(!objectExists) return _response(notFoundMessage, resOptions, 404)
+    if(!objectExists) return _response("", resOptions, 404)
+    if(!options.objectMode.read) return _response("", resOptions, 401)
     if( objectType==="Container"){
       let contents = await  self.storage(options).getContainer(pathname,options)
       const [status, turtleContents, headers] = await _container2turtle(pathname,options,contents)
@@ -186,6 +191,16 @@ async fetch(uri, options = {}) {
     if(!objectExists) return _response(null, resOptions, 404)
     else return _response(null, resOptions, 200)
   }
+
+  if( options.method === 'DELETE'  
+   || options.method === 'PUT'  
+   || options.method === 'POST'  
+   || options.method === 'PATCH'
+  ){
+    if(objectExists && !options.objectMode.write)
+      return _response("", resOptions, 401)
+  }
+
   /* DELETE
   */
   if( options.method==="DELETE" ){
@@ -375,29 +390,27 @@ async fetch(uri, options = {}) {
        date from nodejs Date
   */
   function _getHeaders(pathname,options){    
-    // cxRes
-    // path = path || libPath
-    const fn = options.mungedPath.basename(pathname)
-    // let fn = encodeURI(pathname.replace(/.*\//,''))  
 
+    const fn = options.mungedPath.basename(pathname)
     let headers = (typeof self.storage(options).getHeaders != "undefined")
       ? self.storage(options).getHeaders(pathname,options)
       : {}
-    headers.location = headers.url = headers.location || options.url
-    headers.date = headers.date ||
-      new Date(Date.now()).toISOString()
-    headers.allow = headers.allow || (typeof patch !="undefined")
-      ? 'OPTIONS,HEAD,GET,POST,PUT,PATCH,DELETE'
-      : 'OPTIONS,HEAD,GET,POST,PUT,DELETE'    
-    headers['wac-allow'] = headers['wac-allow'] ||
-      `user="read write append control",public="read"`
+
+    headers.location = headers.url = headers.location 
+      || options.url
+
+    headers.date = headers.date
+      || new Date(Date.now()).toISOString()
+
+    headers.allow = headers.allow
+      || _createAllowHeader(patch,options.objectMode)
+
+    let wacAllow = headers['wac-allow'] 
+      || _createWacHeader(options.objectMode)
+    if( wacAllow ) headers['wac-allow'] = wacAllow;
+
     headers['x-powered-by'] = headers['x-powered-by'] ||
       self.storage(options).name
-/*
-    const ext = ( path.basename(pathname).startsWith('.') )
-              ? path.basename(pathname)
-              : path.extname(pathname)
-*/
 
     const ext = _getExtension(pathname,options)
 
@@ -414,7 +427,6 @@ async fetch(uri, options = {}) {
     headers.link = headers.link;
     if( !headers.link ) {
         if( ext === '.acl' ) {
-          // TBD : IS THIS CORRECT? IS THE TYPE OF ACL "resource"?
           headers.link =
             `<http://www.w3.org/ns/ldp#Resource>; rel="type"`
         }
@@ -436,21 +448,20 @@ async fetch(uri, options = {}) {
         }
     }
     return headers
-/*
-    headers.link = headers.link ||
-      options.objectType==="Container"
-        ? `<.meta>; rel="describedBy", <.acl>; rel="acl",`
-          +`<http://www.w3.org/ns/ldp#Container>; rel="type",`
-          +`<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"`
-        : `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl",`
-          +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
-*/
-
   } // end of getHeaders()
-/*
-  _deleteContainer(pathname,options)
-    * deletes a container with links
-*/
+  function _createWacHeader( mode ){
+    if(!mode.read && !mode.write) return null;
+    if(mode.read && !mode.write) return `user="read",public="read"`
+    if(!mode.read && mode.write) return `user="append write control",public=""`
+    return `user="read write append control",public="read"`
+  }
+  function _createAllowHeader( patch, mode ){
+    return 'OPTIONS,HEAD' 
+         + (mode.read ?',GET' : '') 
+         + (mode.write ?',POST,PUT,DELETE' : '') 
+         + (mode.write && patch ?',PATCH' : '') 
+  }
+
 async function _deleteContainer(pathname,options){
   let files = await self.storage(options).getContainer(pathname, options)
   files = files.filter(file =>  !isLink(file,options)) // linkExt.find(ext => _getExtension(file,options) === ext))
@@ -511,6 +522,7 @@ function _normalizeOptions(opts){
 } // end of SolidRest()
 
 module.exports = exports = SolidRest
+module.exports.SolidRest = SolidRest
 
 /* END */
 

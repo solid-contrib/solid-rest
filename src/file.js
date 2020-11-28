@@ -36,9 +36,24 @@ async  getObjectType(fn,options){
     let stat;
     try { stat = fs.lstatSync(fn); }
     catch(err){ }
+    let read=true,write=true;
+    if( stat ) {
+      try {
+        fs.accessSync(fn,fs.constants.R_OK);
+      }
+      catch(e){read=false}
+      try {
+        fs.accessSync(fn,fs.constants.W_OK);
+      }
+      catch(e){write=false}
+    }
+    let mode = {
+      read: (read),
+      write: (write)
+    }
     let type   = ( stat && stat.isDirectory()) ? "Container" : "Resource";
     if(!stat && fn.endsWith('/')) type = "Container"
-    return Promise.resolve( [type,stat] )
+    return Promise.resolve( [type,stat,mode] )
 }
 
 async getResource(pathname,options,objectType){
