@@ -1,6 +1,6 @@
 
 module.exports.profile_content = `@prefix : <#>.
-@prefix jef: </>.
+@prefix jef: <../>.
 @prefix ldp: <http://www.w3.org/ns/ldp#>.
 @prefix inbox: <../inbox/>.
 @prefix pro: <./>.
