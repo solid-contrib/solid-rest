@@ -2,6 +2,7 @@
    constructor should define the package's name 
    by default this will be added to the x-powered-by header of all responses
 */
+const env = require('./environment-detection.js');
 
 let zFs
 
@@ -287,9 +288,9 @@ function _getParent(url) {
 /*
   if it should work in nodejs, export the object
 */
-if(typeof window==="undefined") {
-  alert = (msg) => console.log(msg)
-  localStorage = {
+if(env.isNode) {
+  global.alert = (msg) => console.log(msg)
+  global.localStorage = {
      getItem    : (key) => { return localStorage[key] },
      removeItem : (key) => { delete localStorage[key] },
      setItem    : (key,val) => { localStorage[key]=val },

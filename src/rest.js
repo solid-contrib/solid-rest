@@ -7,6 +7,7 @@ const { v1: uuidv1 } = require('uuid')
 const contentTypeLookup = require('mime-types').contentType
 const RestPatch = require('./rest-patch')
 const pod = require('./createServerlessPod.js')
+const env = require('./environment-detection.js')
 
 const linkExt = ['.acl', '.meta']
 const linksExt = linkExt.concat('.meta.acl')
@@ -36,17 +37,24 @@ constructor( options ) {
   patch = ($rdf) ? new RestPatch($rdf) : null;
   this.storageHandlers = {}
   if( !handlers ) {
-    if( typeof window ==="undefined") {
-      let File = require('./file.js');
-      let Mem = require('./localStorage.js');
-      handlers = [ new File(), new Mem() ]
+    const handlerList = [];
+    if (env.isNode) {
+      let File = require('./file.js')
+      handlerList.push(new File()) 
     }
-    else {
+    if (env.isNode && !env.isBrowser) {
+      let Mem = require('./localStorage.js')
+      handlerList.push(new Mem())
+    }
+    if (env.isBrowser) {
       try {
-        let Bfs = require('./browserFS.js');
-        handlers = [ new Bfs() ]
+        let Bfs = require('./browserFS.js')
+        handlersList.push(new Bfs())
       }
       catch{(e)=>{alert(e)}}
+    } 
+    if (handlerList.length > 0) {
+      handlers = handlerList;
     }
   }
   handlers.forEach( handler => {
