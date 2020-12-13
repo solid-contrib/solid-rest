@@ -2,10 +2,10 @@
    constructor should define the pacakage's name 
    by default this will be added to the x-powered-by header of all responses
 */
-class SolidLocalStorage {
+class SolidMemStorage {
   constructor() {
-    this.prefix = "ls"
-    this.name = "solid-rest-localStorage-1.0.0"
+    this.prefix = "mem"
+    this.name = "solid-rest-mem-1.0.0"
     localStorage.setItem( "/", " " );
   }
 
@@ -26,7 +26,14 @@ async getObjectType(pathname,options){
     if(type==="Container" && item.startsWith(pathname)){ exists=true; break }
     if(item === pathname){ exists=true; break }
   }
-  return [type,exists] 
+  let mode = {read:true,write:true,append:true}
+  let item = {
+    pathname : pathname,
+    mode : mode,
+    exists : exists,
+    isContainer : type==="Containter",
+  }
+  return [type,exists,mode,item] 
 }
 
 /*
@@ -186,5 +193,5 @@ if(typeof window==="undefined") {
      removeItem : (key) => { delete localStorage[key] },
      setItem    : (key,val) => { localStorage[key]=val },
   }
-  module.exports = SolidLocalStorage
+  module.exports = SolidMemStorage
 }

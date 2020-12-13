@@ -1,0 +1,12 @@
+{
+  "name": "solid-rest-file",
+  "version": "1.2.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

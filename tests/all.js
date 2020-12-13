@@ -5,33 +5,46 @@
 //
 //const SolidNodeClient = require('../').SolidNodeClient
 //const client = new SolidNodeClient()
-const SolidRest = require('../')
-
 
 // global.$rdf = require('rdflib') 
 // const client = new SolidRest()
 const $rdf = require('rdflib');
-const client = new SolidRest({ parser:$rdf })
+
+const SolidRest     = require('../')
+const SolidRestFile = require('../plugins/solid-rest-file');
+const SolidRestMem  = require('../plugins/solid-rest-mem');
+
+function getRestClient(protocol,parser){
+  const plugin = protocol.startsWith('file') ? new SolidRestFile()
+               : protocol.startsWith('mem')  ? new SolidRestMem()
+               : protocol.startsWith('ssh')  ? new SolidRestSsh() : null;
+  return new SolidRest({
+    plugin : plugin,
+    parser : parser,
+  });
+}
+let client;
 
 /** Silence rdflib chatty information about patch
  *  Send console.log() to a logfile
  *  Send console.error(), console.warn() and untrapped errors to screen
  */
+/*
 const fs = require('fs');
 const logfile = `${process.cwd()}/log.txt`;
 console.log = function(msg) { fs.appendFileSync(logfile,msg.toString()) } 
 process.on('uncaughtException', function(err) {
   console.error((err && err.stack) ? err.stack : err);
 });
-
+*/
 const libUrl = require('url')
 
 let [tests,fails,passes,res] = [0,0,0]
 let allfails = 0
 
 async function main(){
-  await run("app:")
   await run("file:")
+//  await run("mem:")
   // await run("https:")
   if(allfails>0){
     process.exit(1)
@@ -43,9 +56,10 @@ async function main(){
 main()
 
 async function getConfig(scheme){
+  client = getRestClient(scheme,$rdf);
   let host = scheme;
-  if(scheme==="app:"){
-    scheme = "app://ls" // = protocol 
+  if(scheme==="mem:"){
+    scheme = "mem://" // = protocol 
     host = scheme;
   }
 
@@ -203,8 +217,8 @@ async function run(scheme){
   let res
   let res1
 
-  if(scheme==="app:")  cfg.base += "/"
-  try {res=await PUT(cfg.dummy)}catch{}
+  if(scheme==="mem:")  cfg.base += "/"
+  try {res=await PUT(cfg.dummy)}catch(e){console.log(e)}
 
   console.warn(`\nTesting ${cfg.base} ...`)
 
@@ -247,7 +261,7 @@ async function run(scheme){
 
   /** PUT */
   res = await PUT( cfg.folder1 )
-  ok( "409 put container (method not allowed)", res.status==409,res)
+  ok( "405 put container (method not allowed)", res.status==405,res)
 
   res = await PUT( cfg.file1,cfg.text )
   ok( "201 put resource", res.status==201,res)

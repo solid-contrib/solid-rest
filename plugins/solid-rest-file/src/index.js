@@ -6,7 +6,7 @@ const fs = require("fs-extra");
 class SolidFileStorage {
   constructor() {
     this.prefix = "file"
-    this.name = "solid-rest-file-storage-1.0.0"
+    this.name = "solid-rest-file-1.0.0"
   }
 
   _makeStream(text){
@@ -32,10 +32,12 @@ class SolidFileStorage {
     return text(stream).then(text => JSON.parse(text))
 }
 
-async  getObjectType(fn,options){
+async  getObjectType(fn,request){
+    request = request.request || request;
+    fn = fn.replace( request.protocol+'//','')
     let stat;
     try { stat = fs.lstatSync(fn); }
-    catch(err){ }
+    catch(err){}
     let read=true,write=true;
     if( stat ) {
       try {
@@ -48,12 +50,19 @@ async  getObjectType(fn,options){
       catch(e){write=false}
     }
     let mode = {
-      read: (read),
-      write: (write)
+      read: read,
+      write: write,
+      append: write,
     }
     let type   = ( stat && stat.isDirectory()) ? "Container" : "Resource";
     if(!stat && fn.endsWith('/')) type = "Container"
-    return Promise.resolve( [type,stat,mode] )
+    stat = stat ? true : false
+    let item = {
+      mode : mode,
+      exists : stat,
+      isContainer : type==="Container" ? true : false,
+    }
+    return Promise.resolve( [type,stat,mode,item] )
 }
 
 async getResource(pathname,options,objectType){
@@ -171,7 +180,7 @@ postContainer(fn,options){
 }
 async makeContainers(pathname, options){
   const foldername = path.dirname(pathname)
-  const [type, exists] = await this.getObjectType(foldername);
+  const [type, exists] = await this.getObjectType(foldername,options.request);
   if (!exists) {
     try {
       fs.mkdirpSync(foldername);
