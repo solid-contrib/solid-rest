@@ -1,9 +1,9 @@
-import u from './utils.js';
 
-export async function containerAsturtle( pathname, options, contentsArray, storage ){
-    const pathSep = u.pathSep( options.item.pathHandler );
-    if(typeof storage.container2turtle != "undefined")
-      return storage.container2turtle(pathname,options,contentsArray)
+
+export  default async function containerAsTurtle( pathname, contentsArray ){
+    const pathSep = this.pathSep;
+    if(typeof this.storage.container2turtle != "undefined")
+      return this.storage.container2turtle(pathname,contentsArray)
     let filenames=contentsArray.filter( item => {
       if(!item.endsWith('.acl') && !item.endsWith('.meta')){ return item }
     })
@@ -20,11 +20,11 @@ export async function containerAsturtle( pathname, options, contentsArray, stora
       for(var i=0;i<filenames.length;i++){
         // let fn = filenames[i]
         let fn = encodeURI(filenames[i])
-        let [ftype,e] =  await storage.getObjectType(pathname + fn,options.request)
+        let [ftype,e] =  await this.storage.getObjectType(pathname + fn,this.request)
         if(ftype==="Container" && !fn.endsWith("/")) fn = fn + "/"
         str = str + `  <${fn}>,\n`
 
-        let ctype = u.getContentType(u.getExtension(fn,options),'Resource')
+        let ctype = this.getContentType(this.getExtension(fn),'Resource')
         ctype = ctype.replace(/;.*/,'')	  
         ftype = ftype==="Container" ? "ldp:Container; a ldp:BasicContainer" : "ldp:Resource"
         str2 = str2 + `<${fn}> a ${ftype}.\n`

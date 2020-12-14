@@ -29,34 +29,6 @@ const linksExt = linkExt.concat('.meta.acl')
     })
   }
 
-function pathSep(type){
-  if(type==='posix') return libPath.posix.sep
-  else return libPath.sep
-}
-function basename(path,type){
-  if(type==='posix') return libPath.posix.basename(path);
-  else return libPath.basename(path);
-}
-
-function mungePath(pathname, slug, options) {
-  pathname = options.item.pathHandler==='posix' 
-    ? libPath.posix.join(pathname, slug)
-    : libPath.join(pathname, slug);
-  if (pathname.includes('\\')) pathname = pathname.replace(/\\/g, '/');
-  return pathname;
-}
-
-  /* treats filename ".acl" and ".meta" as extensions
-  */
-  function getExtension(pathname,options) {
-    let ext = ( basename(pathname,options.item.pathHandler).startsWith('.') )
-            ? basename(pathname,options.item.pathHandler)
-            : options.item.pathHandler==='posix' 
-            ? libPath.posix.extname(pathname)
-            : libPath.extname(pathname)
-    return ext
-  }
-
   function getContentType(ext,type) {
      if( !ext
      || ext==='.ttl'
@@ -74,7 +46,7 @@ function mungePath(pathname, slug, options) {
 
   function isAuxResource(o) {
     return linkExt.find(ext => 
-      getExtension( o.item.pathname,o ) === ext
+      this.getExtension( o ) === ext
     )
   }
   async function getAuxResources (pathname, options,storage) {
@@ -115,16 +87,12 @@ async function getAvailableUrl (pathname, slug = uuidv1(), options,storage) {
   return slug
 }
 
-export default {
+export {
   createServerlessPod,
-  mungePath,
-  getExtension,
   getContentType,
   isAuxResource,    isLink,
   getAuxResources,  getLinks,
   getAvailableUrl,
   linkExt,
   linksExt,
-  pathSep,
-  basename,
 }

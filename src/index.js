@@ -1,17 +1,27 @@
 "use strict";
-const { Response }  = require('cross-fetch')
 
-const RestPatch = require('./rest-patch')
-import u from './utils.js';
-import actions from './actions.js';
-import getResponseHeader from './response.js';
-import {checkRestErrors} from './error.js';
-import {getRequest} from './request.js';
-import {getItem} from './item.js';
+import {getRequest} from './examineRequest.js';
+import {getItem} from './examineRequestedItem.js';
+import {handleRequest} from './handleRequest.js';
+import perform from './performRequestedMethod.js';
+import {handleResponse} from './handleResponse.js';
+
+import {
+  createServerlessPod,
+  getContentType,
+  isAuxResource,    isLink,
+  getAuxResources,  getLinks,
+  getAvailableUrl,
+  linkExt,
+  linksExt,
+} from './utils/utils.js';
+import containerAsTurtle from './utils/container.js';
+const RestPatch = require('./utils/rest-patch')
+
 
 let patch,pathname,pathSep,request,item;
 
-class SolidRest {
+export default class SolidRest {
 
 constructor( options ) {
   options = options || {}
@@ -20,11 +30,29 @@ constructor( options ) {
     process.exit(1);
   }
   this.storage = options.plugin;
+  this.handleRequest = handleRequest.bind(this);
+  this.handleResponse = handleResponse.bind(this);
+  this.getItem = getItem.bind(this);
+  this.getRequest = getRequest.bind(this);
+  this.perform = perform.bind(this);
+  this.isAuxResource = isAuxResource.bind(this);
+  this.getAuxResources = getAuxResources.bind(this);
+  this.getContentType = getContentType.bind(this);
+  this.getAvailableUrl = getAvailableUrl.bind(this);
+  this.containerAsTurtle = containerAsTurtle.bind(this);
+/*
+  createServerlessPod,
+  isLink,
+  getLinks,
+  linkExt,
+  linksExt,
+*/
   let $rdf = (options.parser) ? options.parser
            : (typeof window !="undefined" && window.$rdf) ? window.$rdf
            : (typeof global !="undefined" && global.$rdf) ? global.$rdf
            : null;
   patch = options.patch = ($rdf) ? new RestPatch($rdf) : null;
+  this.os = { canPatch : patch ? true :false };
 }
 
 async createServerlessPod ( base ){
@@ -36,38 +64,9 @@ async itemExists(pathname,options){
 }
 
 async fetch(uri, options = {}) {
-  let self = this
-  request = options = getRequest(uri,options);
-  item = await getItem(uri,request,this.storage);
-
-  options.request = request;
-  options.item = item;
-  if (item.isContainer && !uri.endsWith('/')) options.url = `${options.url}/`
-  pathname = item.pathname
-  pathSep = u.pathSep( item.pathHandler );
-  options.url = request.url;
-  options.rest_prefix = item.rest_prefix;
-const objectType = item.isContainer ? "Container" : "Resource";
-const objectExists = item.exists;
-const mode = item.mode;
-  options.objectType = objectType
-  options.objectExists = objectExists
-  options.objectMode = mode ? mode : {read:true,write:true};
-
-  const resOptions = {headers:{}};
-
-  let restError = checkRestErrors(options,request,item);
-  if( restError ) return _response( null, {}, restError );   
-
-  if (options.method === 'GET') {
-    return makeResponse( resOptions,
-      await actions.GET(pathname,options,this.storage)
-    );
-  }
-
-  if (options.method === 'HEAD' || options.method === 'OPTIONS' ) {
-    return _response(null, resOptions, 200)
-  }
+  let request =  await this.handleRequest(uri,options);
+  return await this.handleResponse(request);
+/*
 
   if( options.method==="DELETE" ){
     return makeResponse( resOptions,
@@ -75,8 +74,8 @@ const mode = item.mode;
     );
   }
 
-  /* POST
-  */
+  // POST
+
   if( options.method==="POST"){
     let link = options.headers.link
     let slug = options.headers.Slug || options.headers.slug || options.slug
@@ -103,8 +102,8 @@ const mode = item.mode;
     }
    
   }
-  /* PUT
-  */
+  // PUT
+
   if (options.method === 'PUT' ) {
     const [status, undefined, headers] = await self.storage.makeContainers(pathname,options)
     Object.assign(resOptions.headers, headers)
@@ -116,8 +115,8 @@ const mode = item.mode;
 
     return _response(null, resOptions, putStatus)
   }
-  /* PATCH
-  */
+  // PATCH
+  
   if (options.method === 'PATCH' ) {
 
     if(!patch){
@@ -161,6 +160,29 @@ const mode = item.mode;
     return _response(null, resOptions, 405)
   }
 
+  function handleResponse(response){
+    // combine the standard headers with ones returned from the action if any
+    // respons = [status,body,headers]
+//    Object.assign(resOptions.headers, response[2])
+//    return _response( response[1], resOptions, response[0] );
+    let status = response[0];
+    let body =  response[1];
+    let headers =  response[2];
+      options.status = status;
+    let headersFromPlugin = 
+      typeof this.storage.getHeaders != "undefined"
+          ? this.storage.getHeaders(pathname,options,item,request)
+          : {}
+    let name =  self.storage.name
+    headers = Object.assign(
+      getResponseHeader(
+        pathname,options,headersFromPlugin,name,item,request
+      ), 
+      options.headers
+    )
+    return new Response(body, options)
+  }
+*/
   function makeResponse(resOptions,response){
     // combine the standard headers with ones returned from the action if any
     // respons = [status,body,headers]
@@ -194,7 +216,8 @@ const mode = item.mode;
 
 } // end of SolidRest()
 
-module.exports = exports = SolidRest
-module.exports.SolidRest = SolidRest
+// module.exports = exports = SolidRest
+// module.exports.SolidRest = SolidRest
+
 
 // THE END

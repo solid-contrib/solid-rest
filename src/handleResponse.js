@@ -1,25 +1,28 @@
-  /* DEFAULT HEADER
-       link created using .meta and .acl appended to uri
-       content-type assigned by mime-types.lookup
-       date from nodejs Date
-  */
+const { Response }  = require('cross-fetch')
 
-import u from './utils.js';
-
-export default function getResponseHeader(
-  pathname,options,headersFromPlugin,name,item,request
-){    
-    const fn = u.basename(pathname,item.pathHandler)
-    let headers = headersFromPlugin;
+export async function handleResponse(response){    
+    const pathname = this.item.pathname;
+    const status = response[0];
+    const body =  response[1];
+    let headers =  response[2] || {};
+    const headersFromPlugin = 
+      typeof this.storage.getHeaders != "undefined"
+          ? this.storage.getHeaders(pathname)
+          : {}
+    let name =  this.storage.name
+    const item = this.item;
+    const request = this.request;
+    const fn = this.basename(pathname,item.pathHandler)
+    Object.assign(headers,headersFromPlugin);
 
     headers.location = headers.url = headers.location 
-      || request.url.href
+      || request.url
 
     headers.date = headers.date
       || new Date(Date.now()).toISOString()
 
     headers.allow = headers.allow
-      || createAllowHeader(options.patch,item.mode)
+      || createAllowHeader(this.canPatch,this.item.mode)
 
     let wacAllow = headers['wac-allow'] 
       || createWacHeader(item.mode)
@@ -27,18 +30,18 @@ export default function getResponseHeader(
 
     headers['x-powered-by'] = headers['x-powered-by'] ||
       name
-
+    const options = {};
     options.item = item; 
     options.request = request;
-    const ext = u.getExtension(pathname,options)
+    const ext = this.getExtension(pathname)
 
     headers['content-type']
        = headers['content-type']
-	  || u.getContentType(ext,item.isContainer==='Container'?"Container":"Resource")
+	  || this.getContentType(ext,item.isContainer==='Container'?"Container":"Resource")
     if(!headers['content-type']){
        delete headers['content-type']
     }
-    if(options.patch) {
+    if(this.canPatch) {
      headers['ms-author-via']=["SPARQL"];
      headers['accept-patch']=['application/sparql-update'];
     }
@@ -65,7 +68,8 @@ export default function getResponseHeader(
           +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
         }
     }
-    return headers
+    headers.status = status;
+    return new Response(body, headers)
   } // end of getHeaders()
 
   function createWacHeader( mode ){

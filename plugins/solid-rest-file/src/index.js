@@ -88,52 +88,51 @@ async putResource(pathname,options){
     })
 }
 */
-async putResource(pathname,options){
+async putResource(pathname,request,item){
     let successCode = 201;
-    let failureCode =
-        ( options.method==="PUT" && options.objectType==="Container" )
-        ? 409 : 500
+    let failureCode = 500;
     return new Promise(async (resolve) => {
         let writeIt=false
-        if(failureCode===409) return resolve( [failureCode] )
-        if(typeof options.body==="undefined") options.body = ""
-        if(typeof options.body==="string"){
+        if(typeof request.body==="undefined") request.body = ""
+        if(typeof request.body==="string"){
           writeIt=true
         }
-        else if(options.body.stream){
-            options.body = await options.body.stream()
-            options.body = await options.body.read()
+        else if(request.body.stream){
+            request.body = await request.body.stream()
+            request.body = await request.body.read()
             writeIt=true
         }
-        else if(options.body.text){
-            options.body = await options.body.text()
+        else if(request.body.text){
+            request.body = await request.body.text()
             writeIt=true
         }
         if(writeIt){
             try {
-                await fs.writeFileSync(pathname,options.body)
+                await fs.writeFileSync(pathname,request.body)
                 return resolve([successCode])
             }
             catch(e){ console.log(e); return resolve([failureCode])}
         }
-        if(!options.body.pipe && typeof FileReader !="undefined"){
+        if(!request.body.pipe && typeof FileReader !="undefined"){
             var fileReader = new FileReader();
             fileReader.onload = function() {
                 fs.writeFileSync(pathname, Buffer.from(
                      new Uint8Array(this.result))
                 )
             }
-            fileReader.onloadend = () => {return resolve([successCode])}
+            fileReader.onloadend = () => {
+              return resolve([successCode])
+            }
             fileReader.onerror = (err) => {
                 console.log(err);
                 return resolve([failureCode])
             }
-            fileReader.readAsArrayBuffer(options.body);
+            fileReader.readAsArrayBuffer(request.body);
         }
         else {
-            options.body = options.body || ""
-            options.body = this._makeStream( options.body );
-            options.body.pipe(fs.createWriteStream(pathname)).on('finish',()=>{
+            request.body = request.body || ""
+            request.body = this._makeStream( request.body );
+            request.body.pipe(fs.createWriteStream(pathname)).on('finish',()=>{
                 return resolve( [successCode] )
             }).on('error', (err) => {
                 console.log(err)
@@ -178,21 +177,20 @@ postContainer(fn,options){
     });
   });
 }
-async makeContainers(pathname, options){
+async makeContainers(pathname){
   const foldername = path.dirname(pathname)
-  const [type, exists] = await this.getObjectType(foldername,options.request);
-  if (!exists) {
+  if (!fs.existsSync(foldername)) {
     try {
       fs.mkdirpSync(foldername);
-      return Promise.resolve([201])
+      return Promise.resolve(true)
     }
     catch {
-      return Promise.resolve([500])
+      return Promise.resolve(false)
     }
   }
-  return Promise.resolve([200])
+  return Promise.resolve(true)
 }
-async getContainer(pathname,options) {
+async getContainer(pathname) {
   return await fs.readdirSync(pathname)
 }
 
