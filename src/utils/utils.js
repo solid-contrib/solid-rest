@@ -1,6 +1,7 @@
 import libPath from "path";
 import {contentType as contentTypeLookup} from 'mime-types'
-const { v1: uuidv1 } = require('uuid')
+import { v1 as uuidv1 } from 'uuid'
+//const { v1: uuidv1 } = require('uuid')
 import pod from './createServerlessPod.js';
 
 const linkExt = ['.acl', '.meta']
@@ -51,7 +52,7 @@ const linksExt = linkExt.concat('.meta.acl')
   }
   async function getAuxResources (pathname, options,storage) {
     let linksExists = linksExt.filter(async ext => 
-      await storage.getObjectType(pathname + ext,options.request)[1]
+      await this.storage.itemExists(pathname + ext)
     )
     const links = linksExists.map( ext => pathname + ext)
     return links || [];
@@ -60,7 +61,7 @@ const linksExt = linkExt.concat('.meta.acl')
 // TBD : remove getLinks and isLink, replace in code with isAuxResource, etc.
 
   function isLink(pathname,options) {
-    return linkExt.find(ext => getExtension(pathname,options) === ext)
+    return linkExt.find(ext => this.getExtension(pathname,options) === ext)
   }
 
 /**
@@ -76,15 +77,12 @@ async function getLinks (pathname, options,storage) {
   return links
 }
 
-
-/*  getAvailableUrl - generate random prefix for POST file names
-*/
-async function getAvailableUrl (pathname, slug = uuidv1(), options,storage) {
-  let requestUrl = mungePath(pathname, slug, options)
-  if(options.resourceType==='Container' && !requestUrl.endsWith(pathSep(options.item.pathHandler))) requestUrl = requestUrl + pathSep(options.item.pathHandler)
- let urlExists = (await storage.getObjectType(requestUrl, options,options.request))[1]
- if (urlExists) { slug = `${uuidv1()}-${slug}` }
-  return slug
+async function generateRandomSlug (pathname, slug = uuidv1()) {
+  let requestUrl = this.mungePath(pathname, slug)
+  if( this.item.isContainer && !this.request.url.endsWith(this.pathSep) )
+    requestUrl = requestUrl + this.pathSep
+  if( await this.storage.itemExists(requestUrl) ){ slug=`${uuidv1()}-${slug}` }
+  return this.mungePath(pathname, slug)
 }
 
 export {
@@ -92,7 +90,7 @@ export {
   getContentType,
   isAuxResource,    isLink,
   getAuxResources,  getLinks,
-  getAvailableUrl,
+  generateRandomSlug,
   linkExt,
   linksExt,
 }

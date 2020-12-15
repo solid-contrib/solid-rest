@@ -1,5 +1,5 @@
 let $rdf;
-//const crypto = require('crypto') TODO may be
+//import crypto from 'crypto' TODO may be
 
 const PATCH_NS = 'http://www.w3.org/ns/solid/terms#'
 const PREFIXES = `PREFIX solid: <${PATCH_NS}>\n`
@@ -10,21 +10,21 @@ const PATCH_PARSERS = {
   'text/n3': parsePatchN3
 }
 
-class RestPatch {
+export default class RestPatch {
 
   constructor(passedRDF){
     $rdf = passedRDF;
   }
 
-  async patchContent (content, contentType, options) {
-    const url = options.url
+  async patchContent (content, contentType, request) {
+    const url = request.url;
     const resource = { 
       contentType: contentType,
-      url: url }
-    // Obtain details of the patch document
+      url: url 
+    }
     const patch = {
-      text: options.body.toString(),
-      contentType: options.headers['content-type'] // normalized to lowercase
+      text: request.body.toString(),
+      contentType: request.headers['content-type']
     }
     const parsePatch = PATCH_PARSERS[patch.contentType]
     if (!parsePatch) {
@@ -129,4 +129,3 @@ function queryForFirstResult(store, sparql) {
   })
 }
 
-module.exports = exports = RestPatch

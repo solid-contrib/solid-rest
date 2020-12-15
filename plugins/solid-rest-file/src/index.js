@@ -1,6 +1,6 @@
 const concatStream = require('concat-stream')
 const Readable = require('stream').Readable
-const path = require("path");
+const libPath = require("path");
 const fs = require("fs-extra");
 
 class SolidFileStorage {
@@ -32,8 +32,11 @@ class SolidFileStorage {
     return text(stream).then(text => JSON.parse(text))
 }
 
+  async  itemExists(path){
+    return fs.existsSync(path);
+  }
+
 async  getObjectType(fn,request){
-    request = request.request || request;
     fn = fn.replace( request.protocol+'//','')
     let stat;
     try { stat = fs.lstatSync(fn); }
@@ -56,10 +59,10 @@ async  getObjectType(fn,request){
     }
     let type   = ( stat && stat.isDirectory()) ? "Container" : "Resource";
     if(!stat && fn.endsWith('/')) type = "Container"
-    stat = stat ? true : false
+    let exists = await this.itemExists(fn);
     let item = {
       mode : mode,
-      exists : stat,
+      exists : exists,
       isContainer : type==="Container" ? true : false,
     }
     return Promise.resolve( [type,stat,mode,item] )
@@ -74,46 +77,32 @@ async getResource(pathname,options,objectType){
   ]
 }
 
-/*
-async putResource(pathname,options){
-    return new Promise((resolve) => {
-        options.body = this._makeStream( options.body );
-        options.body.pipe(fs.createWriteStream(pathname)).on('finish',()=>{
-          resolve( [201] )
-        }).on('error', (err) => { 
-          if(options.method==="PUT" && options.objectType==="Container")
-            resolve( [405] )
-          resolve( [500] )
-        })
-    })
-}
-*/
-async putResource(pathname,request,item){
-    let successCode = 201;
-    let failureCode = 500;
+async putResource(pathname,content){
+    let successCode = [200];
+    let failureCode = [500];
     return new Promise(async (resolve) => {
         let writeIt=false
-        if(typeof request.body==="undefined") request.body = ""
-        if(typeof request.body==="string"){
+        if(typeof content==="undefined") content = ""
+        if(typeof content==="string"){
           writeIt=true
         }
-        else if(request.body.stream){
-            request.body = await request.body.stream()
-            request.body = await request.body.read()
+        else if(content.stream){
+            content = await content.stream()
+            content = await content.read()
             writeIt=true
         }
-        else if(request.body.text){
-            request.body = await request.body.text()
+        else if(content.text){
+            content = await content.text()
             writeIt=true
         }
         if(writeIt){
             try {
-                await fs.writeFileSync(pathname,request.body)
+                await fs.writeFileSync(pathname,content)
                 return resolve([successCode])
             }
             catch(e){ console.log(e); return resolve([failureCode])}
         }
-        if(!request.body.pipe && typeof FileReader !="undefined"){
+        if(!content.pipe && typeof FileReader !="undefined"){
             var fileReader = new FileReader();
             fileReader.onload = function() {
                 fs.writeFileSync(pathname, Buffer.from(
@@ -127,12 +116,12 @@ async putResource(pathname,request,item){
                 console.log(err);
                 return resolve([failureCode])
             }
-            fileReader.readAsArrayBuffer(request.body);
+            fileReader.readAsArrayBuffer(content);
         }
         else {
-            request.body = request.body || ""
-            request.body = this._makeStream( request.body );
-            request.body.pipe(fs.createWriteStream(pathname)).on('finish',()=>{
+            content = content || ""
+            content = this._makeStream( content );
+            content.pipe(fs.createWriteStream(pathname)).on('finish',()=>{
                 return resolve( [successCode] )
             }).on('error', (err) => {
                 console.log(err)
@@ -144,41 +133,41 @@ async putResource(pathname,request,item){
 async deleteResource(fn){
     return new Promise(function(resolve) {
         fs.unlink( fn, function(err) {
-            if(err)  resolve( [409] );
+            if(err)  resolve( false );
             else     resolve( [200] );
         });
     });
 }
 
 deleteContainer(fn) {
-  return new Promise(function(resolve) {
-        fs.rmdir( fn, function(err) {
+  return new Promise(async function(resolve) {
+        await fs.rmdir( fn, function(err) {
             if(err) {
-                resolve( [409] );
+                resolve( false );
             } else {
                 resolve( [200] );
             }
         });
     });
 }
-postContainer(fn,options){
+async postContainer(fn,options){
   fn = fn.replace(/\/$/,'');
   return new Promise(function(resolve) {
     if(fs.existsSync(fn)){
-      return resolve( [201] )
+      return resolve( [200] )
     }
     fs.mkdirp( fn, {}, (err) => {
       if(err) {
-        return resolve( [500] )
+        return resolve( false )
       } 
       else {
-        return resolve( [201] )
+        return resolve( [200] )
       }
     });
   });
 }
 async makeContainers(pathname){
-  const foldername = path.dirname(pathname)
+  const foldername = libPath.dirname(pathname)
   if (!fs.existsSync(foldername)) {
     try {
       fs.mkdirpSync(foldername);

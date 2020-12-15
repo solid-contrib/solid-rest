@@ -1,9 +1,9 @@
 import libPath from "path";
 import Url from "url";
 
-export async function getItem(uri,request,storage){
+export async function getItem(uri,request){
   const [objectType,objectExists,mode,item] =
-    await this.storage.getObjectType(uri,request)
+   await this.perform('GET_ITEM_INFO',uri,request)
   item.mode = item.mode ? item.mode : {read:true,append:true,write:true};
   let pathHandler,url;
   if (request.protocol.startsWith('file')) {
@@ -21,8 +21,8 @@ export async function getItem(uri,request,storage){
   //  item.pathname = url.replace(request.protocol+'//','') ???
   item.pathname = uri.replace(request.protocol+'//','')
   if( request.method==='DELETE' && item.isContainer){
-    let files = await storage.getContainer(item.pathname);
-    files = files.filter(file =>  !this.isLink(file,{item:{pathHandler:item.pathHandler}}))
+    let files = await this.perform('GET_FILES',item.pathname);
+    files = files.filter(file =>  !this.isAuxResource(file))
     if (files.length) item.containerNotEmpty = true;
   }
 

@@ -1,28 +1,31 @@
-const { Response }  = require('cross-fetch')
+//import { Response,Headers } from 'cross-fetch';
+import { Response,Headers } from 'node-fetch';
 
 export async function handleResponse(response){    
     const pathname = this.item.pathname;
-    const status = response[0];
-    const body =  response[1];
+    const isError = typeof response==='number'; 
+    response = isError ? [response] : response;
+    let status = response[0];
+    let body =  response[1] || "";
     let headers =  response[2] || {};
-    const headersFromPlugin = 
-      typeof this.storage.getHeaders != "undefined"
-          ? this.storage.getHeaders(pathname)
-          : {}
-    let name =  this.storage.name
+//    const headersFromPlugin = this.perform('STORAGE_HEADER_METHOD');
+//    if(this.request.method==="PATCH" && status>399 && body){ headers.statusText=body;body=""; }
+    let name =  this.perform('STORAGE_NAME');
     const item = this.item;
     const request = this.request;
     const fn = this.basename(pathname,item.pathHandler)
-    Object.assign(headers,headersFromPlugin);
+//    Object.assign(headers,headersFromPlugin);
 
-    headers.location = headers.url = headers.location 
-      || request.url
+//    headers.location = headers.url = headers.location || this.response.headers.location
+
+    if(this.response && this.response.headers)
+      headers.location = this.response.headers.location
 
     headers.date = headers.date
       || new Date(Date.now()).toISOString()
 
     headers.allow = headers.allow
-      || createAllowHeader(this.canPatch,this.item.mode)
+      || createAllowHeader(this.patch,this.item.mode)
 
     let wacAllow = headers['wac-allow'] 
       || createWacHeader(item.mode)
@@ -41,7 +44,11 @@ export async function handleResponse(response){
     if(!headers['content-type']){
        delete headers['content-type']
     }
-    if(this.canPatch) {
+    else {
+      headers['content-type'] = headers['content-type'].replace(/;.*/,'');
+    }
+
+    if(this.patch) {
      headers['ms-author-via']=["SPARQL"];
      headers['accept-patch']=['application/sparql-update'];
     }
@@ -68,8 +75,21 @@ export async function handleResponse(response){
           +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
         }
     }
-    headers.status = status;
-    return new Response(body, headers)
+    headers.status = parseInt(status) || 500;
+for(var k in headers) {
+  if(typeof headers[k]==='undefined') delete headers[k];
+}
+// console.log('handleResponse1',headers)
+
+    headers = (isError || this.request.method==='PATCH') ? headers : {headers:headers}
+
+    let resp
+    try{
+      resp = new Response(body, headers)
+    } catch(e){console.log(e)}
+//    for(var h of resp.headers.entries()){console.log(1,h)};
+//console.log('handleResponse2',resp)
+    return resp
   } // end of getHeaders()
 
   function createWacHeader( mode ){
