@@ -1,17 +1,3 @@
-/*
-  All calls to the storage plugin happen here. Calls include
-    * Solid-rest verbs (GET_ITEM_INFO), etc.
-    * Rest verbs (GET,etc.)
-
-The **request** object is created in examineRequest.js.  It is a munged version of the request recieved with keys, headers, and method names normalized.
-
-The **item** object is created in examineRequestedItem.js.  It contains all information about an item including its type, mode, and other details returned from the storage plugin's item_info method.
-
-The **headers** object
-
-
-*/
-
 export default async function perform(method,pathname,arg){
   method = method || this.request.method;
   pathname = pathname || this.item.pathname;
@@ -25,6 +11,10 @@ export default async function perform(method,pathname,arg){
 
     case 'ITEM_EXISTS':
       return await this.storage.itemExists(pathname);
+    break;
+
+    case 'ITEM_TYPE': // Container/Resource
+      return await this.storage.itemType(pathname);
     break;
 
     case 'GET_ITEM_INFO':
@@ -106,7 +96,6 @@ export default async function perform(method,pathname,arg){
       const [putStatus,,putHeaders] = await this.storage.putResource(
         pathname, this.request.body
       );
-      console.log(newContent)
       return [putStatus,newContent];
     break;
 

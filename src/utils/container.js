@@ -2,8 +2,6 @@
 
 export  default async function containerAsTurtle( pathname, contentsArray ){
     const pathSep = this.pathSep;
-    if(typeof this.storage.container2turtle != "undefined")
-      return this.storage.container2turtle(pathname,contentsArray)
     let filenames=contentsArray.filter( item => {
       if(!item.endsWith('.acl') && !item.endsWith('.meta')){ return item }
     })
@@ -20,7 +18,8 @@ export  default async function containerAsTurtle( pathname, contentsArray ){
       for(var i=0;i<filenames.length;i++){
         // let fn = filenames[i]
         let fn = encodeURI(filenames[i])
-        let [ftype,e] =  await this.storage.getObjectType(pathname + fn,this.request)
+//        let [ftype,e] =  await this.storage.getObjectType(pathname + fn,this.request)
+        let ftype = await this.perform('ITEM_TYPE',pathname + fn)
         if(ftype==="Container" && !fn.endsWith("/")) fn = fn + "/"
         str = str + `  <${fn}>,\n`
 

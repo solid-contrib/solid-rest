@@ -35,14 +35,21 @@ class SolidFileStorage {
   async  itemExists(path){
     return fs.existsSync(path);
   }
-
-async  getObjectType(fn,request){
-    fn = fn.replace( request.protocol+'//','')
+  async  itemType(path,wantFull){
     let stat;
     try { stat = fs.lstatSync(fn); }
     catch(err){}
+    if( !stat ) return null;
+    return stat && stat.isDirectory() ? "Container" : "Resource";
+  }
+
+async  getObjectType(fn,request){
+    fn = fn.replace( request.protocol+'//','')
+    let type = await this.itemType(fn,'want_full');
+    let exists = await this.itemExists(fn);
+    if(!type && fn.endsWith('/')) type = "Container"
     let read=true,write=true;
-    if( stat ) {
+    if( exists ) {
       try {
         fs.accessSync(fn,fs.constants.R_OK);
       }
@@ -56,16 +63,15 @@ async  getObjectType(fn,request){
       read: read,
       write: write,
       append: write,
+      control: write,
     }
-    let type   = ( stat && stat.isDirectory()) ? "Container" : "Resource";
-    if(!stat && fn.endsWith('/')) type = "Container"
-    let exists = await this.itemExists(fn);
     let item = {
       mode : mode,
       exists : exists,
       isContainer : type==="Container" ? true : false,
     }
-    return Promise.resolve( [type,stat,mode,item] )
+//    return Promise.resolve( [type,stat,mode,item] )
+    return Promise.resolve( item )
 }
 
 async getResource(pathname,options,objectType){

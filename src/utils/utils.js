@@ -50,46 +50,28 @@ const linksExt = linkExt.concat('.meta.acl')
       this.getExtension( o ) === ext
     )
   }
-  async function getAuxResources (pathname, options,storage) {
+  async function getAuxResources (pathname) {
     let linksExists = linksExt.filter(async ext => 
-      await this.storage.itemExists(pathname + ext)
+      await this.perform('ITEM_EXISTS',pathname + ext)
     )
     const links = linksExists.map( ext => pathname + ext)
     return links || [];
   }
 
-// TBD : remove getLinks and isLink, replace in code with isAuxResource, etc.
-
-  function isLink(pathname,options) {
-    return linkExt.find(ext => this.getExtension(pathname,options) === ext)
+  async function generateRandomSlug (pathname, slug = uuidv1()) {
+    let requestUrl = this.mungePath(pathname, slug)
+    if( this.item.isContainer && !this.request.url.endsWith(this.pathSep) )
+      requestUrl = requestUrl + this.pathSep
+    if( await this.perform('ITEM_EXISTS',requestUrl) )
+      { slug=`${uuidv1()}-${slug}` }
+    return this.mungePath(pathname, slug)
   }
-
-/**
- * getLinks for item
- * @param {*} pathname 
- * @param {*} options 
- */
-async function getLinks (pathname, options,storage) {
-  let linksExists = linksExt.filter(async ext => 
-    await storage.getObjectType(pathname + ext,options.request)[1]
-  )
-  const links = linksExists.map( ext => pathname + ext)
-  return links
-}
-
-async function generateRandomSlug (pathname, slug = uuidv1()) {
-  let requestUrl = this.mungePath(pathname, slug)
-  if( this.item.isContainer && !this.request.url.endsWith(this.pathSep) )
-    requestUrl = requestUrl + this.pathSep
-  if( await this.storage.itemExists(requestUrl) ){ slug=`${uuidv1()}-${slug}` }
-  return this.mungePath(pathname, slug)
-}
 
 export {
   createServerlessPod,
   getContentType,
-  isAuxResource,    isLink,
-  getAuxResources,  getLinks,
+  isAuxResource,
+  getAuxResources,
   generateRandomSlug,
   linkExt,
   linksExt,
