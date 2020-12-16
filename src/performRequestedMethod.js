@@ -82,7 +82,7 @@ export default async function perform(method,pathname,arg){
       if(!oldContent) return false;
       oldContent = typeof oldContent === 'string' 
         ? oldContent : oldContent.toString()
-      const contentType=await this.getContentType(this.getExtension(pathname));
+      const contentType=this.item.contentType;
       let newContent;
       try {
         const [patchStatus, newContent] = await this.patch.patchContent(

@@ -1,10 +1,5 @@
-import concatStream from "concat-stream";
-import {Readable} from "stream";
-import libPath from "path";
-import fs from "fs-extra";
-import mime from "mime-types";
 
-export default class SolidFileStorage {
+export default class SolidYOURBACKENDStorage {
 
   /**
    * file system backend for Solid-Rest
@@ -12,8 +7,8 @@ export default class SolidFileStorage {
    * @return {prefix:"file",name:"solid-rest-file-version"}
    */
   constructor() {
-    this.prefix = "file"
-    this.name = "solid-rest-file-2.0.0"
+    this.prefix = "YOUR PROTOCOL PREFIX"
+    this.name = "solid-rest-YOUR_PROTOCOL_PREFIX-YOUR-VERSION"
   }
 
   /**
@@ -22,7 +17,6 @@ export default class SolidFileStorage {
    * @return {boolean}
    */
   async  itemExists(path){
-    return await fs.existsSync(path);
   }
 
   /**
@@ -31,48 +25,20 @@ export default class SolidFileStorage {
    * @return "Container" | "Resource" | null
    */
   async  itemType(path,wantFull){
-    let stat;
-    try { stat = await fs.lstatSync(fn); }
-    catch(err){}
-    if( !stat ) return null;
-    return stat && stat.isDirectory() ? "Container" : "Resource";
   }
 
   /**
    * examine a requested item
    * @param filePath, request object
    * @return item object
+   * item = {
+   *   mode : { read:1,append:1,write:1,control:1 }
+   *   exists : await this.itemExists(),
+   *   isContainer : await this.getType()==="Container" ? true : false,
+   * }
+   * Note : mode is optional, only provide if you can check permissions
    */
   async  getItemInfo(fn,request){
-    fn = fn.replace( /^file:\/\//,'')
-    let mimetype = mime.lookup(fn);  // mimetype from ext
-    let type = await this.itemType(fn);    // Container/Resource
-    let exists = await this.itemExists(fn);
-    if(!type && fn.endsWith('/')) type = "Container"
-    let read=true,write=true;
-    if( exists ) {
-      try {
-        fs.accessSync(fn,fs.constants.R_OK);
-      }
-      catch(e){read=false}
-      try {
-        fs.accessSync(fn,fs.constants.W_OK);
-      }
-      catch(e){write=false}
-    }
-    let mode = {
-      read: read,
-      write: write,
-      append: write,
-      control: write,
-    }
-    let item = {
-      mode : mode,
-      exists : exists,
-      isContainer : type==="Container" ? true : false,
-      mimetype : mimetype,
-    }
-    return Promise.resolve( item )
   }
 
   /**
@@ -82,10 +48,9 @@ export default class SolidFileStorage {
    * @return on failure false  | Response object
    */
   async getResource(pathname){
-    let mimetype = mime.lookup(pathname);
     let bodyData;
     try {
-      bodyData = await fs.readFile(pathname,mime.charset(mimetype))
+      bodyData = await // ...
     }
     catch(e) { return false }
     return bodyData 
