@@ -50,7 +50,7 @@ export default async function perform(method,pathname,arg){
 
     case 'OPTIONS':
     case 'HEAD':
-        return [200];
+        return true;
     break;
 
     case 'PUT':

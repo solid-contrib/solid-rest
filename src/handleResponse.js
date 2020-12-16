@@ -1,16 +1,20 @@
 import { Response,Headers } from 'cross-fetch';
-//import { Response,Headers } from 'node-fetch';
 
 export async function handleResponse(response){    
-  let wrapHeaders = true; // feed {headers} instead of headers to Response
-  let finalResponse = { body:"",headers:{} };
-  if(typeof response==='object' && response[0]){
-    finalResponse.headers.status = response[0];
-    finalResponse.body = response[1] || "";
-  }
-  else if(typeof response==='number'){
+
+  let wrapHeaders = true; // {headers} instead of headers for Response
+
+  let finalResponse = { body:"",headers:{} };  // headers from response
+
+  /* We parse the response depending on its type
+     * number  : plugins may send a simple status code
+     * boolean : or send true on success, false on failure
+     * object  : or send a header and optional body
+     * string  : or, for get requests, send the content
+  */
+  if(typeof response==='number'){
     wrapHeaders = false;
-    finalResponse.headers.status=response; // from handleRequest    
+    finalResponse.headers.status=response;
   }
   else if(typeof response==='boolean'){
     finalResponse.headers.status = response ? 200 : 500;
@@ -23,99 +27,62 @@ export async function handleResponse(response){
     wrapHeaders = false;
     finalResponse = response;
   }
-// console.log(finalResponse)
-    const pathname = this.item.pathname;
-    let name =  await this.perform('STORAGE_NAME');
-    const item = this.item;
-    const request = this.request;
-    const fn = this.basename(pathname,item.pathHandler)
+
+  // now we create headers
+  // if the response already has some of them, those will replace our
+  // constructed ones later
+
+  let headers = {};
+
+  const pathname = this.item.pathname;
+  const item = this.item;
+  const request = this.request;
+  const fn = this.basename(pathname,item.pathHandler)
+
+  // CONTENT-TYPE	  
+  headers['content-type'] = this.item.contentType;
+
+  // LINK
+  headers.link = headers.link || createLinkHeader(this.item);
+
+  // ALLOW
+  headers.allow = createAllowHeader(this.patch,this.item.mode)
+
+  // WAC-ALLOW
+  headers['wac-allow'] = createWacHeader(this.item.mode)
+
+  // DATE
+  headers.date = headers.date || new Date(Date.now()).toISOString()
+
+  // X-POWERED-BY
+  headers['x-powered-by'] = headers['x-powered-by'] 
+    || await this.perform('STORAGE_NAME');
+
+  // LOCATION (we pre-populated this in performRequestedMethod.js)
+  if(this.response && this.response.headers)
+    headers.location = this.response.headers.location
+
+  // ACCEPT-PATCH & MS-AUTHOR-VIA
+  if(this.patch) {
+    headers['accept-patch']=['application/sparql-update'];
+    headers['ms-author-via']=["SPARQL"];
+  }
+
+  // Now we merge headers we created with response headers, prefering response
+  Object.assign( headers, finalResponse.headers );
+
+  // Now we create & return the Response object
+  headers = wrapHeaders ? {headers}  : headers;
+  let responseObject;
+  try{
+    responseObject = new Response( finalResponse.body, headers)
+  } catch(e){console.log(e)}
+  return responseObject;
+
+} // end of handleResponse method
 
 
-    let headers = {}; // our constructed headers
-
-//    headers.location = headers.url = headers.location || this.response.headers.location
-
-    if(this.response && this.response.headers)
-      headers.location = this.response.headers.location
-
-    headers.date = headers.date
-      || new Date(Date.now()).toISOString()
-
-    headers.allow = headers.allow
-      || createAllowHeader(this.patch,this.item.mode)
-
-    let wacAllow = headers['wac-allow'] 
-      || createWacHeader(item.mode)
-    if( wacAllow ) headers['wac-allow'] = wacAllow;
-
-    headers['x-powered-by'] = headers['x-powered-by'] ||
-      name
-    const options = {};
-    options.item = item; 
-    options.request = request;
-    const ext = this.getExtension(pathname)
-
-    headers['content-type']
-       = headers['content-type']
-	  || this.getContentType(ext,item.isContainer==='Container'?"Container":"Resource")
-    if(!headers['content-type']){
-       delete headers['content-type']
-    }
-    else {
-      headers['content-type'] = headers['content-type'].replace(/;.*/,'');
-    }
-
-    if(this.patch) {
-     headers['ms-author-via']=["SPARQL"];
-     headers['accept-patch']=['application/sparql-update'];
-    }
-    headers.link = headers.link;
-    if( !headers.link ) {
-        if( ext === '.acl' ) {
-          headers.link =
-            `<http://www.w3.org/ns/ldp#Resource>; rel="type"`
-        }
-        else if( ext === '.meta' ) {
-          headers.link =
-           `<${fn}.acl>; rel="acl",`
-          +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
-        }
-        else if ( item.isContainer ) {
-          headers.link =
-           `<.meta>; rel="describedBy", <.acl>; rel="acl",`
-          +`<http://www.w3.org/ns/ldp#Container>; rel="type",`
-          +`<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"`
-        }
-        else {
-          headers.link =
-           `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl",`
-          +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
-        }
-    }
-
-for(var k in headers) {
-  if(typeof headers[k]==='undefined') delete headers[k];
-}
-
-
-    // merge headers created above with headers from response, prefer response
-    Object.assign( headers, finalResponse.headers );
-
-//headers = typeof response==='number' || this.request.method==='PATCH' ? headers : {headers} 
-
-headers = wrapHeaders ? {headers}  : headers;
-
-//console.log(headers);
-
-
-    let resp
-    try{
-      resp = new Response( finalResponse.body, headers)
-    } catch(e){console.log(e)}
-//    for(var h of resp.headers.entries()){console.log(1,h)};
-//console.log('handleResponse2',resp)
-    return resp
-  } // end of getHeaders()
+// Utility methods for creating headers
 
   function createWacHeader( mode ){
     if(!mode.read && !mode.write) return null;
@@ -130,3 +97,33 @@ headers = wrapHeaders ? {headers}  : headers;
          + (mode.write ?',POST,PUT,DELETE' : '') 
          + (mode.write && patch ?',PATCH' : '') 
   }
+
+  function createLinkHeader(item) {
+    let ext = item.extension;
+    let isContainer = item.isContainer;
+    let link;
+
+    if( ext === '.acl' ) // .acl not controlledBy or describedBy anything
+      return `<http://www.w3.org/ns/ldp#Resource>; rel="type"`
+
+    else if( ext === '.meta' ) {
+      return
+       `<${fn}.acl>; rel="acl",` // .meta controlledBy .meta.acl
+       +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
+    }
+
+    else if ( isContainer ) {
+      return
+        `<.meta>; rel="describedBy", <.acl>; rel="acl",`
+       +`<http://www.w3.org/ns/ldp#Container>; rel="type",`
+       +`<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"`
+       +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
+    }
+    else {
+      return
+        `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl",`
+        +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
+    }
+  }
+
+// THE END!

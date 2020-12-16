@@ -16,16 +16,16 @@ export  default async function containerAsTurtle( pathname, contentsArray ){
     if(filenames.length){
       str = str + "; ldp:contains\n";
       for(var i=0;i<filenames.length;i++){
-        // let fn = filenames[i]
         let fn = encodeURI(filenames[i])
-//        let [ftype,e] =  await this.storage.getObjectType(pathname + fn,this.request)
         let ftype = await this.perform('ITEM_TYPE',pathname + fn)
         if(ftype==="Container" && !fn.endsWith("/")) fn = fn + "/"
         str = str + `  <${fn}>,\n`
 
         let ctype = this.getContentType(this.getExtension(fn),'Resource')
         ctype = ctype.replace(/;.*/,'')	  
-        ftype = ftype==="Container" ? "ldp:Container; a ldp:BasicContainer" : "ldp:Resource"
+        ftype = ftype==="Container" 
+          ? "ldp:Container; a ldp:BasicContainer; a ldp:Resource" 
+          : "ldp:Resource"
         str2 = str2 + `<${fn}> a ${ftype}.\n`
         str2 = str2 + `<${fn}> a <http://www.w3.org/ns/iana/media-types/${ctype}#Resource>.\n`
         // str2 = str2 + `<${fn}> :type "${ctype}".\n`
@@ -34,6 +34,6 @@ export  default async function containerAsTurtle( pathname, contentsArray ){
     }
     str = str + `.\n` + str2
     // str = _makeStream(str);
-    return  ([200,str])
+    return (str)
   }
 
