@@ -18,7 +18,7 @@ export default async function perform(method,pathname,arg){
     break;
 
     case 'GET_ITEM_INFO':
-      return await this.storage.getObjectType(pathname,arg)
+      return await this.storage.getItemInfo(pathname,arg)
     break;
 
     case 'GET_FILES':
@@ -76,28 +76,40 @@ export default async function perform(method,pathname,arg){
     break;
 
     case 'PATCH':
-      let [getStatus,oldContent,h] = await this.storage.getResource(pathname)
-      if(getStatus !== 200) return [getStatus]
+      // 415 patchOnNonTurtle is handled already in handleRequest.js
+      let oldContent = await this.storage.getResource(pathname)
+      oldContent = oldContent && oldContent.body ? oldContent.body : oldContent
+      if(!oldContent) return false;
       oldContent = typeof oldContent === 'string' 
         ? oldContent : oldContent.toString()
-      const contentType = this.getContentType( this.getExtension(pathname) );
-      if (contentType !== 'text/turtle')
-        return [400,"Can not patch : ${pathname} is not a text/turtle file"]; 
+      const contentType=await this.getContentType(this.getExtension(pathname));
       let newContent;
       try {
         const [patchStatus, newContent] = await this.patch.patchContent(
           oldContent, contentType, this.request
         )
-        if ( patchStatus !== 200 ) return [ patchStatus, newContent ]
-      } catch (e) { return [parseInt(e),e] }
+        if ( patchStatus !== 200 ) {
+           return { headers: {
+             status:patchStatus
+           }}; 
+        }
+      } catch (e) { 
+          return { headers: {
+            status:parseInt(e),
+            statusText:e
+          }}; 
+      }
       const status = await this.storage.makeContainers(pathname);
-      if(!status) return [500]
-      this.request.body = newContent
-      const [putStatus,,putHeaders] = await this.storage.putResource(
+      if(!status) return false;
+      let putStatus = await this.storage.putResource(
         pathname, this.request.body
       );
-      return [putStatus,newContent];
+      putStatus = putStatus && putStatus.body ? putStatus.body : putStatus
+      return putStatus
     break;
 
   }
+
 }
+// ENDS
+

@@ -48,6 +48,11 @@ export default class SolidRest {
   async fetch( uri, options = {} ) {
     let request =  await this.handleRequest(uri,options);
     return await this.handleResponse(request);
+/*
+   for(var r of [4,"foo",true,false,{body:"x",headers:{status:66}}]){
+      await this.handleResponse(r);
+   }
+*/
   }
 
   async itemExists(pathname){

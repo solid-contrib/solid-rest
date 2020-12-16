@@ -62,6 +62,8 @@ console.log('delete');
 
   res = await DELETE( cfg.folder2 )
   res = await DELETE( cfg.folder1 )
+
+  cfg.folder1 = cfg.base+cfg.folder1+'/';
   res = await GET( cfg.folder1 )
   ok( "delete container", res.status==404,res)
 

@@ -2,50 +2,46 @@ const concatStream = require('concat-stream')
 const Readable = require('stream').Readable
 const libPath = require("path");
 const fs = require("fs-extra");
+const mime = require('mime-types')
 
-class SolidFileStorage {
+export default class SolidFileStorage {
+
+ /**
+  * file system backend for Solid-Rest
+  * @constructor
+  * @return {prefix:"file",name:"solid-rest-file-version"}
+  */
   constructor() {
     this.prefix = "file"
-    this.name = "solid-rest-file-1.0.0"
+    this.name = "solid-rest-file-2.0.0"
   }
 
-  _makeStream(text){
-    if (typeof text === 'object' && typeof text.stream === 'function') {
-      return text.stream()
-    }
-       let s = new Readable
-       s.push(text)
-       s.push(null)  
-       return s;
- }
- async text (stream) {
-  return new Promise((resolve, reject) => {
-    stream = stream || ""
-    if(typeof stream === "string") return resolve(stream);
-    stream.pipe(concatStream({
-      encoding: 'string'
-    }, resolve())).catch(e=>{console.log(e); reject()})
-    stream.on('error', reject())
-  })
-}
- async json (stream) {
-    return text(stream).then(text => JSON.parse(text))
-}
-
+ /**
+  * check if file exists
+  * @param {filePath:string}
+  * @return {boolean}
+  */
   async  itemExists(path){
-    return fs.existsSync(path);
+    return await fs.existsSync(path);
   }
+
+ /**
+  * check if thing is Container or Resource
+  * @param {filePath:string}
+  * @return {null|"Container"|"Resource"}
+  */
   async  itemType(path,wantFull){
     let stat;
-    try { stat = fs.lstatSync(fn); }
+    try { stat = await fs.lstatSync(fn); }
     catch(err){}
     if( !stat ) return null;
     return stat && stat.isDirectory() ? "Container" : "Resource";
   }
 
-async  getObjectType(fn,request){
-    fn = fn.replace( request.protocol+'//','')
-    let type = await this.itemType(fn,'want_full');
+async  getItemInfo(fn,request){
+    fn = fn.replace( /^file:\/\//,'')
+    let mimetype = mime.lookup(fn);  // mimetype from ext
+    let type = await this.itemType(fn);    // Container/Resource
     let exists = await this.itemExists(fn);
     if(!type && fn.endsWith('/')) type = "Container"
     let read=true,write=true;
@@ -69,23 +65,29 @@ async  getObjectType(fn,request){
       mode : mode,
       exists : exists,
       isContainer : type==="Container" ? true : false,
+      mimetype : mimetype,
     }
-//    return Promise.resolve( [type,stat,mode,item] )
     return Promise.resolve( item )
 }
 
-async getResource(pathname,options,objectType){
-  // const bodyData = await fs.createReadStream(pathname)
-  const bodyData = await fs.readFile(pathname)
-  return [
-    200,
-    bodyData
-  ]
-}
+ /**
+  * check if thing is Container or Resource
+  * @param filePath:string
+  * @return { status:number, body?:string, header?:object }
+  */
+  async getResource(pathname){
+    let mimetype = mime.lookup(pathname);
+    let bodyData;
+    try {
+      bodyData = await fs.readFile(pathname,mime.charset(mimetype))
+    }
+    catch(e) { return false }
+    return bodyData 
+  }
 
 async putResource(pathname,content){
-    let successCode = [200];
-    let failureCode = [500];
+    let successCode = true;
+    let failureCode = false;
     return new Promise(async (resolve) => {
         let writeIt=false
         if(typeof content==="undefined") content = ""
@@ -104,9 +106,9 @@ async putResource(pathname,content){
         if(writeIt){
             try {
                 await fs.writeFileSync(pathname,content)
-                return resolve([successCode])
+                return resolve(successCode)
             }
-            catch(e){ console.log(e); return resolve([failureCode])}
+            catch(e){ console.log(e); return resolve(failureCode)}
         }
         if(!content.pipe && typeof FileReader !="undefined"){
             var fileReader = new FileReader();
@@ -116,11 +118,11 @@ async putResource(pathname,content){
                 )
             }
             fileReader.onloadend = () => {
-              return resolve([successCode])
+              return resolve(successCode)
             }
             fileReader.onerror = (err) => {
                 console.log(err);
-                return resolve([failureCode])
+                return resolve(failureCode)
             }
             fileReader.readAsArrayBuffer(content);
         }
@@ -128,19 +130,20 @@ async putResource(pathname,content){
             content = content || ""
             content = this._makeStream( content );
             content.pipe(fs.createWriteStream(pathname)).on('finish',()=>{
-                return resolve( [successCode] )
+                return resolve( successCode )
             }).on('error', (err) => {
                 console.log(err)
-                return resolve( [failureCode] )
+                return resolve( failureCode )
             })
         }
     })
 }
+
 async deleteResource(fn){
     return new Promise(function(resolve) {
         fs.unlink( fn, function(err) {
             if(err)  resolve( false );
-            else     resolve( [200] );
+            else     resolve( true );
         });
     });
 }
@@ -151,27 +154,28 @@ deleteContainer(fn) {
             if(err) {
                 resolve( false );
             } else {
-                resolve( [200] );
+                resolve( true );
             }
         });
     });
 }
-async postContainer(fn,options){
+async postContainer(fn){
   fn = fn.replace(/\/$/,'');
   return new Promise(function(resolve) {
     if(fs.existsSync(fn)){
-      return resolve( [200] )
+      return resolve( true )
     }
     fs.mkdirp( fn, {}, (err) => {
       if(err) {
         return resolve( false )
       } 
       else {
-        return resolve( [200] )
+        return resolve( true )
       }
     });
   });
 }
+// return true on success
 async makeContainers(pathname){
   const foldername = libPath.dirname(pathname)
   if (!fs.existsSync(foldername)) {
@@ -185,9 +189,26 @@ async makeContainers(pathname){
   }
   return Promise.resolve(true)
 }
-async getContainer(pathname) {
-  return await fs.readdirSync(pathname)
-}
+
+  // returns an array of files or false
+  async getContainer(pathname) {
+    let files
+    try {
+      files = await fs.readdirSync(pathname)
+    }
+    catch(e) { return false  }
+    return files;
+  }
+
+  _makeStream(text){
+    if (typeof text === 'object' && typeof text.stream === 'function') {
+      return text.stream()
+    }
+       let s = new Readable
+       s.push(text)
+       s.push(null)  
+       return s;
+ }
 
 }
 
@@ -205,12 +226,5 @@ function getParent(url) {
   return url.substring(0, url.lastIndexOf('/')) + '/'
 }
 
-module.exports = SolidFileStorage
 
-/*
-  linux
-    /home/travis/build/jeff-zucker/solid-rest/test-folder/rest/deep-folder
 
-  osx
-    /Users/travis/build/jeff-zucker/solid-rest/test-folder/rest/deep-folder
-*/

@@ -1,20 +1,37 @@
-//import { Response,Headers } from 'cross-fetch';
-import { Response,Headers } from 'node-fetch';
+import { Response,Headers } from 'cross-fetch';
+//import { Response,Headers } from 'node-fetch';
 
 export async function handleResponse(response){    
+  let wrapHeaders = true; // feed {headers} instead of headers to Response
+  let finalResponse = { body:"",headers:{} };
+  if(typeof response==='object' && response[0]){
+    finalResponse.headers.status = response[0];
+    finalResponse.body = response[1] || "";
+  }
+  else if(typeof response==='number'){
+    wrapHeaders = false;
+    finalResponse.headers.status=response; // from handleRequest    
+  }
+  else if(typeof response==='boolean'){
+    finalResponse.headers.status = response ? 200 : 500;
+  }
+  else if(typeof response==='string'){
+    finalResponse.headers.status = 200;
+    finalResponse.body = response;
+  }
+  else if(typeof response==='object'){
+    wrapHeaders = false;
+    finalResponse = response;
+  }
+// console.log(finalResponse)
     const pathname = this.item.pathname;
-    const isError = typeof response==='number'; 
-    response = isError ? [response] : response;
-    let status = response[0];
-    let body =  response[1] || "";
-    let headers =  response[2] || {};
-//    const headersFromPlugin = this.perform('STORAGE_HEADER_METHOD');
-//    if(this.request.method==="PATCH" && status>399 && body){ headers.statusText=body;body=""; }
-    let name =  this.perform('STORAGE_NAME');
+    let name =  await this.perform('STORAGE_NAME');
     const item = this.item;
     const request = this.request;
     const fn = this.basename(pathname,item.pathHandler)
-//    Object.assign(headers,headersFromPlugin);
+
+
+    let headers = {}; // our constructed headers
 
 //    headers.location = headers.url = headers.location || this.response.headers.location
 
@@ -75,17 +92,25 @@ export async function handleResponse(response){
           +`<http://www.w3.org/ns/ldp#Resource>; rel="type"`
         }
     }
-    headers.status = parseInt(status) || 500;
+
 for(var k in headers) {
   if(typeof headers[k]==='undefined') delete headers[k];
 }
-// console.log('handleResponse1',headers)
 
-    headers = (isError || this.request.method==='PATCH') ? headers : {headers:headers}
+
+    // merge headers created above with headers from response, prefer response
+    Object.assign( headers, finalResponse.headers );
+
+//headers = typeof response==='number' || this.request.method==='PATCH' ? headers : {headers} 
+
+headers = wrapHeaders ? {headers}  : headers;
+
+//console.log(headers);
+
 
     let resp
     try{
-      resp = new Response(body, headers)
+      resp = new Response( finalResponse.body, headers)
     } catch(e){console.log(e)}
 //    for(var h of resp.headers.entries()){console.log(1,h)};
 //console.log('handleResponse2',resp)

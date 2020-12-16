@@ -314,12 +314,12 @@ if( check.patch ){
   res1 = await GET( cfg.file1 )
   ok("200 patch sparql insert, delete to existing resource",res.status==200 && testPatch(res1, cfg.resPatchSparql), res1)
 
+/* DROPPING SUPPORT FOR N3
   res = await PATCH( cfg.file1,cfg.patchN3_1, 'text/n3' )
   res1 = await GET( cfg.file1 )
   //console.warn(res1.statusText.toString())
   ok("200 patch n3 insert",res.status==200 && testPatch(res1, cfg.resPatchN3_1), res1)
 
-/* NOT WORKING !
   res = await PATCH( cfg.file1,cfg.patchN3_3, 'text/n3' )
   res1 = await GET( cfg.file1 )
   ok("200 patch n3 delete, insert, where",res.status==200 && testPatch(res1, cfg.resPatchN3_2), res1)
@@ -358,8 +358,8 @@ if(check.headers && typeof slug !='undefined'){
   res = await DELETE( cfg.base )
   ok("200 delete container",res.status==200,res)
 
-  let skipped = 33 - passes - fails;
-  console.warn(`${passes}/33 tests passed, ${fails} failed, ${skipped} skipped\n`)
+  let skipped = 31 - passes - fails;
+  console.warn(`${passes}/31 tests passed, ${fails} failed, ${skipped} skipped\n`)
   allfails = allfails + fails
 }
 /* =========================================================== */
