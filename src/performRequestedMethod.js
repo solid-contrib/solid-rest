@@ -1,6 +1,9 @@
-export default async function perform(method,pathname,arg){
+export default async function perform(method,pathname,content,ctype){
+  this.request = this.requestObj;
   method = method || this.request.method;
+  this.item = this.item || {pathname:pathname}
   pathname = pathname || this.item.pathname;
+
   let res;
   this.response = this.response || {headers:{}};
   switch( method ) {
@@ -10,6 +13,7 @@ export default async function perform(method,pathname,arg){
     break;
 
     case 'ITEM_EXISTS':
+      pathname = pathname.replace('file://','');
       return await this.storage.itemExists(pathname);
     break;
 
@@ -18,7 +22,7 @@ export default async function perform(method,pathname,arg){
     break;
 
     case 'GET_ITEM_INFO':
-      return await this.storage.getItemInfo(pathname,arg)
+      return await this.storage.getItemInfo(pathname,content)
     break;
 
     case 'GET_FILES':
@@ -44,7 +48,11 @@ export default async function perform(method,pathname,arg){
         return await this.containerAsTurtle(pathname,files)
       }
       else {
-        return await this.storage.getResource(pathname)
+        let thing = await this.storage.getResource(pathname)
+        if(!thing) return false;
+        this.response.body = thing;
+        this.response.headers.status = 200;
+        return true
       }
     break;
 
@@ -54,7 +62,22 @@ export default async function perform(method,pathname,arg){
     break;
 
     case 'PUT':
-      return await this.storage.putResource(pathname,this.request.body);
+      content = content || this.request.body;
+      ctype = ctype || this.item.contentType;
+      console.log('content for put',content);
+      let x = await this.storage.putResource(pathname,content,ctype);
+      console.log('response from put',x);
+      return x;
+      return await this.storage.putResource(pathname,content,ctype);
+    break;
+
+    case 'FULL_PUT':
+      let success = await this.storage.makeContainers(pathname);
+      if( !success ) return false;
+      if(typeof content==="undefined") content = this.request.body;
+      ctype = ctype || this.item.contentType;
+      return await this.storage.putResource(pathname,content,ctype);
+
     break;
 
     case 'DELETE':

@@ -1,4 +1,4 @@
-const URL = require("url").URL;
+import {URL} from "url";
 
 export function getRequest(uri,options){
   const request = normalizeRequestKeys(options)
@@ -13,6 +13,10 @@ export function getRequest(uri,options){
     request.url = uri;
     const url = new URL(uri)
     request.protocol = url.protocol
+  }
+  if(request.url.endsWith('.dummy') ){ // rdflib does this !!!
+    request.headers["content-type"] = "text/turtle";
+    request.body = "";
   }
   return request;
 }

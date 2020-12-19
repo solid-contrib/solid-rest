@@ -9,9 +9,11 @@ const methods = {
 }
 export async function handleRequest( uri, originalRequest ){
 
+  const request=this.requestObj= await this.getRequest( uri, originalRequest );
+  const item = this.item = await this.getItem( uri, request );
+
   // Errors we find in the request
   //
-  const request = this.request = await this.getRequest( uri, originalRequest );
   if( !request.url || !request.method ) return 400;
   if( request.slug.endsWith('/') ) return 400;
   if( request.originMismatch ) return 403;
@@ -21,7 +23,6 @@ export async function handleRequest( uri, originalRequest ){
 
   // Errors we find by comparing the request & the itemRequested
   //
-  const item = this.item = await this.getItem( uri, request );
   if( item.folderFileConfusion ) return 400; // can't have both /foo and /foo/
   if( item.patchOnNonRdf ) return 400;
   if( item.isAuxResource ){ 
@@ -39,11 +40,13 @@ export async function handleRequest( uri, originalRequest ){
    || (method.requiresWrite && !item.mode.write )
    || (method.requiresControl && !item.mode.control )
   ) return 401;
-  if( method.requiresContentType && !request.headers['content-type'] )
-    return 400;
+  if( method.requiresContentType && !request.headers['content-type'] ) {
+    console.log(request.method,"No Content Type");
+    return 400; 
+  }
   if ( request.method==='POST' ){
     this.item.pathname = await this.generateRandomSlug(
-      this.item.pathname, this.request.slug
+      this.item.pathname, request.slug
     )
   }
 
@@ -67,4 +70,5 @@ export async function handleRequest( uri, originalRequest ){
 
 }
 // ENDS
+
 

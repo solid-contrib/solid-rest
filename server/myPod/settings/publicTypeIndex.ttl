@@ -1,0 +1,12 @@
+@prefix : <#>.
+@prefix solid: <https://www.w3.org/ns/solid/terms#>.
+@prefix terms: <http://purl.org/dc/terms/>.
+@prefix ter: <http://www.w3.org/ns/solid/terms#>.
+@prefix bookm: <http://www.w3.org/2002/01/bookmark#>.
+
+<> a solid:ListedDocument, solid:TypeIndex; terms:references :Bookmark.
+
+:Bookmark
+    a ter:TypeRegistration;
+    ter:forClass bookm:Bookmark;
+    ter:instance <../bookmarks.ttl>.

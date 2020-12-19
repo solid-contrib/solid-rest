@@ -1,0 +1,78 @@
+<!DOCTYPE html><html><head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <title> Data Kitchen </title>
+  <link type="text/css" rel="stylesheet" href="./scripts/mashlib/mash.css" />
+  <script>
+    function changeSpace(){
+      const selector = document.getElementById('spaceSelector')
+      const newSpace = selector.value
+      if( newSpace === "dummy" ) return
+      selector.value==='dummy';
+      const databrowser = document.getElementById('framedDatabrowser')
+      databrowser.src= 'http://localhost:8000/mashlib.html?q='+newSpace;
+    }
+  </script>
+</head><body>
+
+<table id="menu">
+  <tr><th>
+    <a href="http://localhost:8000/">Data Kitchen : </a>
+    <select id="spaceSelector" onchange="changeSpace()">
+      <option value="dummy">Information Spaces</a>
+      <option value="http://localhost:8000/mashlib.html?/home/jeff/">Local File System</a>
+      <option value="http://localhost:8000/mashlib.html?https://jeff-zucker.solidcommunity.net/">Solid Pods</a>
+      <option value="http://localhost:8000/ssh">Cloud Storage</a>
+    </select>
+
+    <select id="vocabularies" onchange="changeSpace()">
+      <option value="dummy">Vocabularies</a>
+    </select>
+
+    <select id="tools" onchange="changeSpace()">
+      <option value="dummy">Tools</a>
+    </select>
+
+    <select id="ideas" onchange="changeSpace()">
+      <option value="dummy">Ideas</a>
+    </select>
+
+  </th></tr>
+  <tr><td>
+    <iframe id="framedDatabrowser" src="http://localhost:8000/mashlib.html?q=/home/jeff/"></iframe>
+  </td></tr>
+</table>
+
+  <style>
+    body {
+      margin:0;
+      padding:0;
+    }
+    table { width:100%; height:100vh;}
+    th { background-color:#ccc; height:2.5em; text-align:left; 
+      padding-left:1em;
+    }
+
+    #data-kitchen {
+      margin:0;
+      padding:0.5em;
+      background-color:#ccc;
+      height:5vh;
+      width:98vw;
+    }
+    #framedDatabrowser {
+      margin:0;
+height:100%;
+width:100%;
+//      height:90vh;
+//      width:100vw;
+      border:none;
+    }
+  </style>
+
+</body></html>
+
+<!--
+ * information spaces, ontologies, applications documentation
+     applications : gitter-solid, file-copy/move, sparql query
+ * nav buttons up/down,left/right/back
+-->

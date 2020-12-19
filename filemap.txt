@@ -1,0 +1,37 @@
+solid-rest/
+  README.md
+  Plugin-Developer.md
+  tests/
+    all.js
+    shouldSucceed.js
+    shouldFail.js
+  src/
+    index.js
+    handleRequest.js
+    examineRequest.js
+    examineRequestedItem.js
+    performRequestedMethod.js
+    handleResponse.js
+    utils/
+      performPatch.js
+      containerToTurtle.js
+      utils.js
+      createServerlessPod.js
+  plugins/
+    solid-rest-file/
+      README.md
+      src/
+       index.js
+    solid-rest-mem/
+      README.md
+      src/
+        index.js
+    solid-rest-ssh/
+      README.md
+      src/
+        index.js
+    solid-rest-browser/
+      README.md
+      src/
+        index.js
+  

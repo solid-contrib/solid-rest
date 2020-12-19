@@ -16,8 +16,8 @@ export  default async function containerAsTurtle( pathname, contentsArray ){
     if(filenames.length){
       str = str + "; ldp:contains\n";
       for(var i=0;i<filenames.length;i++){
+        let ftype = await this.perform('ITEM_TYPE',pathname + filenames[i])
         let fn = encodeURI(filenames[i])
-        let ftype = await this.perform('ITEM_TYPE',pathname + fn)
         if(ftype==="Container" && !fn.endsWith("/")) fn = fn + "/"
         str = str + `  <${fn}>,\n`
 

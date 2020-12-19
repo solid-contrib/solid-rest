@@ -1,6 +1,22 @@
 import { Response,Headers } from 'cross-fetch';
 
-export async function handleResponse(response){    
+  const statusText = {
+    200:"OK",
+    201:"Created",
+    400:"Bad Request",
+    401:"Unauthorized",
+    403:"Forbidden",
+    404:"Not Found",
+    405:"Method Not Allowed",
+    408:"Request Timeout",
+    415:"Unsupported Media Type",
+    418:"I'm a teapot",
+    420:"Smoke 'em if you got 'em",
+    500:"Server error",
+  };
+
+
+export async function handleResponse(response,originalRequest){    
 
   let wrapHeaders = true; // {headers} instead of headers for Response
 
@@ -34,9 +50,10 @@ export async function handleResponse(response){
 
   let headers = {};
 
-  const pathname = this.item.pathname;
+  const request = this.requestObj;
   const item = this.item;
-  const request = this.request;
+  const pathname = this.item.pathname;
+
   const fn = this.basename(pathname,item.pathHandler)
 
   // CONTENT-TYPE	  
@@ -68,15 +85,28 @@ export async function handleResponse(response){
     headers['ms-author-via']=["SPARQL"];
   }
 
+  const body = finalResponse.body || this.response.body || "";
+
   // Now we merge headers we created with response headers, prefering response
   Object.assign( headers, finalResponse.headers );
+  
+  headers.status = headers.status || this.response.headers.status || 500;
+  headers.statusText = headers.statusText || statusText[headers.status];
+
+//console.log(headers)
 
   // Now we create & return the Response object
+  if( originalRequest.plainResponse ) { // from a server that wants to munge
+    return { body:body, headers:headers };
+  }
   headers = wrapHeaders ? {headers}  : headers;
   let responseObject;
+
+
+
   try{
     responseObject = new Response( finalResponse.body, headers)
-  } catch(e){console.log(e)}
+  } catch(e){console.log("Error "+e)}
   return responseObject;
 
 } // end of handleResponse method

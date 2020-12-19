@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html id="docHTML">
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <link type="text/css" rel="stylesheet" href="./scripts/mashlib/mash.css" />
+<script>
+    window.$SolidTestEnvironment = {
+	username : "http://localhost:8000/profile/card#me"
+    }
+</script>
+<script type="text/javascript" src="./scripts/mashlib/mashlib.js"></script>
+
+<script type="module">
+document.addEventListener('DOMContentLoaded', function() {
+    const UI = panes.UI
+    const $rdf = UI.rdf
+    const dom = document
+    $rdf.Fetcher.crossSiteProxyTemplate = self.origin + '/xss?uri={uri}';
+    var uri = window.location.href;
+    window.document.title = 'Data Kitchen: ' + uri;
+    var kb = UI.store;
+    var outliner = panes.getOutliner(dom)
+
+    function goUri ( event ) {
+      let uri = $rdf.uri.join(uriField.value, window.location.href)
+    let uri = document.getElementById('spaceSelector').value
+
+      console.log("User field " + uriField.value)
+      console.log("User requests " + uri)
+
+      const params = new URLSearchParams(location.search)
+      params.set('uri', uri);
+      window.history.replaceState({}, '', `${location.pathname}?${params}`);
+
+      var subject = kb.sym(uri);
+      // UI.widgets.makeDraggable(icon, subject) // beware many handlers piling up
+      outliner.GotoSubject(subject, true, undefined, true, undefined);
+    }
+
+    function go ( event ) {
+      let uri = event || $rdf.uri.join(uriField.value, window.location.href)
+      console.log("User field " + uriField.value)
+      console.log("User requests " + uri)
+
+      const params = new URLSearchParams(location.search)
+      params.set('uri', uri);
+      window.history.replaceState({}, '', `${location.pathname}?${params}`);
+
+      var subject = kb.sym(uri);
+      // UI.widgets.makeDraggable(icon, subject) // beware many handlers piling up
+      outliner.GotoSubject(subject, true, undefined, true, undefined);
+    }
+
+    const uriField = dom.getElementById('uriField')
+    const goButton = dom.getElementById('goButton')
+    uriField.addEventListener('keyup', function (e) {
+      if (e.keyCode === 13) {
+        go(e)
+      }
+    }, false)
+
+    goButton.addEventListener('click', go, false);
+    let initial = new URLSearchParams(self.location.search).get("uri")
+    if (initial) {
+      uriField.value = initial
+      go()
+    } else {
+      console.log('ready for user input')
+    }
+
+    const spaceSelector = dom.getElementById('spaceSelector')
+    spaceSelector.addEventListener('change', goUri, false);
+
+});
+</script>
+<style>
+#data-kitchen {
+  padding:0.5em;
+  background-color:#ccc;
+}
+#dk-left-menu a {
+  display:inline-block;
+  border: 1px solid black;
+  background-color:white;
+  padding:0.2em;
+  margin-left : 0.75em;
+}
+
+// move up/down,left/right/back
+
+</style>
+</head>
+<body>
+  <table style="width:100%;">
+    <tr><div id="data-kitchen">
+<a href="http://localhost:8000/">Data Kitchen : </a>
+
+<select id="spaceSelector">
+  <option value="dummy">Information Spaces</a>
+  <option value="http://localhost:8000/home/jeff/">My Local Files System</a>
+  <option value="https://jeff-zucker.solidcommunity.net/">My Solid Community Pod</a>
+  <option value="https://jeffzucker.inrupt.net/">My Inrupt Pod</a>
+  <option value="ssh://oceanofstreams.org">My Dreamhost Cloud Storage</a>
+</select>
+
+
+    </div></tr>
+    <tr style="font-size:100%">
+      <td style="padding:1em; width:5em;" id="icon">URI:</td>
+      <td><input id="uriField" type="text" style="font-size:100%; min-width:30em; padding:0.5em; width:95%;"/></td>
+      <td  style="width:5em;"><input type="button" id="goButton" value="Go" /></td>
+    </tr>
+    <tr>
+      <div class="TabulatorOutline" id="DummyUUID" role="main">
+          <table id="outline"></table>
+          <div id="GlobalDashboard"></div>
+      </div>
+    </tr>
+</table>
+</body>
+</html>

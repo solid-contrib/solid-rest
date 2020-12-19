@@ -12,7 +12,7 @@ import {
   generateRandomSlug,
 } from './utils/utils.js';
 import containerAsTurtle from './utils/container.js';
-import RestPatch from './utils/rest-patch';
+import RestPatch from './utils/rest-patch.js';
 
 export default class SolidRest {
 
@@ -42,17 +42,11 @@ export default class SolidRest {
              : (typeof global !="undefined" && global.$rdf) ? global.$rdf
              : null;
     this.patch = options.patch = ($rdf) ? new RestPatch($rdf) : null;
-
   }
 
   async fetch( uri, options = {} ) {
-    let request =  await this.handleRequest(uri,options);
-    return await this.handleResponse(request);
-/*
-   for(var r of [4,"foo",true,false,{body:"x",headers:{status:66}}]){
-      await this.handleResponse(r);
-   }
-*/
+    let response =  await this.handleRequest(uri,options);
+    return await this.handleResponse(response,options);
   }
 
   async itemExists(pathname){

@@ -2,32 +2,40 @@ import libPath from "path";
 import {contentType as contentTypeLookup} from 'mime-types'
 import { v1 as uuidv1 } from 'uuid'
 //const { v1: uuidv1 } = require('uuid')
-import pod from './createServerlessPod.js';
+import * as pod from './createServerlessPod.js';
 
 const linkExt = ['.acl', '.meta']
 const linksExt = linkExt.concat('.meta.acl')
 
+
   async function createServerlessPod( base ){
     console.log(`Creating pod at <${base}>`);
     base = base.replace(/\/$/,'');
+    let baseExists = await this.perform('ITEM_EXISTS',base);
+    if(!baseExists){
+      console.log(`Folder <${base}> does not exist.`);
+      process.exit();
+    }
+/*
     await _makeResource( base,"/.acl", pod.acl_content );
     await _makeResource( base,"/profile/card", pod.profile_content );
     await _makeResource( base,"/settings/prefs.ttl", pod.prefs_content );
     await _makeResource(base,"/settings/privateTypeIndex.ttl",pod.private_content );
-    await _.makeResource( base,"/settings/publicTypeIndex.ttl", pod.public_content );
-    await _.makeResource( base,"/private/.meta", "" );
-    await _.makeResource( base,"/.well-known/.meta", "" );
-    await _.makeResource( base,"/public/.meta", "" );
-    await _.makeResource( base,"/inbox/.meta", "" );
-  }
-  async function _makeResource( base, path, content ){
-    let url = base + path
-    console.log ( "  creating " + path )
-    await this.fetch( url, {
-      method:"PUT",
-      body:content,
-      headers:{"content-type":"text/turtle"}
-    })
+    await _makeResource( base,"/settings/publicTypeIndex.ttl", pod.public_content );
+    await _makeResource( base,"/private/.meta", "" );
+    await _makeResource( base,"/.well-known/.meta", "" );
+    await _makeResource( base,"/public/.meta", "" );
+    await _makeResource( base,"/inbox/.meta", "" );
+*/
+    await this.perform( 'FULL_PUT',base+"/.acl", pod.acl_content );
+    await this.perform( 'FULL_PUT',base+"/profile/card", pod.profile_content );
+    await this.perform( 'FULL_PUT',base+"/settings/prefs.ttl", pod.prefs_content );
+    await this.perform('FULL_PUT',base+"/settings/privateTypeIndex.ttl",pod.private_content );
+    await this.perform( 'FULL_PUT',base+"/settings/publicTypeIndex.ttl", pod.public_content );
+    await this.perform( 'FULL_PUT',base+"/private/.meta", "" );
+    await this.perform( 'FULL_PUT',base+"/.well-known/.meta", "" );
+    await this.perform( 'FULL_PUT',base+"/public/.meta", "" );
+    await this.perform( 'FULL_PUT',base+"/inbox/.meta", "" );
   }
 
   function getContentType(ext,type) {

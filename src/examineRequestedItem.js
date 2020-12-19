@@ -2,21 +2,21 @@ import libPath from "path";
 import Url from "url";
 
 export async function getItem(uri,request){
-  const item =  await this.perform('GET_ITEM_INFO',uri,request)
-  item.mode = item.mode ? item.mode : {read:true,append:true,write:true};
-  let pathHandler,url;
-  if (request.protocol.startsWith('file')) {
+  let pathHandler,url,pname;
+  if (uri.startsWith('file')) {
     url = Url.format(request.url)
-    // item.pathname = Url.fileURLToPath(url)
+    pname = Url.fileURLToPath(url)
     pathHandler = libPath;
   }
   else {
     url = decodeURIComponent(uri)
-    // item.pathname = Url.parse(url).pathname
+    pname = Url.parse(url).pathname
     pathHandler = libPath.posix
   }
-  //  item.pathname = url.replace(request.protocol+'//','') ???
-  item.pathname = uri.replace(request.protocol+'//','')
+  const item =  await this.perform('GET_ITEM_INFO',pname,request)
+  item.mode = item.mode ? item.mode : {read:true,append:true,write:true};
+  item.pathname = pname;
+
   if( request.method==='DELETE' && item.isContainer){
     let files = await this.perform('GET_FILES',item.pathname);
     files = files.filter(file =>  !this.isAuxResource(file))

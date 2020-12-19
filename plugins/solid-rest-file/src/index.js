@@ -5,7 +5,6 @@ import fs from "fs-extra";
 import mime from "mime-types";
 
 export default class SolidFileStorage {
-
   /**
    * file system backend for Solid-Rest
    * @constructor
@@ -30,12 +29,38 @@ export default class SolidFileStorage {
    * @param filePath
    * @return "Container" | "Resource" | null
    */
-  async  itemType(path,wantFull){
+  async  itemType(path){
     let stat;
-    try { stat = await fs.lstatSync(fn); }
+    try { stat = await fs.lstatSync(path); }
     catch(err){}
     if( !stat ) return null;
-    return stat && stat.isDirectory() ? "Container" : "Resource";
+    if( stat.isSymbolicLink() ) return null;
+    if( stat.isDirectory() ) return "Container";
+    if( stat.isFile() ) return "Resource";
+    return null;
+  }
+
+  /**
+   * read a folder
+   * @param filePath
+   * @return on success : a possibly empty array of child fileNames (not paths)
+   * @return on failure : false
+   */
+  async getContainer(pathname) {
+    let files;
+    let newFiles = [];
+    let newFolders = [];
+    try {
+      files = await fs.readdirSync(pathname)
+      for(var f in files){
+        let ftype = await this.itemType(pathname+files[f]);
+        if( ftype==="Resource" ) newFiles.push(files[f]);
+        if( ftype==="Container" ) newFolders.push(files[f]);
+      }            
+    }
+    catch(e) { console.log(e); return false  }
+    newFiles = newFiles.concat(newFolders);
+    return newFiles;
   }
 
   /**
@@ -67,6 +92,8 @@ export default class SolidFileStorage {
       control: write,
     }
     let item = {
+      fileName : fn,
+      extension : mime.extension(fn),
       mode : mode,
       exists : exists,
       isContainer : type==="Container" ? true : false,
@@ -82,12 +109,13 @@ export default class SolidFileStorage {
    * @return on failure false  | Response object
    */
   async getResource(pathname){
-    let mimetype = mime.lookup(pathname);
-    let bodyData;
-    try {
-      bodyData = await fs.readFile(pathname,mime.charset(mimetype))
+    let ctype,encoding,bodyData;
+    try{
+      ctype = mime.contentType(pathname);
+      encoding = ctype.match(/text|application/) ? "string" : null;
+      bodyData = encoding ? await fs.readFile(pathname,encoding) :await fs.readFile(pathname);
     }
-    catch(e) { return false }
+    catch(e) { console.log("Error"+e); return false }
     return bodyData 
   }
 
@@ -97,7 +125,7 @@ export default class SolidFileStorage {
    * @return true | Response object on success
    * @return false | Response object on failure
    */
-  async putResource(pathname,content){
+  async putResource(pathname,content,ctype){
     let successCode = true;
     let failureCode = false;
     return new Promise(async (resolve) => {
@@ -222,22 +250,6 @@ export default class SolidFileStorage {
     }
     return Promise.resolve(true)
   }
-
-  /**
-   * read a folder
-   * @param filePath
-   * @return on success : a possibly empty array of child fileNames (not paths)
-   * @return on failure : false
-   */
-  async getContainer(pathname) {
-    let files
-    try {
-      files = await fs.readdirSync(pathname)
-    }
-    catch(e) { return false  }
-    return files;
-  }
-
 
   /**
    * creates a ReadableStream

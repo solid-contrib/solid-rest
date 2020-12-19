@@ -2,6 +2,7 @@
   "name": "solid-rest",
   "version": "2.0.0",
   "author": "Jeff Zucker",
+  "type":"module",
   "license": "MIT",
   "description": "treat any storage as a mini Solid server",
   "main": "./src/index.js",
