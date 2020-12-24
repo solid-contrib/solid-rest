@@ -1,0 +1,103 @@
+<!DOCTYPE html><html><head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <title> Data Kitchen </title>
+  <link rel="stylesheet" href="/common/css/bootstrap.min.css" />
+  <link type="text/css" rel="stylesheet" href="/assets/css/mash.css" />
+</head><body id="data-kitchen">
+
+<table>
+  <tr class='tabs'><th>
+    <ul class="nav nav-tabs">
+      <li><a id="textTab" href="javascript:go('text')">Data Kitchen</a></li>
+      <li><a id="fileTab" href="javascript:go('file')">Local File System</a></li>
+      <li><a id="httpTab" href="javascript:go('http')">Solid Pods</a></li>
+      <li><a id="cloudTab" href="javascript:go('cloud')">Cloud Storage</a></li>
+<!--
+      <li><a id="fileButton" href="javascript:go('text','${host}/add-infoSpace.tmpl')">Add an Information Space</a></li>
+-->
+    </ul>
+  </tr>
+  <tr><td>
+    <iframe id="textBrowser" src="${host}/assets/html/welcome.html"></iframe>
+    <iframe id="fileBrowser" src="${host}/fileBrowser.tmpl"></iframe>
+    <iframe id="httpBrowser" src="${host}/httpBrowser.tmpl"></iframe>
+    <iframe id="cloudBrowser" src=""></iframe>
+  </td></tr>
+</table>
+
+<script>
+  // const types = ['text','file','http1','http2','cloud'];
+  const types = ['text','file','http','cloud'];
+  const cfg = {};
+  for(var type of types){
+    cfg[type] = {};
+    cfg[type].tab = document.getElementById(type+'Tab');
+    cfg[type].frame = document.getElementById(type+'Browser');
+    cfg[type].previous="";
+  }
+  function go(frameType,url) { 
+    for(var t of types){
+      cfg[t].frame.style.display='none';
+      cfg[t].tab.style.fontWeight='normal';
+    }
+    cfg[frameType].frame.style.display='block';
+    cfg[frameType].tab.style.fontWeight='bold';
+    if(url) {
+      cfg[frameType].previous = url;
+      cfg[frameType].src = url;
+    }
+  }
+
+</script>
+
+<style>
+table {
+  width: 100%;
+  height: 100%;
+}
+iframe {
+  width: 100%;
+  height: 100%;
+  border:none;
+  opacity:10;
+}
+.nav-tabs::after {
+  display:none;
+}
+.nav-tabs li {
+  border-right:2px solid white;
+  background-color:#ddd;
+}
+.nav-tabs li:hover, .nav-tabs li.actve  {
+  background-color:white !important;
+}
+tr.tabs {
+  height:2em !important;
+}
+th  {
+  font-weight:normal;
+}
+#fileBrowser, #httpBrowser, #sshBrowser {
+  display:none;
+}
+#textBrowser {
+  display:block;
+}
+#textTab {
+  display:none;
+}
+
+.nav-tabs span {
+  display:inline-block;
+  text-align:right;
+  background-color : white !important;
+  padding:0.5em;
+  font-weight:bold;
+  font-size:large;
+  padding-left:4em;
+}
+</style>
+
+</body></html>
+
+

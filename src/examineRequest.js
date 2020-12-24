@@ -27,7 +27,10 @@ export function getRequest(uri,options){
 function normalizeRequestKeys(opts){
   let newOpts = {};
   for(var o in opts){
-    newOpts[o.toLowerCase()] = opts[o];
+    if(o==='host'){
+      newOpts['hostname'] = opts[o]; // express requires this
+    }
+    else newOpts[o.toLowerCase()] = opts[o];
   }
   return newOpts;
 }  

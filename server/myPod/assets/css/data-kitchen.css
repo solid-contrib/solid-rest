@@ -1,0 +1,82 @@
+.dkPage {
+  padding:1em;
+  max-width:800px;
+}
+
+#data-kitchen {
+  margin:0;
+  padding:0;
+}
+#data-kitchen table { width:100%; height:100vh;}
+#data-kitchen th { background-color:#ccc; height:2.5em; text-align:left; 
+  padding-left:1em;
+}
+/*
+#data-kitchen {
+  margin:0;
+  padding:0.5em;
+  background-color:#ccc;
+  height:5vh;
+  width:98vw;
+}
+*/
+#data-kitchen #framedDatabrowser {
+  margin:0;
+  height:100%;
+  width:100%;
+  border:none;
+}
+
+
+
+
+/* MASHLIB DATA-BROWSER TWEAKS
+*/
+
+/* small document view 
+*/
+.docView, .doc {
+  width:80vw !important;
+  height:25vh !important;
+}
+
+/* don't indent the current item, keep at same level as other items 
+*/
+td {
+  margin-left:0 !important;
+}
+
+td.pred {
+  width:1em !important;
+  min-width:1em !important;
+}
+
+tr {
+  padding-top:0.5em !important;
+}
+
+/* URI/Filepath input area
+*/
+#mainInput {
+  margin:1em;
+}
+#loginArea {
+  font-size:90%;
+  margin-top:0.5em;
+  margin-left:0.9em;
+}
+#loginArea em {
+  color:green;
+  font-weight:bold;
+}
+
+/* not working */
+div.instancePane {
+  margin-top:1em !important;
+}
+#loginButton, #logoutButton {
+  display:none;
+}
+
+
+

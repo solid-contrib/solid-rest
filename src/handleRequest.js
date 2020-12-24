@@ -10,7 +10,6 @@ const methods = {
 export async function handleRequest( uri, originalRequest ){
 
   const request=this.requestObj= await this.getRequest( uri, originalRequest );
-  const item = this.item = await this.getItem( uri, request );
 
   // Errors we find in the request
   //
@@ -20,6 +19,8 @@ export async function handleRequest( uri, originalRequest ){
   if( request.unsupportedAcceptFormat ) return 405; 
   if( request.method==='PATCH' && !this.patch ) return 405;
   if( request.method==='POST' && !request.headers.link ) return 400; 
+
+  const item = this.item = await this.getItem( uri, request );
 
   // Errors we find by comparing the request & the itemRequested
   //

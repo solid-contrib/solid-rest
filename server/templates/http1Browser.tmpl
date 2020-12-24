@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html id="docHTML">
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <script>
+      // FILE ONLY
+      // window.$SolidTestEnvironment = {username:"${host}/profile/card#me"};
+  </script>
+  <script type="text/javascript" src="/assets/js/mashlib.js"></script>
+  <link type="text/css" rel="stylesheet" href="/assets/css/mash.css" />
+  <link type="text/css" rel="stylesheet" href="/assets/css/data-kitchen.css" />
+
+<script type="module">
+  document.addEventListener('DOMContentLoaded', function() {
+    const solid = {auth:SolidAuthClient}
+    const UI = panes.UI
+    const $rdf = UI.rdf
+    const dom = document
+    $rdf.Fetcher.crossSiteProxyTemplate = self.origin + '/xss?uri={uri}';
+    var uri = window.location.href;
+    window.document.title = 'Data Kitchen: ' + uri;
+    var kb = UI.store;
+    var outliner = panes.getOutliner(dom)
+
+    const prefix = '${host}/tabulator.html?'
+
+    async function goUri ( event ) {
+//      const prompt = document.getElementById('prompt');
+      // prompt.innerHTML = "File Path : ";      // FILE ONLY
+//      prompt.innerHTML = "URI : ";         // HTTP ONLY
+      const params = new URLSearchParams(location.search)
+      let display_uri = uri = params.get('q') ;
+      if(event && typeof event.toString().match('Mouse')){
+        display_uri = uri = uriField.value;
+      }
+      if( !uri && !event ) return;
+/* FILE ONLY
+      if(!uri.startsWith('http')) {
+        uri = '${host}'+display_uri
+      }    
+      else if(uri.match(prefix) ){
+        uri = uri.replace('${host}/tabulator.html?','');
+        display_uri = uri;
+        if( !uri.startsWith('http') ){
+          display_uri = uri;
+          uri = '${host}'+uri
+        }
+      }
+      display_uri = display_uri.replace('${host}','');
+*/
+      console.log("User field " + uriField.value)
+      console.log("User requests " + uri)
+  
+      uriField.value = display_uri;
+      params.set('uri', uri);
+      window.history.replaceState({}, '', `${location.pathname}?${params}`);
+
+      await showLogin(uri);
+
+      var subject = kb.sym(uri);
+      // UI.widgets.makeDraggable(icon, subject) // beware many handlers piling up
+      outliner.GotoSubject(subject, true, undefined, true, undefined);
+    }
+
+    // LOGIN
+    const loginButton = dom.getElementById('loginButton')
+    const logoutButton = dom.getElementById('logoutButton')
+    const loginInfo = dom.getElementById('loginInfo')
+    loginButton.addEventListener('click', doLogin, false);
+    logoutButton.addEventListener('click', doLogout, false);
+    async function showLogin(uri){
+      solid.auth.trackSession( session => {
+        if (session){
+          loginInfo.innerHTML = `logged in as <em>${session.webId}</em>`;
+          loginButton.style.display =  "none";
+          logoutButton.style.display = "inline-block";
+        }
+        else {
+          loginInfo.innerHTML = "Not logged in."
+          loginButton.style.display = "inline-block";
+          logoutButton.style.display = "none";
+        }
+      });
+    }
+    async function doLogout(){
+      await solid.auth.logout();
+    }
+    async function doLogin(){
+      let uri = uriField.value;
+      if(!uri) return;
+      
+      let session = await solid.auth.currentSession();
+      let popupUri = 'https://solidcommunity.net/common/popup.html';
+      if (!session)
+        session = await solid.auth.popupLogin({ popupUri });
+      alert(`Logged in as ${session.webId}`);
+      popupLogin();
+    }
+
+    // GO-BUTTON
+    const goButton = dom.getElementById('goButton')
+    goButton.addEventListener('click', goUri, false);
+
+    // URI-FIELD
+    const uriField = dom.getElementById('uriField')
+    uriField.addEventListener('keyup', function (e) {
+      if (e.keyCode === 13) {
+        goUri(e)
+      }
+    }, false)
+
+    // INITIAL PAGE-LOAD ACTION
+    let initial = new URLSearchParams(self.location.search).get("uri")
+    if (initial) {
+      uriField.value = initial
+      goUri();
+    } else {
+      goUri();
+      console.log('ready for user input')
+    }
+});
+</script>
+</head>
+<script>
+function drag(ev) {
+  ev.dataTransfer.setData("text", ev.target.id);
+}
+function drop(ev) {
+  var data = ev.dataTransfer.getData("text");
+  ev.target.value = document.getElementById(data).innerHTML;
+  ev.target.appendChild(document.getElementById(data));
+  ev.preventDefault();
+}
+</script>
+
+<body>
+
+  <!-- URI & LOGIN CONTROLS -->
+  <div id="mainInput">
+    <input id="uriField" ondrop="drop(event)" ondrag="drag(event)" type="text" style="font-size:100%; min-width:30em; padding:0.5em; width:20em;" placeholder="URI of a pod - you can browse wihout logging in" />
+    <input type="button" id="goButton" value="Go" /><br />
+    <div id="loginArea">
+      <span id="loginInfo"></span>
+      <input type="button" id="loginButton" value="Login" />
+      <input type="button" id="logoutButton" value="Logout" />
+    </div>
+ </div>
+
+  <!-- TABULATOR OUTLINE -->
+  <table>
+    <tr><td>
+      <div class="TabulatorOutline" id="DummyUUID" role="main">
+        <table id="outline"></table>
+        <div id="GlobalDashboard"></div>
+      </div>
+    </td></tr>
+
+  </table>
+
+</body></html>

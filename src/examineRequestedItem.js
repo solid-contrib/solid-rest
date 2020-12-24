@@ -38,12 +38,48 @@ export async function getItem(uri,request){
   item.extension = this.getExtension(item.pathname);
   item.contentType = this.getContentType(item.extension);
   item.patchOnNonTurtle = request.method==='PATCH' && !item.contentType.match('text/turtle');
-  item.isAcl = this.extension==='.acl';
-  item.folderFileConfusion = false; // TBD
-  item.isAuxResource = false; // TBD
-  item.isAcl = false; // TBD
+  item.isAcl = this.extension==='.acl';  // TBD use LinkExt
+  item.isAuxResource = item.isAcl || this.extension==='.meta';
+/*
+  if(item.exists) {
+    item.folderFileConfusion = false;
+    return item;
+  }
+*/
+  let conflict
+  // item is container but file of same name exists
+  if(item.pathname.endsWith('/')){
+    let type = await this.perform('ITEM_TYPE',item.pathname.replace(/\/$/,''))
+    item.folderFileConfusion = type && type==='Resource';
+    return item;
+  }
+  conflict = await this.perform('ITEM_EXISTS',item.pathname+'/')
+  if(!conflict){
+    item.folderFileConfusion = false;
+    return item;
+  }
+/* nah, don't redirect, then solidOS won't append / to folder contents
+  if( request.method==='GET' ){
+    item.redirected = true;
+    item.pathname = item.pathname + '/';
+    item.isContainer = true;
+    item.folderFileConfusion = false;
+    return item;
+  }
+*/
+  item.folderFileConfusion = true;
   return item;
 }
+/*
+reqWithSlash
+  if noSlash exists - fail
+  else is container
+reqNoSlash
+  if method==get and withSlash exists - redirect
+  else if withSlash exists - fail
+  else is file
+*/
+
 /*
 item = {
   mode: { read: true, write: true, append: true, control: true },

@@ -65,6 +65,7 @@ export default async function perform(method,pathname,content,ctype){
       content = content || this.request.body;
       ctype = ctype || this.item.contentType;
       console.log('content for put',content);
+if(typeof content !="string") content = "";
       let x = await this.storage.putResource(pathname,content,ctype);
       console.log('response from put',x);
       return x;

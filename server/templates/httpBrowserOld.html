@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html id="docHTML">
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <script>
+      // FILE ONLY
+      // window.$SolidTestEnvironment = {username:"${host}/profile/card#me"};
+  </script>
+  <script type="text/javascript" src="/assets/js/mashlib.js"></script>
+  <link type="text/css" rel="stylesheet" href="/assets/css/mash.css" />
+  <link type="text/css" rel="stylesheet" href="/assets/css/data-kitchen.css" />
+
+<script type="module">
+document.addEventListener('DOMContentLoaded', function() {
+    const UI = panes.UI
+    const $rdf = UI.rdf
+    const dom = document
+    $rdf.Fetcher.crossSiteProxyTemplate = self.origin + '/xss?uri={uri}';
+    var uri = window.location.href;
+    window.document.title = 'Data Kitchen: ' + uri;
+    var kb = UI.store;
+    var outliner = panes.getOutliner(dom)
+
+    const prefix = '${host}/tabulator.html?'
+
+function goUri ( event ) {
+      const prompt = document.getElementById('prompt');
+      // prompt.innerHTML = "File Path : ";      // FILE ONLY
+      prompt.innerHTML = "URI : ";         // HTTP ONLY
+      const params = new URLSearchParams(location.search)
+      let display_uri = uri = params.get('q') ;
+      if(event && typeof event.toString().match('Mouse')){
+        display_uri = uri = uriField.value;
+      }
+      if( !uri && !event ) return;
+/* FILE ONLY
+      if(!uri.startsWith('http')) {
+        uri = '${host}'+display_uri
+      }    
+      else if(uri.match(prefix) ){
+        uri = uri.replace('${host}/tabulator.html?','');
+        display_uri = uri;
+        if( !uri.startsWith('http') ){
+          display_uri = uri;
+          uri = '${host}'+uri
+        }
+      }
+      display_uri = display_uri.replace('${host}','');
+*/
+      console.log("User field " + uriField.value)
+      console.log("User requests " + uri)
+  
+      uriField.value = display_uri;
+      params.set('uri', uri);
+      window.history.replaceState({}, '', `${location.pathname}?${params}`);
+
+      var subject = kb.sym(uri);
+      // UI.widgets.makeDraggable(icon, subject) // beware many handlers piling up
+      outliner.GotoSubject(subject, true, undefined, true, undefined);
+    }
+
+    const uriField = dom.getElementById('uriField')
+    const goButton = dom.getElementById('goButton')
+    uriField.addEventListener('keyup', function (e) {
+      if (e.keyCode === 13) {
+        goUri(e)
+      }
+    }, false)
+
+    goButton.addEventListener('click', goUri, false);
+    let initial = new URLSearchParams(self.location.search).get("uri")
+    if (initial) {
+      uriField.value = initial
+      goUri();
+    } else {
+      goUri();
+      console.log('ready for user input')
+    }
+});
+</script>
+</head>
+<body>
+  <table style="width:100%;">
+<script>
+function drag(ev) {
+  ev.dataTransfer.setData("text", ev.target.id);
+}
+function drop(ev) {
+  var data = ev.dataTransfer.getData("text");
+  ev.target.value = document.getElementById(data).innerHTML;
+  ev.target.appendChild(document.getElementById(data));
+  ev.preventDefault();
+}
+</script>
+
+    <tr style="font-size:100%">
+<div id="mainInput">
+      <span id="prompt"></span>
+      <input id="uriField" ondrop="drop(event)" ondrag="drag(event)" type="text" style="font-size:100%; min-width:30em; padding:0.5em; width:20em;"/>
+      <input type="button" id="goButton" value="Go" />
+</div>
+    </td></tr>
+    <tr>
+      <div class="TabulatorOutline" id="DummyUUID" role="main">
+          <table id="outline"></table>
+          <div id="GlobalDashboard"></div>
+      </div>
+    </tr>
+</table>
+</body>
+</html>
