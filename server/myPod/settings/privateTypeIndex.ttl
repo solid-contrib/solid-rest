@@ -1,5 +1,0 @@
-
-@prefix solid: <https://www.w3.org/ns/solid/terms#>.
-<>
-    a solid:TypeIndex ;
-    a solid:UnlistedDocument.
