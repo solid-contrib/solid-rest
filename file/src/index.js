@@ -87,9 +87,7 @@ export class SolidRestFile {
 
     let exists = await this.itemExists(fn);
     if (!type && fn.endsWith('/')) type = "Container";
-    let read = true,
-        write = true;
-
+    let read = true, write = true;
     if (exists) {
       try {
         fs.accessSync(fn, fs.constants.R_OK);

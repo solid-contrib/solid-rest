@@ -71,20 +71,26 @@ export async function handleResponse(response, originalRequest) {
 
   const body = finalResponse.body || this.response.body || ""; // Now we merge headers we created with response headers, prefering response
 
+
+
   Object.assign(headers, finalResponse.headers);
   headers.status = headers.status || this.response.headers.status || 500;
-  headers.statusText = headers.statusText || statusText[headers.status]; //console.log(headers)
+  headers.statusText = headers.statusText || statusText[headers.status]; 
   // Now we create & return the Response object
 
   if (originalRequest.plainResponse) {
     // from a server that wants to munge
     return {
+      status:headers.status,
+      statusText:headers.statusText,
       body: body,
       headers: headers
     };
   }
 
   headers = wrapHeaders ? {
+    status:headers.status,
+    statusText:headers.statusText,
     headers: headers
   } : headers;
   let responseObject;

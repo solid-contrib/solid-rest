@@ -21,7 +21,7 @@ export default async function perform(method, pathname, content, ctype) {
       break;
 
     case 'LOGIN':
-      return await this.storage.login(pathname);
+      return await this.storage.login(this.request.loginoptions);
       break;
 
     case 'ITEM_TYPE':
@@ -132,17 +132,14 @@ export default async function perform(method, pathname, content, ctype) {
 
         if (patchStatus !== 200) {
           return {
-            headers: {
-              status: patchStatus
-            }
+            status: patchStatus,
+            statusText: newContent
           };
         }
       } catch (e) {
         return {
-          headers: {
-            status: parseInt(e),
-            statusText: e
-          }
+          status: parseInt(e),
+          statusText: e
         };
       }
 

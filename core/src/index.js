@@ -37,7 +37,9 @@ export default class SolidRest {
   }
 
   async login(options) {
-    return await this.perform('LOGIN', options);
+    options = {loginOptions:options,method:'login'};
+    let response = await this.handleRequest('http://example.org/', options);
+    return await this.handleResponse(response, options );
   }
 
   async itemExists(pathname) {

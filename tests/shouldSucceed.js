@@ -1,11 +1,8 @@
-import SolidRest from '../';
-import SolidRestFile from '../plugins/solid-rest-file';
-import SolidRestMem from '../plugins/solid-rest-mem';
+import {SolidRestFile} from '../file';
+let client = new SolidRestFile();
 
 let [tests,fails,passes,res] = [0,0,0]
 let allfails = 0
-
-let client = getRestClient('file');
 
 const cfg = {
   base    : `file://${process.cwd()}/`,
@@ -53,7 +50,7 @@ console.log('head');
   ok( "head container", res.status==200 && res.headers.get('content-type')==='text/turtle',res)
 
   res = await HEAD( cfg.file1 )
-  ok( "head resource", res.status==200 && res.headers.get('content-type')==='text/plain',res)
+  ok( "head resource", res.status==200 && res.headers.get('content-type').startsWith('text/plain',res))
 
 console.log('delete');
   res = await DELETE( cfg.file1 )

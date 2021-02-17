@@ -1,7 +1,7 @@
 {
   "name": "@solid-rest/dropbox",
   "author": "Jeff Zucker",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "license": "MIT",
   "description": "Solid-Rest plugin for Dropbox",
   "main": "dist/cjs/index.js",

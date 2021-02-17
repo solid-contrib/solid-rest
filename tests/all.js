@@ -1,27 +1,9 @@
-// SAME TEST SHOULD WORK FOR solid-rest AND solid-node-client
-//
-//const SolidNodeClient = require('../').SolidNodeClient
-//const client = new SolidNodeClient()
-
-// global.$rdf = require('rdflib') 
-// const client = new SolidRest()
-// const $rdf = require('rdflib');
 import * as $rdf from 'rdflib';
-import SolidRest from '../src/index.js';
-import SolidRestFile from '../plugins/solid-rest-file/src/index.js';
-//import SolidRestMem from '../plugins/solid-rest-mem/src/index.js';
+import {SolidRestFile} from '../file/src/index.js';
 import * as libUrl from 'url'
 
-function getRestClient(protocol,parser){
-  const plugin = protocol.startsWith('file') ? new SolidRestFile()
-               : protocol.startsWith('mem')  ? new SolidRestMem()
-               : protocol.startsWith('ssh')  ? new SolidRestSsh() : null;
-  return new SolidRest({
-    plugin : plugin,
-    parser : parser,
-  });
-}
-let client,slug,cSlug;
+global.$rdf = $rdf;
+const client = new SolidRestFile();
 
 /** Silence rdflib chatty information about patch
  *  Send console.log() to a logfile
@@ -36,8 +18,8 @@ process.on('uncaughtException', function(err) {
 });
 */
 
-let [tests,fails,passes,res] = [0,0,0]
-let allfails = 0
+let [tests,fails,passes,res,allfails,slug,cSlug] = [0,0,0,0,'','']
+
 
 async function main(){
   await run("file:")
@@ -53,7 +35,6 @@ async function main(){
 main()
 
 async function getConfig(scheme){
-  client = getRestClient(scheme,$rdf);
   let host = scheme;
   if(scheme==="mem:"){
     scheme = "mem://" // = protocol 

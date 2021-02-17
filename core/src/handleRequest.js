@@ -27,6 +27,8 @@ const methods = {
   PATCH: {
     requiresWrite: 1,
     requiresContentType: 1
+  },
+  LOGIN: {
   }
 };
 export async function handleRequest(uri, originalRequest) {
@@ -41,7 +43,7 @@ export async function handleRequest(uri, originalRequest) {
   if (request.method === 'POST' && !request.headers.link) return 400;
   const item = this.item = await this.getItem(uri, request); //
   // Errors we find by comparing the request & the itemRequested
-
+  if(item.isContainer && !item.contentType) item.contentType="text/turtle";
   if (item.folderFileConfusion) return 400; // can't have both /foo and /foo/
 
   if (item.patchOnNonRdf) return 400;
@@ -73,7 +75,7 @@ export async function handleRequest(uri, originalRequest) {
 
 
   if (request.method === 'PUT' || request.method === 'PATCH') {
-    if (item.isContainer) return 405;
+    // if (item.isContainer) return 405;
     let okDir = await this.perform('CREATE_INTERMEDIATE_CONTAINERS');
     if (!okDir) return 500;
   }
