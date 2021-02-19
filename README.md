@@ -1,40 +1,13 @@
-# Solid REST
+# Solid-Rest
 
-## treat any storage backend as a minimal Solid server
+Treat any storage backend as a Solid pod
 
-<!--
-[![NPM](https://nodei.co/npm/solid-rest.png)](https://nodei.co/npm/solid-rest/)
--->
+## Overview
 
-This package provides Solid access to local file systems and other storage spaces. It recieves standard Solid REST requests and returns the same kind of response a Solid server sends.  This means that libraries and apps can make a file:// or app:// request in the same way they make an https request without having to know anything about the backend and without needing a server on the backend.
+Solid-Rest translates Solid requests into backend requests and backend responses into Solid responses.  This means that any storage system that has a Solid-Rest plugin may be treated as a pod.  Currently there are plugins for file and dropbox which means that any app that uses Solid-Rest can address file:// and dropbox:// URIs the same way as a Solid pod https:// URI and expect the same responses with some exceptions : permissions are not handled by Solid .acls, they  are based on the underlying file or cloud permissions; collaborative tools such as chat are not available.  These backends can now be addressed with most Solid libraries (e.g. rdflib) and apps (e.g. the databrowser). 
 
-### Using with rdflib
+Plugins for ssh, in-memory storage, in-browser storage (indexedDB, localStorage, Native File API) are in development.
 
-Solid-Rest is included automatically in [rdflib]() when a script is run outside a browser.  This means that commands such as fetcher.load('file:///somepath/container/') will behave, for most purposes just like the same command against an https URI on a Solid server (in this case, create an in-memory parsed version of the container's turtle representation).  
-
-### Using with other libraries
-
-Solid-Rest can be used with any other libraries capable of operating either outside a browser or in an express-wrapped browser.  For example, [solid-file-client]() uses solid-rest behind the scenes to support file transfers between local file systems and remote pods.
-
-
-### Backends
-
-**file://** - the local file system; works on command-line or in a browser within an electron process
-
-**app://ls/** - an in-memory local storage; works on command-line or in a browser within an electron process
-
-**app://bfs/** - any of the dozen or so storage mechanisms supported by [BrowserFS](https://github.com/jvilk/BrowserFS) - Dropbox, browser Local Storage, browser indexedDB, browser Native File Api, and more; works in a browser.
-
-The file and in-memory storage are initialized automatically with the creation of the rest object.  The BrowserFS backends need to be initialized explicitly.  Please see tests/browser-test.html in the distribution for an example and details.
-
-### Plugins
-
-The package supports plugins, so new backends may be added by supplying the storage system specific commands without having to reinvent the wheel of receiving REST requests and responding to them in a Solid manner.  The src/localStorage.js package contains documentation on writing plugins.  Contact me for more info.
-
-<img src="https://github.com/jeff-zucker/solid-rest/blob/master/solid-rest.png" alt="diagram of solid-rest">
-
-### Acknowledgements
-
-Thanks to [Otto-AA](https://github.com/Otto-AA) and [CxRes](https://github.com/CxRes) for advice and patches.
-
-copyright &copy; 2019, 2020, [Jeff Zucker](https://github.com/jeff-zucker), may be freely distributed with the MIT license
+Although Solid-Rest can be used stand-alone, it is best used in conjunction with other libraries, especially [Solid-Node-Client](), a nodejs client for Solid.
+  Solid-Node-Client comes preloaded with the Solid-Rest-File plugin, so it will be transparently included in anything using that library.
+  

@@ -1,0 +1,52 @@
+{
+  "name": "@solid-rest/file",
+  "version": "2.0.5",
+  "author": "Jeff Zucker",
+  "license": "MIT",
+  "description": "solid-rest plugin for filesystems",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "scripts": {
+    "build": "rm -rf dist && mkdir dist && mkdir dist/cjs && npm run build:cjs && npm run build:esm",
+    "build:cjs": "babel --plugins @babel/plugin-transform-modules-commonjs src --out-dir dist/cjs",
+    "build:esm": "babel src --out-dir dist/esm",
+    "test": "node tests/cjsall"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solid/solid-rest.git"
+  },
+  "keywords": [
+    "solid",
+    "linked data",
+    "file systems"
+  ],
+  "bugs": {
+    "url": "https://github.com/solid/solid-rest/issues"
+  },
+  "engines": {
+    "node": ">=10.12.0"
+  },
+  "homepage": "https://github.com/solid/solid-rest#readme",
+  "dependencies": {
+    "@solid-rest/core": "^2.0.1",
+    "concat-stream": "^2.0.0",
+    "fs-extra": "^9.0.1",
+    "mime-types": "^2.1.27",
+    "stream": "0.0.2"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.10",
+    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
+    "@solid/eslint-config-base": "^0.1.8",
+    "@typescript-eslint/eslint-plugin": "^4.11.1",
+    "@typescript-eslint/parser": "^4.11.1",
+    "eslint": "^7.16.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-config-prettier": "^7.1.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.1.3",
+    "eslint-plugin-prettier": "^3.3.0",
+    "prettier": "^2.2.1"
+  }
+}

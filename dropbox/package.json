@@ -1,0 +1,38 @@
+{
+  "name": "@solid-rest/dropbox",
+  "author": "Jeff Zucker",
+  "version": "1.0.6",
+  "license": "MIT",
+  "description": "Solid-Rest plugin for Dropbox",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "scripts": {
+    "build": "rm -rf dist && mkdir dist && mkdir dist/cjs && npm run build:cjs && npm run build:esm",
+    "build:cjs": "babel --plugins @babel/plugin-transform-modules-commonjs src --out-dir dist/cjs",
+    "build:esm": "babel src --out-dir dist/esm"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solid/solid-rest.git"
+  },
+  "keywords": [
+    "solid",
+    "linked data",
+    "dropbox"
+  ],
+  "bugs": {
+    "url": "https://github.com/solid/solid-rest/issues"
+  },
+  "engines": {
+    "node": ">=10.12.0"
+  },
+  "homepage": "https://github.com/solid/solid-rest#readme",
+  "dependencies": {
+    "@solid-rest/core": "^2.0.1",
+    "dropbox": "^8.2.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.10",
+    "@babel/plugin-transform-modules-commonjs": "^7.12.1"
+  }
+}

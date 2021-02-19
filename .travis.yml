@@ -1,9 +1,0 @@
-language: node_js
-node_js:
-  - 14
-os:
-  - linux
-  - osx
-  - windows
-script:
-  - node tests/all.js

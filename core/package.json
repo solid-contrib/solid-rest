@@ -1,0 +1,42 @@
+{
+  "name": "@solid-rest/core",
+  "version": "2.0.4",
+  "author": "Jeff Zucker",
+  "license": "MIT",
+  "description": "treat any storage as a mini Solid server",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "scripts": {
+    "build": "npm run build:clean && npm run build:cjs && npm run build:esm",
+    "build:clean": "rm -rf dist && mkdir dist && mkdir dist/cjs && mkdir dist/esm",
+    "build:cjs": "babel --plugins @babel/plugin-transform-modules-commonjs src --out-dir dist/cjs",
+    "build:esm": "babel src --out-dir dist/esm"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeff-zucker/solid-rest.git"
+  },
+  "keywords": [
+    "solid",
+    "linked data"
+  ],
+  "bugs": {
+    "url": "https://github.com/jeff-zucker/solid-rest/issues"
+  },
+  "engines": {
+    "node": ">=10.12.0"
+  },
+  "homepage": "https://github.com/jeff-zucker/solid-rest#readme",
+  "dependencies": {
+    "cross-fetch": "3.0.6",
+    "mime-types": "2.1.27",
+    "uuid": "8.3.1"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.10",
+    "@babel/plugin-transform-modules-commonjs": "^7.12.1",
+    "babel-core": "6.26.3",
+    "babel-preset-es2015": "6.24.1",
+    "babel-preset-stage-0": "6.24.1"
+  }
+}
