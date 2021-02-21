@@ -88,7 +88,6 @@ export default async function perform(method, pathname, content, ctype) {
     case 'PUT':
       content = content || this.request.body;
       ctype = ctype || this.item.contentType; // console.log('content for put',content);
-
       let x = await this.storage.putResource(pathname, content, ctype); // console.log('response from put',x);
 
       return x;

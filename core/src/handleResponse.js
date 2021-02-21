@@ -15,7 +15,6 @@ const statusText = {
 };
 export async function handleResponse(response, originalRequest) {
   let wrapHeaders = true; // {headers} instead of headers for Response
-
   let finalResponse = {
     body: "",
     headers: {}
@@ -39,6 +38,9 @@ export async function handleResponse(response, originalRequest) {
   } else if (typeof response === 'object') {
     wrapHeaders = false;
     finalResponse = response;
+    finalResponse.headers = finalResponse.headers || {};
+    finalResponse.headers.status = finalResponse.status;
+    finalResponse.headers.statusText = finalResponse.statusText;
   } // now we create headers
   // if the response already has some of them, those will replace our
   // constructed ones later
