@@ -5,28 +5,14 @@ import * as pod from './createServerlessPod.js';
 const linkExt = ['.acl', '.meta'];
 const linksExt = linkExt.concat('.meta.acl');
 
+
+function url2Path( url ) {
+}
+
 async function createServerlessPod(base) {
   console.log(`Creating pod at <${base}>`);
   base = base.replace(/\/$/, '');
-  let baseExists = await this.perform('ITEM_EXISTS', base);
-
-  if (!baseExists) {
-    console.log(`Folder <${base}> does not exist.`);
-    process.exit();
-  }
-  /*
-      await _makeResource( base,"/.acl", pod.acl_content );
-      await _makeResource( base,"/profile/card", pod.profile_content );
-      await _makeResource( base,"/settings/prefs.ttl", pod.prefs_content );
-      await _makeResource(base,"/settings/privateTypeIndex.ttl",pod.private_content );
-      await _makeResource( base,"/settings/publicTypeIndex.ttl", pod.public_content );
-      await _makeResource( base,"/private/.meta", "" );
-      await _makeResource( base,"/.well-known/.meta", "" );
-      await _makeResource( base,"/public/.meta", "" );
-      await _makeResource( base,"/inbox/.meta", "" );
-  */
-
-
+  base = base.replace(/^[^:]*:\/\//, '');
   await this.perform('FULL_PUT', base + "/.acl", pod.acl_content);
   await this.perform('FULL_PUT', base + "/profile/card", pod.profile_content);
   await this.perform('FULL_PUT', base + "/settings/prefs.ttl", pod.prefs_content);
