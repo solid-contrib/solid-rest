@@ -50,25 +50,26 @@ export async function handleResponse(response, originalRequest) {
   const request = this.requestObj;
   const item = this.item;
   const pathname = this.item.pathname;
-  const fn = this.basename(pathname, item.pathHandler); // CONTENT-TYPE	  
+//  const fn = this.basename(pathname, item.pathHandler); 
+  const fn = this.basename(pathname); 
 
-  headers['content-type'] = this.item.contentType; // LINK
+  headers['content-type'] = this.item.contentType; // CONTENT-TYPE	  
 
-  headers.link = headers.link || createLinkHeader(this.item); // ALLOW
+  headers.link = headers.link || createLinkHeader(this.item,fn); // LINK
 
-  headers.allow = createAllowHeader(this.patch, this.item.mode); // WAC-ALLOW
+  headers.allow = createAllowHeader(this.patch, this.item.mode); // ALLOW
 
-  headers['wac-allow'] = createWacHeader(this.item.mode); // DATE
+  headers['wac-allow'] = createWacHeader(this.item.mode); // WAC-ALLOW
 
-  headers.date = headers.date || new Date(Date.now()).toISOString(); // X-POWERED-BY
+  headers.date = headers.date || new Date(Date.now()).toISOString(); // DATE
 
-  headers['x-powered-by'] = headers['x-powered-by'] || (await this.perform('STORAGE_NAME')); // LOCATION (we pre-populated this in performRequestedMethod.js)
+  headers['x-powered-by'] = headers['x-powered-by'] || (await this.perform('STORAGE_NAME')); // LOCATION (we pre-populated this in performRequestedMethod.js) // X-POWERED-BY
 
-  if (this.response && this.response.headers) headers.location = this.response.headers.location; // ACCEPT-PATCH & MS-AUTHOR-VIA
+  if (this.response && this.response.headers) headers.location = this.response.headers.location;
 
-  if (this.patch) {
+  if (this.patch) {                              // ACCEPT-PATCH & MS-AUTHOR-VIA
     headers['accept-patch'] = ['application/sparql-update'];
-    headers['ms-author-via'] = ["SPARQL"];
+    headers['ms-author-via'] = ["SPARQL"];                   
   }
 
   const body = finalResponse.body || this.response.body || ""; // Now we merge headers we created with response headers, prefering response
@@ -79,6 +80,9 @@ export async function handleResponse(response, originalRequest) {
   headers.status = headers.status || this.response.headers.status || 500;
   headers.statusText = headers.statusText || statusText[headers.status]; 
   // Now we create & return the Response object
+  for(var h of Object.keys(headers)){
+    if(! headers[h]) delete headers[h];
+  }
 
   if (originalRequest.plainResponse) {
     // from a server that wants to munge
@@ -119,19 +123,21 @@ function createAllowHeader(patch, mode) {
 }
 
 function createLinkHeader(item) {
+  let fn = item.pathname.replace(/.*\//,'');
   let ext = item.extension;
   let isContainer = item.isContainer;
-  let link;
   if (ext === '.acl') // .acl not controlledBy or describedBy anything
-    return `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;else if (ext === '.meta') {
-    return;
-    `<${fn}.acl>; rel="acl",` // .meta controlledBy .meta.acl
-    + `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
-  } else if (isContainer) {
-    return;
-    `<.meta>; rel="describedBy", <.acl>; rel="acl",` + `<http://www.w3.org/ns/ldp#Container>; rel="type",` + `<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"` + `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
-  } else {
-    return;
-    `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl",` + `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
+    return `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
+  else if (ext === '.meta') {
+    return `<${fn}.acl>; rel="acl",` // .meta controlledBy .meta.acl
+        + `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
+  }
+  else if (isContainer) {
+    return  `<.meta>; rel="describedBy", <.acl>; rel="acl",` + `<http://www.w3.org/ns/ldp#Container>; rel="type",` + `<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"` + `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
+  }
+  else {
+    let link = `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl",` + `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
+    console.log(33,item,link);
+    return link;
   }
 } // THE END!

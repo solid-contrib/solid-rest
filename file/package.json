@@ -1,6 +1,6 @@
 {
   "name": "@solid-rest/file",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "author": "Jeff Zucker",
   "license": "MIT",
   "description": "solid-rest plugin for filesystems",
@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/solid/solid-rest#readme",
   "dependencies": {
-    "@solid-rest/core": "^2.0.6",
+    "@solid-rest/core": "^2.0.7",
     "concat-stream": "^2.0.0",
     "fs-extra": "^9.0.1",
     "mime-types": "^2.1.27",
