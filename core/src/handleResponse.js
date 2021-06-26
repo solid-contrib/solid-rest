@@ -69,6 +69,7 @@ export async function handleResponse(response, originalRequest) {
   if (this.response && this.response.headers) headers.location = this.response.headers.location;
 
   headers.url = headers.location || pathname ;
+
   if (this.patch) {                              // ACCEPT-PATCH & MS-AUTHOR-VIA
     headers['accept-patch'] = ['application/sparql-update'];
     headers['ms-author-via'] = ["SPARQL"];                   
@@ -86,11 +87,8 @@ export async function handleResponse(response, originalRequest) {
     if(! headers[h]) delete headers[h];
   }
 
-  if(this.request.method.toLowerCase()==="head"){
-    body = headers
-  }
-
-
+  if(!headers.url.match(':')) headers.url = "file://"+headers.url;
+  headers.location = headers.location || headers.url;
 
   if (originalRequest.plainResponse) {
     // from a server that wants to munge
