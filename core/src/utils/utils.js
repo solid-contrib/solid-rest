@@ -35,6 +35,7 @@ function getContentType(ext, type) {
 
 function isAuxResource(o) {
   return linkExt.find(ext => this.getExtension(o) === ext);
+  // return linkExt.find(ext => o.extension === ext);
 }
 
 async function getAuxResources(pathname) {

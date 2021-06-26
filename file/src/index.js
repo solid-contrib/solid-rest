@@ -68,7 +68,7 @@ export class SolidRestFile {
       }
     } catch (e) {
       console.log(e);
-      return false;
+      return e;
     }
 
     return newFiles;
@@ -133,7 +133,7 @@ export class SolidRestFile {
 
     try {
       ctype = mime.contentType(pathname);
-      encoding = ctype.match(/text|application/) ? "string" : null;
+      encoding = ctype.match(/text|application/) ? "utf-8" : null;
       bodyData = encoding ? await fs.readFile(pathname, encoding) : await fs.readFile(pathname);
     } catch (e) {
       console.log("Error" + e);
@@ -151,8 +151,8 @@ export class SolidRestFile {
 
 
   async putResource(pathname, content, ctype) {
-    let successCode = true;
-    let failureCode = false;
+    let successCode = fs.existsSync(pathname) ?200 :201;
+    let failureCode = 500;
     return new Promise(async resolve => {
       let writeIt = false;
       if (typeof content === "undefined") content = "";
@@ -247,17 +247,19 @@ export class SolidRestFile {
 
 
   async postContainer(fn) {
+    let successCode = fs.existsSync(fn) ?200 :201;
+    let failureCode = 500;
     fn = fn.replace(/\/$/, '');
     return new Promise(function (resolve) {
       if (fs.existsSync(fn)) {
-        return resolve(true);
+        return resolve(successCode);
       }
 
       fs.mkdirp(fn, {}, err => {
         if (err) {
-          return resolve(false);
+          return resolve(failureCode);
         } else {
-          return resolve(true);
+          return resolve(successCode);
         }
       });
     });

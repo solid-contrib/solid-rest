@@ -33,19 +33,17 @@ const methods = {
 };
 export async function handleRequest(uri, originalRequest) {
   const request = this.requestObj = await this.getRequest(uri, originalRequest); //
+  const item = this.item = await this.getItem(uri, request); //
   // Errors we find in the request
-
   if (!request.url || !request.method) return 400;
   if (request.slug.endsWith('/')) return 400;
   if (request.originMismatch) return 403;
   if (request.unsupportedAcceptFormat) return 405;
   if (request.method === 'PATCH' && !this.patch) return 405;
   if (request.method === 'POST' && !request.headers.link) return 400;
-  const item = this.item = await this.getItem(uri, request); //
   // Errors we find by comparing the request & the itemRequested
   if(item.isContainer && !item.contentType) item.contentType="text/turtle";
   if (item.folderFileConfusion) return 400; // can't have both /foo and /foo/
-
   if (item.patchOnNonRdf) return 400;
 
   if (item.isAuxResource) {

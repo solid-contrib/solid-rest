@@ -49,13 +49,14 @@ export async function handleResponse(response, originalRequest) {
   let headers = {};
   const request = this.requestObj;
   const item = this.item;
-  const pathname = this.item.pathname;
+
+  const pathname = item.pathname;
 //  const fn = this.basename(pathname, item.pathHandler); 
   const fn = this.basename(pathname); 
 
   headers['content-type'] = this.item.contentType; // CONTENT-TYPE	  
 
-  headers.link = headers.link || createLinkHeader(this.item,fn); // LINK
+  headers.link = headers.link || createLinkHeader(item); // LINK
 
   headers.allow = createAllowHeader(this.patch, this.item.mode); // ALLOW
 
@@ -67,12 +68,13 @@ export async function handleResponse(response, originalRequest) {
 
   if (this.response && this.response.headers) headers.location = this.response.headers.location;
 
+  headers.url = headers.location || pathname ;
   if (this.patch) {                              // ACCEPT-PATCH & MS-AUTHOR-VIA
     headers['accept-patch'] = ['application/sparql-update'];
     headers['ms-author-via'] = ["SPARQL"];                   
   }
 
-  const body = finalResponse.body || this.response.body || ""; // Now we merge headers we created with response headers, prefering response
+  let body = finalResponse.body || this.response.body || ""; // Now we merge headers we created with response headers, prefering response
 
 
 
@@ -84,16 +86,22 @@ export async function handleResponse(response, originalRequest) {
     if(! headers[h]) delete headers[h];
   }
 
+  if(this.request.method.toLowerCase()==="head"){
+    body = headers
+  }
+
+
+
   if (originalRequest.plainResponse) {
     // from a server that wants to munge
     return {
       status:headers.status,
       statusText:headers.statusText,
       body: body,
-      headers: headers
+      headers: headers,
     };
   }
-
+wrapHeaders = true;
   headers = wrapHeaders ? {
     status:headers.status,
     statusText:headers.statusText,
@@ -106,7 +114,6 @@ export async function handleResponse(response, originalRequest) {
   } catch (e) {
     console.log("Error " + e);
   }
-
   return responseObject;
 } // end of handleResponse method
 // Utility methods for creating headers
@@ -123,9 +130,10 @@ function createAllowHeader(patch, mode) {
 }
 
 function createLinkHeader(item) {
-  let fn = item.pathname.replace(/.*\//,'');
-  let ext = item.extension;
   let isContainer = item.isContainer;
+  let fn = item.pathname.replace(/\/$/,'');
+  fn = fn.replace(/.*\//,'');
+  let ext = item.extension;
   if (ext === '.acl') // .acl not controlledBy or describedBy anything
     return `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
   else if (ext === '.meta') {
@@ -137,7 +145,6 @@ function createLinkHeader(item) {
   }
   else {
     let link = `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl",` + `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
-    console.log(33,item,link);
     return link;
-  }
+  }  
 } // THE END!
