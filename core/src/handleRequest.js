@@ -57,7 +57,8 @@ export async function handleRequest(uri, originalRequest) {
   if (item.mode.write) item.mode.append = true; // does write imply read?
 
   const method = methods[request.method];
-  if (!method) return 409;
+  if (!method) console.log(55,request.method);
+//  if (!method) return 409;
   if (method.mustExist && !item.exists) return 404;
   if (method.requiresRead && !item.mode.read || method.requiresAppend && !item.mode.append || method.requiresWrite && !item.mode.write || method.requiresControl && !item.mode.control) return 401;
 

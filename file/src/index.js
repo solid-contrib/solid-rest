@@ -1,6 +1,5 @@
 import libPath from "path";
 import { Readable } from "stream";
-//import SolidRest from "@solid-rest/core";
 import SolidRest from "../../../core/";
 import fs from "fs-extra";
 import mime from "mime-types"; // import concatStream from "concat-stream";
@@ -133,7 +132,7 @@ export class SolidRestFile {
 
     try {
       ctype = mime.contentType(pathname);
-      encoding = ctype.match(/text|application/) ? "utf-8" : null;
+      encoding = ctype.match(/text|application/) ? "utf8" : null;
       bodyData = encoding ? await fs.readFile(pathname, encoding) : await fs.readFile(pathname);
     } catch (e) {
       console.log("Error" + e);
@@ -154,6 +153,11 @@ export class SolidRestFile {
     let successCode = fs.existsSync(pathname) ?200 :201;
     let failureCode = 500;
     return new Promise(async resolve => {
+      if(pathname.endsWith('/')) {
+        let res = await this.postContainer(pathname);      
+        resolve(res);
+        return res;
+      }
       let writeIt = false;
       if (typeof content === "undefined") content = "";
 
@@ -254,7 +258,6 @@ export class SolidRestFile {
       if (fs.existsSync(fn)) {
         return resolve(successCode);
       }
-
       fs.mkdirp(fn, {}, err => {
         if (err) {
           return resolve(failureCode);

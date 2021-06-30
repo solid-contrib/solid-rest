@@ -1,6 +1,6 @@
 {
   "name": "@solid-rest/file",
-  "version": "2.0.13",
+  "version": "2.0.14",
   "author": "Jeff Zucker",
   "license": "MIT",
   "description": "solid-rest plugin for filesystems",
@@ -10,7 +10,7 @@
     "build": "rm -rf dist && mkdir dist && mkdir dist/cjs && npm run build:cjs && npm run build:esm",
     "build:cjs": "babel --plugins @babel/plugin-transform-modules-commonjs src --out-dir dist/cjs",
     "build:esm": "babel src --out-dir dist/esm",
-    "test": "node tests/cjs"
+    "test": "node tests/all"
   },
   "repository": {
     "type": "git",

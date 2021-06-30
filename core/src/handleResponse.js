@@ -15,6 +15,7 @@ const statusText = {
 };
 export async function handleResponse(response, originalRequest) {
   let wrapHeaders = true; // {headers} instead of headers for Response
+  originalRequest = originalRequest || this.request || {method:'GET'};
   let finalResponse = {
     body: "",
     headers: {}
@@ -31,10 +32,12 @@ export async function handleResponse(response, originalRequest) {
     wrapHeaders = false;
     finalResponse.headers.status = response;
   } else if (typeof response === 'boolean') {
-    finalResponse.headers.status = response ? 200 : 500;
+    let fr  = response ? 201 : 500;
+    fr = fr===201 && originalRequest.method && originalRequest.method.match(/(GET|HEAD)/) ?200 :201;
+    finalResponse.headers.status = fr
   } else if (typeof response === 'string') {
-    finalResponse.headers.status = 200;
-    finalResponse.body = response;
+      finalResponse.headers.status = 200;
+      finalResponse.body = response;
   } else if (typeof response === 'object') {
     wrapHeaders = false;
     finalResponse = response;
@@ -45,6 +48,12 @@ export async function handleResponse(response, originalRequest) {
   // if the response already has some of them, those will replace our
   // constructed ones later
 
+  if(originalRequest.method && originalRequest.method.match(/(PUT)/) && finalResponse.headers.status == 200){
+    finalResponse.headers.status = 201 
+  }
+  if(originalRequest.method && originalRequest.method.match(/(DELETE)/) && finalResponse.headers.status == 201){
+    finalResponse.headers.status = 200 
+  }
 
   let headers = {};
   const request = this.requestObj;
@@ -70,25 +79,29 @@ export async function handleResponse(response, originalRequest) {
 
   headers.url = headers.location || pathname ;
 
-  if (this.patch) {                              // ACCEPT-PATCH & MS-AUTHOR-VIA
+  if (this.patch) {                        // ACCEPT-PATCH & MS-AUTHOR-VIA
     headers['accept-patch'] = ['application/sparql-update'];
     headers['ms-author-via'] = ["SPARQL"];                   
   }
 
   let body = finalResponse.body || this.response.body || ""; // Now we merge headers we created with response headers, prefering response
 
-
-
   Object.assign(headers, finalResponse.headers);
-  headers.status = headers.status || this.response.headers.status || 500;
+  headers.status = finalResponse.headers.status || this.response.headers.status || 500;
+
   headers.statusText = headers.statusText || statusText[headers.status]; 
   // Now we create & return the Response object
   for(var h of Object.keys(headers)){
     if(! headers[h]) delete headers[h];
   }
 
-  if(!headers.url.match(':')) headers.url = "file://"+headers.url;
-  headers.location = headers.location || headers.url;
+  if(!headers.url.match(/:/)) headers.url = "file://"+headers.url;
+
+  headers.location = headers.location || headers.url.replace(/^....?:\/\//,'');
+
+
+//  if(!headers.location.match(/^file:/)) headers.location = "file://"+headers.location;
+
 
   if (originalRequest.plainResponse) {
     // from a server that wants to munge
@@ -97,18 +110,23 @@ export async function handleResponse(response, originalRequest) {
       statusText:headers.statusText,
       body: body,
       headers: headers,
+      url:headers.url,
     };
   }
 wrapHeaders = true;
   headers = wrapHeaders ? {
     status:headers.status,
     statusText:headers.statusText,
-    headers: headers
+    headers: headers,
+    url:headers.url
+
   } : headers;
   let responseObject;
 
+  
+
   try {
-    responseObject = new Response(body, headers);
+    responseObject = new Response(body, headers,{url:headers.url});
   } catch (e) {
     console.log("Error " + e);
   }

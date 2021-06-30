@@ -128,21 +128,22 @@ export default async function perform(method, pathname, content, ctype) {
 
       try {
         const [patchStatus, newContent] = await this.patch.patchContent(oldContent, contentType, this.request);
-
         if (patchStatus !== 200) {
           return {
             status: patchStatus,
-            statusText: newContent
+            body: newContent
           };
         }
       } catch (e) {
+        if(!e.length) e = "";
         return {
-          status: parseInt(e),
-          statusText: e
+          status: e,
+          statusText: e.toString()
         };
       }
 
       const status = await this.storage.makeContainers(pathname);
+
       if (!status) return false;
       let putStatus = await this.storage.putResource(pathname, this.request.body);
       putStatus = putStatus && putStatus.body ? putStatus.body : putStatus;
