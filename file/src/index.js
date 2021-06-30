@@ -56,6 +56,7 @@ export class SolidRestFile {
 
 
   async getContainer(pathname) {
+    if( !this.itemExists(pathname)) return 404;
     let files;
     let newFiles = [];
 
