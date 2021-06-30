@@ -15,7 +15,7 @@ const statusText = {
 };
 export async function handleResponse(response, originalRequest) {
   let wrapHeaders = true; // {headers} instead of headers for Response
-  originalRequest = originalRequest || this.request || {method:'GET'};
+  let method = originalRequest.method || this.request.method || "GET";
   let finalResponse = {
     body: "",
     headers: {}
@@ -33,7 +33,7 @@ export async function handleResponse(response, originalRequest) {
     finalResponse.headers.status = response;
   } else if (typeof response === 'boolean') {
     let fr  = response ? 201 : 500;
-    fr = fr===201 && originalRequest.method && originalRequest.method.match(/(GET|HEAD)/) ?200 :201;
+    fr = fr===201 && method.match(/(GET|HEAD)/) ?200 :201;
     finalResponse.headers.status = fr
   } else if (typeof response === 'string') {
       finalResponse.headers.status = 200;
@@ -48,10 +48,10 @@ export async function handleResponse(response, originalRequest) {
   // if the response already has some of them, those will replace our
   // constructed ones later
 
-  if(originalRequest.method && originalRequest.method.match(/(PUT)/) && finalResponse.headers.status == 200){
+  if(method.match(/(PUT)/) && finalResponse.headers.status == 200){
     finalResponse.headers.status = 201 
   }
-  if(originalRequest.method && originalRequest.method.match(/(DELETE)/) && finalResponse.headers.status == 201){
+  if(method.match(/(DELETE|GET|HEAD)/) && finalResponse.headers.status == 201){
     finalResponse.headers.status = 200 
   }
 
@@ -77,7 +77,8 @@ export async function handleResponse(response, originalRequest) {
 
   if (this.response && this.response.headers) headers.location = this.response.headers.location;
 
-  headers.url = headers.location || pathname ;
+//  headers.url = headers.location || pathname ;
+  headers.url = pathname ;
 
   if (this.patch) {                        // ACCEPT-PATCH & MS-AUTHOR-VIA
     headers['accept-patch'] = ['application/sparql-update'];
@@ -111,6 +112,7 @@ export async function handleResponse(response, originalRequest) {
       body: body,
       headers: headers,
       url:headers.url,
+      location:headers.location,
     };
   }
 wrapHeaders = true;
@@ -118,6 +120,7 @@ wrapHeaders = true;
     status:headers.status,
     statusText:headers.statusText,
     headers: headers,
+    location:headers.location,
     url:headers.url
 
   } : headers;
