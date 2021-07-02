@@ -205,6 +205,7 @@ if(check.headers){
   res = await postFolder( cfg.base,cfg.c1name )
   cSlug = res.headers.get('location')
   ok( "post container returns location header (new slug generated)",  cfg.folder1!=cSlug && cSlug.match('-'+cfg.c1name)) 
+  cSlug = cfg.base + "/" + cSlug;
 
   res = await postFolder( cfg.missingFolder,cfg.c2name )
   ok( "404 post container, parent not found", res.status==404,res)
@@ -229,6 +230,13 @@ if(check.headers){
   slug = res.headers.get('location') || "";
   ok( "post resource returns location (new slug generated)", slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
 }
+
+  res = await GET(cfg.folder1);
+  const gotText = await res.text();
+  const regex = new RegExp('<'+slug+'>');
+  ok( "contained resources use relative path with slug", gotText.match(regex), gotText )
+
+  slug = cfg.folder1 + slug;
 
   res = await postFile( cfg.missingFolder,cfg.file2 )
   ok( "404 post resource, parent not found", res.status==404,res)
@@ -309,8 +317,8 @@ if( check.patch ){
   ok("200 delete folder with meta", res.status===200, res)
 
 if(check.headers && typeof slug !='undefined'){
-  res = await DELETE( cfg.host + slug )
-//  res = await DELETE( slug )
+//  res = await DELETE( cfg.host + slug )
+  res = await DELETE( slug )
   ok("200 delete resource",res.status==200,res)
 }
 
@@ -323,16 +331,16 @@ if(check.headers && typeof slug !='undefined'){
   res = await DELETE( cfg.folder1 )
 
   if(check.headers && typeof cSlug!='undefined'){
-    res = await DELETE( cfg.host + cSlug )
-//    res = await DELETE( cSlug )
+//    res = await DELETE( cfg.host + cSlug )
+    res = await DELETE( cSlug )
   }
 
   cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
   res = await DELETE( cfg.base )
   ok("200 delete container",res.status==200,res)
 
-  let skipped = 33 - passes - fails;
-  console.warn(`${passes}/33 tests passed, ${fails} failed, ${skipped} skipped\n`)
+  let skipped = 34 - passes - fails;
+  console.warn(`${passes}/34 tests passed, ${fails} failed, ${skipped} skipped\n`)
   allfails = allfails + fails
 }
 /* =========================================================== */

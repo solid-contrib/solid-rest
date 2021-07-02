@@ -1,3 +1,5 @@
+import libPath from 'path';
+
 export default async function perform(method, pathname, content, ctype) {
   this.request = this.requestObj;
   method = method || this.request.method;
@@ -5,7 +7,7 @@ export default async function perform(method, pathname, content, ctype) {
     pathname: pathname
   };
   pathname = pathname || this.item.pathname;
-  let res;
+  let res,fn;
   this.response = this.response || {
     headers: {}
   };
@@ -108,10 +110,10 @@ export default async function perform(method, pathname, content, ctype) {
 
     case 'POST':
       if (this.request.headers.link.match("Container")) {
-        this.response.headers.location = pathname + '/';
+        this.response.headers.location = pathname.replace(/.*\//,'') + '/';
         return await this.storage.postContainer(pathname, this.request);
       } else {
-        this.response.headers.location = pathname;
+        this.response.headers.location = pathname.replace(/.*\//,'');
         return await this.storage.putResource(pathname, this.request.body);
       }
 

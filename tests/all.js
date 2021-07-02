@@ -1,7 +1,6 @@
 const $rdf = require('rdflib');
 const {SolidRestFile} = require('../file/');
 const libUrl = require('url');
-const libPath = require('path');
 
 global.$rdf = $rdf;
 const client = new SolidRestFile();
@@ -215,20 +214,11 @@ if(check.headers){
 
   loc = res.headers.get('location')
   ok( "post resource returns location header",  (cfg.folder1+cfg.r1name).match(loc), loc) 
-//  ok( "post resource returns location header",  loc.startsWith(cfg.folder1), loc) 
-/*
-  await fetcher.load(cfg.folder1);
-  let contains = $rdf.sym("http://www.w3.org/ns/ldp#contains");
-  let docNode = $rdf.sym(cfg.folder1);
-  let gotFile = kb.any(docNode,contains);
-  ok( "contained resources use relative path", gotFile.value===cfg.r1name, cfg.r1name )
-  console.log(33,gotFile.value);
-*/
+
   res = await GET(cfg.folder1);
   const gotText = await res.text();
   const regex = new RegExp('<'+cfg.r1name+'>');
   ok( "contained resources use relative path", gotText.match(regex), gotText )
-//  console.log(33,gotText);
 
 //  NSS allows this and returns 201
 //  res = await postFile( cfg.folder1,cfg.meta )
@@ -239,6 +229,13 @@ if(check.headers){
   slug = res.headers.get('location') || "";
   ok( "post resource returns location (new slug generated)", slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
 }
+
+  res = await GET(cfg.folder1);
+  gotText = await res.text();
+  regex = new RegExp('<'+slug+'>');
+  ok( "contained resources use relative path with slugs", gotText.match(regex), gotText )
+
+
 
   res = await postFile( cfg.missingFolder,cfg.file2 )
   ok( "404 post resource, parent not found", res.status==404,res)
