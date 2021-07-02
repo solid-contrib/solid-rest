@@ -67,7 +67,7 @@ export class SolidRestFile {
       }
     } catch (e) {
 //      console.log(e);
-      reject(e);
+      return(e);
     }
 
     return newFiles;

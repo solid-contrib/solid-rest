@@ -1,3 +1,9 @@
+/*
+          url : file:///foo/bar.txt
+     location : /foo/bar.txt
+ ldp:contains : bar.txt
+*/
+
 import { Response, Headers } from 'cross-fetch';
 const statusText = {
   200: "OK",

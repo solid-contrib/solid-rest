@@ -12,8 +12,8 @@ let [tests,fails,passes,res,allfails,slug,cSlug] = [0,0,0,0,'','']
 
 async function main(){
   await run("file:")
-  // await run("mem:")
   // await run("https:")
+  // await run("mem:")
   if(allfails>0){
     process.exit(1)
   }
@@ -202,12 +202,12 @@ if(check.headers){
 
   // POST CONTAINER LOCATION is slug + "/"
   let loc = res.headers.get('location')
-  ok( "post container returns location header",loc===`${cfg.c1name}/`)
+  ok( "post container returns location header",loc.match(`${cfg.c1name}/`));
 
   res = await postFolder( cfg.base,cfg.c1name )
   cSlug = res.headers.get('location')
   ok( "post container returns location header (new slug generated)",  cfg.folder1!=cSlug && cSlug.match('-'+cfg.c1name)) 
-  cSlug = cfg.base + "/" + cSlug;
+
 
   res = await postFolder( cfg.missingFolder,cfg.c2name )
   ok( "404 post container, parent not found", res.status==404,res)
@@ -218,8 +218,7 @@ if(check.headers){
 
   // POST RESOURCE LOCATION is same as slug
   loc = res.headers.get('location')
-  ok( "post resource returns location header",  cfg.r1name===loc, loc) 
-
+  ok( "post resource returns location header",  loc.endsWith(cfg.r1name), loc) 
 
   res = await GET(cfg.folder1);
   const gotText = await res.text();
@@ -238,10 +237,12 @@ if(check.headers){
 
   res = await GET(cfg.folder1);
   const gotText = await res.text();
-  const regex = new RegExp('<'+slug+'>');
+  const tmpSlug = slug.replace(/.*\//,'');
+  const regex = new RegExp('<'+tmpSlug+'>');
   ok( "contained resources use relative path with slug", gotText.match(regex), gotText )
 
-  slug = cfg.folder1 + slug;
+  slug = cfg.host + slug;
+//  slug = cfg.folder1 + slug;
 
   res = await postFile( cfg.missingFolder,cfg.file2 )
   ok( "404 post resource, parent not found", res.status==404,res)
@@ -263,8 +264,8 @@ if(check.headers){
   res = await PUT( cfg.folder2meta,cfg.text )
   ok("201 put container acl",res.status==201, res)
 
-res = await GET(cfg.folder1);
-console.log(await res.text());
+//res = await GET(cfg.folder1);
+//console.log(await res.text());
 
   // HEAD
   res = await HEAD( cfg.deepR )
@@ -325,7 +326,6 @@ if( check.patch ){
   ok("200 delete folder with meta", res.status===200, res)
 
 if(check.headers && typeof slug !='undefined'){
-//  res = await DELETE( cfg.host + slug )
   res = await DELETE( slug )
   ok("200 delete resource",res.status==200,res)
 }
@@ -339,8 +339,7 @@ if(check.headers && typeof slug !='undefined'){
   res = await DELETE( cfg.folder1 )
 
   if(check.headers && typeof cSlug!='undefined'){
-//    res = await DELETE( cfg.host + cSlug )
-    res = await DELETE( cSlug )
+    res = await DELETE( cfg.host + cSlug )
   }
 
   cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"

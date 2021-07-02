@@ -110,10 +110,13 @@ export default async function perform(method, pathname, content, ctype) {
 
     case 'POST':
       if (this.request.headers.link.match("Container")) {
-        this.response.headers.location = pathname.replace(/.*\//,'') + '/';
+//        this.response.headers.location = pathname.replace(/.*\//,'') + '/';
+        this.response.headers.location = pathname + '/';
         return await this.storage.postContainer(pathname, this.request);
       } else {
-        this.response.headers.location = pathname.replace(/.*\//,'');
+//        this.response.headers.location = pathname.replace(/.*\//,'');
+        this.response.headers.location = pathname;
+
         return await this.storage.putResource(pathname, this.request.body);
       }
 
