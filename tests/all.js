@@ -1,9 +1,12 @@
 const $rdf = require('rdflib');
 const {SolidRestFile} = require('../file/');
 const libUrl = require('url');
+const libPath = require('path');
 
 global.$rdf = $rdf;
 const client = new SolidRestFile();
+const kb = $rdf.graph();
+const fetcher = $rdf.fetcher(kb,{fetch:client.fetch.bind(client)});
 
 let [tests,fails,passes,res,allfails,slug,cSlug] = [0,0,0,0,'','']
 
@@ -213,7 +216,19 @@ if(check.headers){
   loc = res.headers.get('location')
   ok( "post resource returns location header",  (cfg.folder1+cfg.r1name).match(loc), loc) 
 //  ok( "post resource returns location header",  loc.startsWith(cfg.folder1), loc) 
-
+/*
+  await fetcher.load(cfg.folder1);
+  let contains = $rdf.sym("http://www.w3.org/ns/ldp#contains");
+  let docNode = $rdf.sym(cfg.folder1);
+  let gotFile = kb.any(docNode,contains);
+  ok( "contained resources use relative path", gotFile.value===cfg.r1name, cfg.r1name )
+  console.log(33,gotFile.value);
+*/
+  res = await GET(cfg.folder1);
+  const gotText = await res.text();
+  const regex = new RegExp('<'+cfg.r1name+'>');
+  ok( "contained resources use relative path", gotText.match(regex), gotText )
+//  console.log(33,gotText);
 
 //  NSS allows this and returns 201
 //  res = await postFile( cfg.folder1,cfg.meta )
@@ -326,8 +341,8 @@ if(check.headers && typeof slug !='undefined'){
   res = await DELETE( cfg.base )
   ok("200 delete container",res.status==200,res)
 
-  let skipped = 32 - passes - fails;
-  console.warn(`${passes}/32 tests passed, ${fails} failed, ${skipped} skipped\n`)
+  let skipped = 33 - passes - fails;
+  console.warn(`${passes}/33 tests passed, ${fails} failed, ${skipped} skipped\n`)
   allfails = allfails + fails
 }
 /* =========================================================== */
