@@ -12,7 +12,7 @@ export class SolidRestFile {
    */
   constructor() {
     this.prefix = "file";
-    this.name = "solid-rest-file-2.0.0";
+    this.name = "solid-rest-file-2.0.17";
     return new SolidRest({
       plugin: this
     });
@@ -56,19 +56,18 @@ export class SolidRestFile {
 
 
   async getContainer(pathname) {
-    if( !this.itemExists(pathname)) return 404;
+//    if( !this.itemExists(pathname)) return 404;
     let files;
     let newFiles = [];
 
     try {
       files = await fs.readdirSync(pathname);
-
       for (var f in files) {
         newFiles.push(await this.getItemInfo(pathname + files[f]));
       }
     } catch (e) {
-      console.log(e);
-      return e;
+//      console.log(e);
+      reject(e);
     }
 
     return newFiles;

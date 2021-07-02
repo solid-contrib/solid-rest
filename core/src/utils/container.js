@@ -16,10 +16,10 @@ export default async function containerAsTurtle(pathname, contentsArray, typeWan
 
     for (var i = 0; i < filenames.length; i++) {
       let fn = filenames[i].path;
-      if (filenames[i].isContainer && !fn.endsWith("/")) fn = fn + "/";
       if (typeWanted) fn = "/" + typeWanted + fn;
       fn = encodeURI(fn);
       fn = libPath.basename(fn);  // contained resources are relative to folder
+      if (filenames[i].isContainer && !fn.endsWith("/")) fn = fn + "/";
       str = str + `  <${fn}>,\n`;
       let ftype = filenames[i].isContainer ? "Container" : "Resource";
       let ctype = this.getContentType(this.getExtension(fn), ftype);

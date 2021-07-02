@@ -98,7 +98,10 @@ export async function handleResponse(response, originalRequest) {
 
   if(!headers.url.match(/:/)) headers.url = "file://"+headers.url;
 
-  headers.location = headers.location || headers.url.replace(/^....?:\/\//,'');
+
+
+
+//  headers.location = headers.location || headers.url.replace(/^....?:\/\//,'');
 
 
 //  if(!headers.location.match(/^file:/)) headers.location = "file://"+headers.location;
