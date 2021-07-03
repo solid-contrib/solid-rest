@@ -3,7 +3,7 @@
      location : /foo/bar.txt
  ldp:contains : bar.txt
 */
-
+import libPath from 'path';
 import { Response, Headers } from 'cross-fetch';
 const statusText = {
   200: "OK",
@@ -66,8 +66,10 @@ export async function handleResponse(response, originalRequest) {
   const item = this.item;
 
   const pathname = item.pathname;
+
 //  const fn = this.basename(pathname, item.pathHandler); 
-  const fn = this.basename(pathname); 
+//  const fn = this.basename(pathname); 
+  const fn = libPath.basename(pathname); 
 
   headers['content-type'] = this.item.contentType; // CONTENT-TYPE	  
 

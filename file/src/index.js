@@ -63,6 +63,7 @@ export class SolidRestFile {
     try {
       files = await fs.readdirSync(pathname);
       for (var f in files) {
+        if(!pathname.endsWith('/')) pathname = pathname + "/";
         newFiles.push(await this.getItemInfo(pathname + files[f]));
       }
     } catch (e) {
