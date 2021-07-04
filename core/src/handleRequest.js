@@ -25,6 +25,7 @@ const methods = {
     requiresContentType: 1
   },
   PATCH: {
+    mustExist: 1,
     requiresWrite: 1,
     requiresContentType: 1
   },
