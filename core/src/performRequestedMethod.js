@@ -123,34 +123,50 @@ export default async function perform(method, pathname, content, ctype) {
       break;
 
     case 'PATCH':
+      const contentType = this.item.contentType;
+      if(!contentType.match(/(text\/turtle|text\/n3|application\/ld\+json|application\/rdf\+xml)/)) return( {
+            status: 409,
+            body: "can not patch a file of type "+contentType
+      });
+      if(pathname.endsWith('/')) return( {
+            status: 409,
+            body: "can not patch a Container"
+      });
+      let exists=await this.storage.itemExists(pathname.replace('file://',''));
+      if( !exists ) await this.perform('FULL_PUT', pathname, "", ctype);
+;
+
+      
       // 415 patchOnNonTurtle is handled already in handleRequest.js
       let oldContent = await this.storage.getResource(pathname);
       oldContent = oldContent && oldContent.body ? oldContent.body : oldContent;
-      if (!oldContent) return false;
+//      if (!oldContent) return false;
       oldContent = typeof oldContent === 'string' ? oldContent : oldContent.toString();
-      const contentType = this.item.contentType;
-      let newContent;
+      let newContent,patchStatus;
 
-      try {
-        const [patchStatus, newContent] = await this.patch.patchContent(oldContent, contentType, this.request);
+
+//      try {
+        [patchStatus, newContent] = await this.patch.patchContent(oldContent, contentType, this.request);
         if (patchStatus !== 200) {
           return {
             status: patchStatus,
             body: newContent
           };
         }
-      } catch (e) {
+/*      } catch (e) {
         if(!e.length) e = "";
         return {
           status: e,
           statusText: e.toString()
         };
       }
+*/
 
-      const status = await this.storage.makeContainers(pathname);
+//      const status = await this.storage.makeContainers(pathname);
 
-      if (!status) return false;
-      let putStatus = await this.storage.putResource(pathname, this.request.body);
+//      if (!status) return false;
+//      let putStatus = await this.storage.putResource(pathname, this.request.bod);
+      let putStatus = await this.storage.putResource(pathname, newContent);
       putStatus = putStatus && putStatus.body ? putStatus.body : putStatus;
       return putStatus;
       break;

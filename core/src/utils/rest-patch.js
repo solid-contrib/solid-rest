@@ -32,7 +32,6 @@ export default class RestPatch {
 
     try {
       const patchObject = await parsePatch(url, patchUri, patch.text);
-      if(patchObject[0] != 200) return patchObject;
       const graph = await this.readGraph(content, resource);
       await this.applyPatch(patchObject, graph, url);
       const newContent = await this.writeGraph(graph, resource);
@@ -45,11 +44,13 @@ export default class RestPatch {
 
   async readGraph(fileContents, resource) {
     const graph = $rdf.graph();
-
+    if(!fileContents.length) return graph;
     try {
       $rdf.parse(fileContents, graph, resource.url, resource.contentType);
     } catch (err) {
-      return [`500 : Patch: Target ${resource.contentType} file syntax error: ${err}`];
+     throw new Error(`500 : Patch: Target ${resource.contentType} file syntax \
+error: ${err}`)  
+//      return [`500 : Patch: Target ${resource.contentType} file syntax error: ${err}`];
     }
 
     return graph;
@@ -60,8 +61,8 @@ export default class RestPatch {
     return new Promise((resolve, reject) => graph.applyPatch(patchObject, graph.sym(url), err => {
       if (err) {
         const message = err.message || err; // returns string at the moment
-
-        return [`409 : The patch could not be applied. ${message}`]; // is this correct : not tested
+        return reject(new Error(`409 : The patch could not be applied. ${message}`)) // is this correct : not tested
+ //       return [`409 : The patch could not be applied. ${message}`]; // is this correct : not tested
       }
 
       resolve(graph);
@@ -84,11 +85,11 @@ export default class RestPatch {
 
 async function parsePatchSparql(targetURI, patchURI, patchText) {
   const baseURI = patchURI.replace(/#.*/, '');
-
   try {
-    let res = $rdf.sparqlUpdateParser(patchText, $rdf.graph(), baseURI);
+    return $rdf.sparqlUpdateParser(patchText, $rdf.graph(), baseURI);
   } catch (err) {
-    return [400,`400 : Patch document syntax error: ${err}`];
+   throw new Error(`400 : Patch document syntax error: ${err}`) 
+// return [400,`400 : Patch document syntax error: ${err}`];
   }
 } // Parses the given N3 patch document
 
@@ -115,7 +116,8 @@ async function parsePatchN3(targetURI, patchURI, patchText) {
       OPTIONAL { ?patch solid:where   ?where.  }
     }`);
   } catch (err) {
-    return [400,`400 : No patch for ${targetURI} found. ${err}`];
+   throw new Error(`400 : No patch for ${targetURI} found. ${err}`)            
+//    return [400,`400 : No patch for ${targetURI} found. ${err}`];
   } // Return the insertions and deletions as an rdflib patch document
 
 
@@ -126,7 +128,8 @@ async function parsePatchN3(targetURI, patchURI, patchText) {
   } = firstResult;
 
   if (!insert && !deleted) {
-    return[400, 'Patch should at least contain inserts or deletes.'];
+    throw error(400, 'Patch should at least contain inserts or deletes.') 
+//    return[400, 'Patch should at least contain inserts or deletes.'];
   }
 
   return {
