@@ -10,12 +10,13 @@ async function HEAD(url){
 async function EXISTS(url){
   try {
     let res = await global.client.fetch( url, {method:"HEAD"} );
-    return res.ok;
+    return res.status==200 ?true :false;
   }
   catch(e){ return false; }
 }
-async function PUT(url,text){
-  return await global.client.fetch( url, {method:"PUT",body:text,headers:{"content-type":"text/turtle"}} )
+async function PUT(url,text,ctype){
+  ctype = ctype || 'text/turtle';
+  return await global.client.fetch( url, {method:"PUT",body:text,headers:{"content-type":ctype}} )
 }
 async function PATCH(url, patchContent, patchContentType){
   return await global.client.fetch(url, {

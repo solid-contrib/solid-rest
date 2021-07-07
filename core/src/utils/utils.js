@@ -39,6 +39,8 @@ function isAuxResource(o) {
 }
 
 async function getAuxResources(pathname) {
+  if(pathname.endsWith('.acl')) return [];
+  if(pathname.endsWith('.meta')) return [];
   let linksExists = linksExt.filter(async (ext) => await this.perform('ITEM_EXISTS', pathname + ext));
   const links = linksExists.map(ext => pathname + ext);
   return links || [];
