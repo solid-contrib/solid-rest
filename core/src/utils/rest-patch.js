@@ -29,10 +29,18 @@ export default class RestPatch {
     } // Parse the patch document and verify permissions
 
     const patchUri = `${url}#patch`; // `${url}#patch-${hash(patchContentType)}`
-
     try {
       const patchObject = await parsePatch(url, patchUri, patch.text);
       const graph = await this.readGraph(content, resource);
+
+      /* rdf.sparqlUpdateParser accepts multiple INSERT statements
+         but only applies the last one;  so gives a false 200;
+         I trap it here with kldugy regex; TBD - better solution (Jeff)
+      */
+      let insertStmts = patch.text.match(/INSERT/g);
+      if(insertStmts && insertStmts.length>1)
+        return [400,"can not have multiple INSERT statements in a patch"];
+
       await this.applyPatch(patchObject, graph, url);
       const newContent = await this.writeGraph(graph, resource);
       return [200, newContent];

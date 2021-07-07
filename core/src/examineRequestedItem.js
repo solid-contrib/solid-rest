@@ -23,8 +23,11 @@ export async function getItem(uri, request) {
 
   if (request.method === 'DELETE' && item.isContainer) {
     let files = await this.perform('GET_FILES', item.pathname);
-    files = files.filter(file => !this.isAuxResource(file));
-    item.containedFiles = files.length;
+    if(!files.filter) item.containedFiles = 0;
+    else {
+      files = files.filter(file => !this.isAuxResource(file));
+      item.containedFiles = files.length;
+    }
   }
 
   this.getExtension = path => {

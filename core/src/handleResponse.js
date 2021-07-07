@@ -87,7 +87,9 @@ export async function handleResponse(response, originalRequest) {
 
 //  headers.url = headers.location || pathname ;
   headers.url = pathname ;
-
+  if(method==="POST"){
+    headers.url = this.request.url;
+  }
   if (this.patch) {                        // ACCEPT-PATCH & MS-AUTHOR-VIA
     headers['accept-patch'] = ['application/sparql-update'];
     headers['ms-author-via'] = ["SPARQL"];                   
