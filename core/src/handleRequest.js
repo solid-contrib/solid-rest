@@ -50,15 +50,13 @@ export async function handleRequest(uri, originalRequest) {
     if (item.isAcl) request.method.requiresControl = true;
     if (request.method === "POST") return 405;
   }
-
-  if (request.method === 'DELETE' && item.containedFiles) return 409;
   if (item.mode.control) item.mode.write = true; // does control imply read?
 
   if (item.mode.write) item.mode.append = true; // does write imply read?
 
   const method = methods[request.method];
   if (!method) console.log(55,request.method);
-//  if (!method) return 409;
+  if (!method) return 409;
   if (method.mustExist && !item.exists) return 404;
   if (method.requiresRead && !item.mode.read || method.requiresAppend && !item.mode.append || method.requiresWrite && !item.mode.write || method.requiresControl && !item.mode.control) return 401;
 
@@ -81,12 +79,15 @@ export async function handleRequest(uri, originalRequest) {
 
   if (request.method === 'DELETE') {
     let del = await this.perform('DELETE_AUX_RESOURCES');
+//console.log(77,request.method,item.isContainer,item.containedFiles);
+//    if(item.isContainer && item.containedFiles);
     if (!del) return 500;
   }
 
   let response = await this.perform(request.method);
-  if (!response) return 500; //
-  // SUCCESS !!!
-
+  if (!response && request.method === 'DELETE' && item.isContainer){
+    let stillExists  = await this.perform('ITEM_EXISTS',this.item.pathname);
+    if( stillExists ) return 409;
+  }
   return response;
 } // ENDS

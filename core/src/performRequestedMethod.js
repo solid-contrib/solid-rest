@@ -32,7 +32,7 @@ export default async function perform(method, pathname, content, ctype) {
       break;
 
     case 'GET_ITEM_INFO':
-      return await this.storage.getItemInfo(pathname, content);
+      return await this.storage.getItemInfo(pathname);
       break;
 
     case 'GET_FILES':
@@ -41,16 +41,15 @@ export default async function perform(method, pathname, content, ctype) {
 
     case 'DELETE_AUX_RESOURCES':
       const links = (await this.getAuxResources(pathname)) || [];
-
       try {
         links.map(async link => {
-          await this.storage.deleteResource(link);
+          res = await this.storage.deleteResource(link);
         });
+        return true;
       } catch (e) {
         console.log(e);
         return null;
       }
-
       return 200;
       break;
 
@@ -105,7 +104,12 @@ export default async function perform(method, pathname, content, ctype) {
       break;
 
     case 'DELETE':
-      if (this.item.isContainer) return await this.storage.deleteContainer(pathname);else return await this.storage.deleteResource(pathname);
+      if (this.item.isContainer){
+        return await this.storage.deleteContainer(pathname);
+      }
+      else {
+        return await this.storage.deleteResource(pathname);
+      }
       break;
 
     case 'POST':

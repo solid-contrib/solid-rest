@@ -85,10 +85,19 @@ export async function handleResponse(response, originalRequest) {
 
   if (this.response && this.response.headers) headers.location = this.response.headers.location;
 
-//  headers.url = headers.location || pathname ;
+  //  NO, DON'T USE LOCATION headers.url = headers.location || pathname ;
   headers.url = pathname ;
   if(method==="POST"){
     headers.url = this.request.url;
+/*
+    // NO, DON'T ADD SLUG headers.url = this.request.url + this.request.slug;
+    let cont = await this.perform('ITEM_TYPE',pathname);
+    if(cont==="Resource") {
+      headers.url = headers.url.replace(/\/$/,'');
+      headers.url = headers.url.replace(/\/[^\/]*$/,'');
+    }
+    if(!headers.url.endsWith('/')) headers.url=headers.url+"/";
+*/
   }
   if (this.patch) {                        // ACCEPT-PATCH & MS-AUTHOR-VIA
     headers['accept-patch'] = ['application/sparql-update'];

@@ -25,7 +25,8 @@ export async function getItem(uri, request) {
     let files = await this.perform('GET_FILES', item.pathname);
     if(!files.filter) item.containedFiles = 0;
     else {
-      files = files.filter(file => !this.isAuxResource(file));
+// NO, if it has .acl it should be a containedFile
+//      files = files.filter(file => !this.isAuxResource(file));
       item.containedFiles = files.length;
     }
   }
