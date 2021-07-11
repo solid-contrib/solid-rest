@@ -221,9 +221,11 @@ export class SolidRestFile {
 
   async deleteResource(fn) {
     return new Promise(function (resolve) {
+     try {
       fs.unlink(fn, function (err) {
         if (err) resolve(false);else resolve(true);
       });
+     } catch(e) { console.log(e); resolve(false) }
     });
   }
   /**
@@ -233,8 +235,9 @@ export class SolidRestFile {
    */
 
 
-  deleteContainer(fn) {
+  async deleteContainer(fn) {
     return new Promise(async function (resolve) {
+     try {
       await fs.rmdir(fn, function (err) {
         if (err) {
           resolve(false);
@@ -242,6 +245,7 @@ export class SolidRestFile {
           resolve(true);
         }
       });
+    } catch(e) { console.log(e); resolve(false) }
     });
   }
   /**

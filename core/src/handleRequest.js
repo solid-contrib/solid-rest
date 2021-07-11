@@ -77,17 +77,12 @@ export async function handleRequest(uri, originalRequest) {
     if (!okDir) return 500;
   }
 
-  if (request.method === 'DELETE') {
-    let del = await this.perform('DELETE_AUX_RESOURCES');
-//console.log(77,request.method,item.isContainer,item.containedFiles);
-//    if(item.isContainer && item.containedFiles);
-    if (!del) return 500;
-  }
-
   let response = await this.perform(request.method);
   if (!response && request.method === 'DELETE' && item.isContainer){
     let stillExists  = await this.perform('ITEM_EXISTS',this.item.pathname);
-    if( stillExists ) return 409;
+    if( stillExists ){
+      return 409;
+    }
   }
   return response;
 } // ENDS

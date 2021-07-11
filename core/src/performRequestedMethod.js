@@ -39,6 +39,17 @@ export default async function perform(method, pathname, content, ctype) {
       return await this.storage.getContainer(pathname);
       break;
 
+    case 'DELETE':
+      if (this.item.isContainer){
+        await this.perform('DELETE_AUX_RESOURCES',pathname)
+        return await this.storage.deleteContainer(pathname);
+      }
+      else {
+        await this.perform('DELETE_AUX_RESOURCES',pathname)
+        return await this.storage.deleteResource(pathname);
+      }
+      break;
+
     case 'DELETE_AUX_RESOURCES':
       const links = (await this.getAuxResources(pathname)) || [];
       try {
@@ -48,7 +59,7 @@ export default async function perform(method, pathname, content, ctype) {
         return true;
       } catch (e) {
         console.log(e);
-        return null;
+        return false;
       }
       return 200;
       break;
@@ -101,15 +112,6 @@ export default async function perform(method, pathname, content, ctype) {
       if (typeof content === "undefined") content = this.request.body;
       ctype = ctype || this.item.contentType;
       return await this.storage.putResource(pathname, content, ctype);
-      break;
-
-    case 'DELETE':
-      if (this.item.isContainer){
-        return await this.storage.deleteContainer(pathname);
-      }
-      else {
-        return await this.storage.deleteResource(pathname);
-      }
       break;
 
     case 'POST':
