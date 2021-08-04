@@ -119,8 +119,9 @@ console.log("\nSPARQL update - expected to fail");
   await DELETE(nonRdfFile)
   await DELETE(folder);
 
-  let skipped = 11 - passes - fails;
-  console.warn(`${passes}/11 tests passed, ${fails} failed, ${skipped} skipped\n`);
+  let total = 13;
+  let skipped = total - passes - fails;
+  console.warn(`${passes}/${total} tests passed, ${fails} failed, ${skipped} skipped\n`);
   allfails = allfails + fails
 }
 // =========================================================== //

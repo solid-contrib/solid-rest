@@ -153,6 +153,7 @@ export class SolidRestFile {
   async putResource(pathname, content, ctype) {
     let successCode = fs.existsSync(pathname) ?200 :201;
     let failureCode = 500;
+    content = content || "";
     return new Promise(async resolve => {
       if(pathname.endsWith('/')) {
         let res = await this.postContainer(pathname);      
@@ -175,6 +176,7 @@ export class SolidRestFile {
 
       if (writeIt) {
         try {
+          content = content || "";
           await fs.writeFileSync(pathname, content);
           return resolve(successCode);
         } catch (e) {
