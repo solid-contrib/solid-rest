@@ -46,12 +46,16 @@ export async function getItem(uri, request) {
     return pathname;
   };
 
-  item.extension = this.getExtension(item.pathname);
+  pname = (request.method==="POST") ?this.mungePath(item.pathname,request.slug) :item.pathname;
+  item.extension = this.getExtension(pname);
+//  item.extension = this.getExtension(item.pathname);
   item.contentType = this.getContentType(item.extension);
   item.patchOnNonTurtle = request.method === 'PATCH' && !item.contentType.match('text/turtle');
   item.isAcl = this.extension === '.acl'; // TBD use LinkExt
 
-  item.isAuxResource = item.isAcl || this.extension === '.meta';
+  //item.isAuxResource = item.isAcl || this.extension === '.meta';
+  item.isAuxResource = pname.match(/\.(acl|meta)$/) ?true :false;
+
   /*
     let conflict
     // item is container but file of same name exists

@@ -40,6 +40,7 @@ export async function handleResponse(response, originalRequest) {
   } else if (typeof response === 'boolean') {
     let fr  = response ? 201 : 500;
     fr = fr===201 && method.match(/(GET|HEAD)/) ?200 :201;
+    if( method.match(/OPTIONS/) ) fr = 204;
     finalResponse.headers.status = fr
   } else if (typeof response === 'string') {
       finalResponse.headers.status = 200;

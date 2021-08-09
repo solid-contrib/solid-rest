@@ -1,8 +1,7 @@
-const $rdf = require('rdflib');
+const $rdf = global.$rdf = require('rdflib');
 const {SolidRestFile} = require('../');
 const libUrl = require('url');
 
-global.$rdf = $rdf;
 const client = new SolidRestFile();
 const kb = $rdf.graph();
 const fetcher = $rdf.fetcher(kb,{fetch:client.fetch.bind(client)});
@@ -59,6 +58,7 @@ async function getConfig(scheme){
   let  file1  = folder1 + r1name
   let  file2  = folder2 + r2name
   let  missingFolder = base + "/noSuchThing/norThis/"
+  let  missingFolderPost = base + "/noSuchThingPost/"
 
   const patchSparql = `INSERT { :new <#temp> <#245>; <temp1> "n0:240" .}
   DELETE { <> a :test.}`
@@ -158,6 +158,7 @@ const resPatchN3_2 = [`@prefix : <#>.
     file1  : file1,
     file2  : file2,
     missingFolder : missingFolder,
+    missingFolderPost : missingFolderPost,
     text   : "<> a <#test>.",
     patchN3_1 : patchN3_1(file1),
     patchN3_2 : patchN3_2(file1),
@@ -209,8 +210,8 @@ if(check.headers){
   ok( "post container returns location header (new slug generated)",  cfg.folder1!=cSlug && cSlug.match('-'+cfg.c1name)) 
 
 
-  res = await postFolder( cfg.missingFolder,cfg.c2name )
-  ok( "404 post container, parent not found", res.status==404,res)
+  res = await postFolder( cfg.missingFolderPost,cfg.c2name )
+  ok( "201 post container, parent not found", res.status==201,res)
 
   res = await postFile( cfg.folder1,cfg.r1name,cfg.text )
   ok( "201 post resource", res.status==201,res)
@@ -233,6 +234,7 @@ if(check.headers){
   ok( "201 post resource, resource found", res.status==201, res )
   slug = res.headers.get('location') || "";
   ok( "post resource returns location (new slug generated)", slug !== cfg.r1name && slug.endsWith('-test1.ttl'),res)
+
 }
 
   res = await GET(cfg.folder1);
@@ -244,8 +246,8 @@ if(check.headers){
   slug = cfg.host + slug;
 //  slug = cfg.folder1 + slug;
 
-  res = await postFile( cfg.missingFolder,cfg.file2 )
-  ok( "404 post resource, parent not found", res.status==404,res)
+  res = await postFile( cfg.missingFolderPost, cfg.r1name )
+  ok( "201 post resource, parent not found", res.status==201,res)
 
   // PUT
 
@@ -312,8 +314,8 @@ if( check.patch ){
   ok("200 patch n3 delete, insert, where",res.status==200 && testPatch(res1, cfg.resPatchN3_2), res1)
 
 }
-res = await GET(cfg.base)
-  console.log(await res.text())
+//res = await GET(cfg.base)
+//  console.log(await res.text())
 
 
   // DELETE 
@@ -344,6 +346,9 @@ if(check.headers && typeof slug !='undefined'){
 
   if(check.headers && typeof cSlug!='undefined'){
     res = await DELETE( cfg.host + cSlug )
+    res = await DELETE( cfg.missingFolderPost + cfg.r1name )
+    res = await DELETE( cfg.missingFolderPost + cfg.c2name )
+    res = await DELETE( cfg.missingFolderPost )
   }
 
   cfg.base = cfg.base.endsWith("/") ? cfg.base : cfg.base+"/"
@@ -414,4 +419,10 @@ async function testPatch (res, resPatch) {
   let content = await res.text();
 //  if(!content) console.log("No body from PATCH",resPatch);
   return resPatch.find(string => string === content)
+}
+
+console.log = (...args)=>{
+  for(let a of args){
+    if(!a.toString().match(/^\@\@\@/) ) console.warn(a);
+  }
 }

@@ -4,7 +4,6 @@ const methods = {
     requiresWrite: 1
   },
   POST: {
-    mustExist: 1,
     requiresAppend: 1,
     requiresContentType: 1
   },
@@ -17,7 +16,6 @@ const methods = {
     requiresRead: 1
   },
   OPTIONS: {
-    mustExist: 1,
     requiresRead: 1
   },
   PUT: {
@@ -48,7 +46,7 @@ export async function handleRequest(uri, originalRequest) {
 
   if (item.isAuxResource) {
     if (item.isAcl) request.method.requiresControl = true;
-    if (request.method === "POST") return 405;
+    if (request.method === "POST") return 403;
   }
   if (item.mode.control) item.mode.write = true; // does control imply read?
 
@@ -61,7 +59,7 @@ export async function handleRequest(uri, originalRequest) {
   if (method.requiresRead && !item.mode.read || method.requiresAppend && !item.mode.append || method.requiresWrite && !item.mode.write || method.requiresControl && !item.mode.control) return 401;
 
   if (method.requiresContentType && !request.headers['content-type']) {
-    console.log(request.method, "No Content Type");
+//    console.log(request.method, "No Content Type");
     return 400;
   }
 
@@ -71,7 +69,7 @@ export async function handleRequest(uri, originalRequest) {
   // Errors from carrying out the request
 
 
-  if (request.method === 'PUT' || request.method === 'PATCH') {
+  if (request.method === 'PUT' || request.method==='POST' || request.method === 'PATCH') {
     // if (item.isContainer) return 405;
     let okDir = await this.perform('CREATE_INTERMEDIATE_CONTAINERS');
     if (!okDir) return 500;
