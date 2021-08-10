@@ -1,6 +1,6 @@
 {
   "name": "@solid-rest/file",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "author": "Jeff Zucker",
   "license": "MIT",
   "description": "solid-rest plugin for filesystems",

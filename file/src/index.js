@@ -133,7 +133,7 @@ export class SolidRestFile {
 
     try {
       ctype = mime.contentType(pathname);
-      encoding = ctype.match(/text|application/) ? "utf8" : null;
+      encoding = typeof ctype !="undefined" && ctype.match(/text|application/) ? "utf8" : null;
       bodyData = encoding ? await fs.readFile(pathname, encoding) : await fs.readFile(pathname);
     } catch (e) {
       console.log("Error" + e);
