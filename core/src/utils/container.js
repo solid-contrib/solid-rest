@@ -22,11 +22,12 @@ export default async function containerAsTurtle(pathname, contentsArray, typeWan
       if (filenames[i].isContainer && !fn.endsWith("/")) fn = fn + "/";
       str = str + `  <${fn}>,\n`;
       let ftype = filenames[i].isContainer ? "Container" : "Resource";
-      let ctype = this.getContentType(this.getExtension(fn), ftype);
+      let ctype = this.getContentType(this.getExtension(fn), ftype) || "";
       ctype = ctype.replace(/;.*/, '');
       ftype = filenames[i].isContainer ? "ldp:Container; a ldp:BasicContainer; a ldp:Resource" : "ldp:Resource";
       str2 = str2 + `<${fn}> a ${ftype}.\n`;
-      str2 = str2 + `<${fn}> a <http://www.w3.org/ns/iana/media-types/${ctype}#Resource>.\n`; // str2 = str2 + `<${fn}> :type "${ctype}".\n`
+      if(ctype)
+        str2 = str2 + `<${fn}> a <http://www.w3.org/ns/iana/media-types/${ctype}#Resource>.\n`; // str2 = str2 + `<${fn}> :type "${ctype}".\n`
     }
 
     str = str.replace(/,\n$/, "");

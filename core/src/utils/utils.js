@@ -28,8 +28,9 @@ function getContentType(ext, type) {
   if (!ext || ext === '.ttl' || ext === '.acl' || ext === '.meta' || type === "Container") {
     return 'text/turtle';
   } else {
-    let ctype = contentTypeLookup(ext);
-    return ctype ? ctype : 'text/turtle';
+    let ctype = contentTypeLookup(ext) || "";
+    return ctype;
+//    return ctype ? ctype : 'text/turtle';
   }
 }
 
