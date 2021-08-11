@@ -12,7 +12,7 @@ export class SolidRestFile {
    */
   constructor() {
     this.prefix = "file";
-    this.name = "solid-rest-file-2.0.17";
+    this.name = "solid-rest-file-2.1.4";
     return new SolidRest({
       plugin: this
     });
