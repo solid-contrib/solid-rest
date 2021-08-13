@@ -42,7 +42,9 @@ export class SolidRestFile {
     } catch (err) {}
 
     if (!stat) return null;
-    if (stat.isSymbolicLink()) return null;
+    if (stat.isSymbolicLink()) {
+       return "Container";
+    };
     if (stat.isDirectory()) return "Container";
     if (stat.isFile()) return "Resource";
     return null;
