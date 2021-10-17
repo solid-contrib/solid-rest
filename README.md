@@ -8,6 +8,6 @@ Solid-Rest translates Solid requests into backend requests and backend responses
 
 Plugins for ssh, in-memory storage, in-browser storage (indexedDB, localStorage, Native File API) are in development.
 
-Although Solid-Rest can be used stand-alone, it is best used in conjunction with other libraries, especially [Solid-Node-Client](), a nodejs client for Solid.
+Although Solid-Rest can be used stand-alone, it is best used in conjunction with other libraries, especially [Solid-Node-Client](https://GitHub.com/solid/solid-node-client), a nodejs client for Solid.
   Solid-Node-Client comes preloaded with the Solid-Rest-File plugin, so it will be transparently included in anything using that library.
   
