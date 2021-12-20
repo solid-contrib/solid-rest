@@ -1,0 +1,20 @@
+<script src="https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js"></script>
+<script src="../dist/window/solid-rest-browser.bundle.js"></script>
+
+<script type="module">
+  async function test(){
+    const solidRest = new SolidRestBrowser();
+    await solidRest.configure();
+    const uri = 'browser://IndexedDB/foo/bar/text.txt';
+    const expected = 'Sample content.';
+    await solidRest.fetch( uri, {
+      method:'PUT', 
+      body: expected,
+      headers:{"content-type":"text/plain"},
+    })
+    let got = await solidRest.fetch(uri);
+    if(await got.text()===expected) alert ("Success!");
+    else alert("Failure!");
+  }
+  test();
+</script>

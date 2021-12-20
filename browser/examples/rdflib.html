@@ -1,0 +1,32 @@
+<script src="https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/rdflib@2.2.14/dist/rdflib.min.js"></script><script src="../dist/window/solid-rest-browser.bundle.js"></script><script type="module">
+
+  async function test(){
+
+    // define the knowledge-base & updater as usual
+    //
+    const kb = $rdf.graph();
+    const myUpdater = new $rdf.UpdateManager(kb)
+
+    // define a custom fetcher using solid rest and the knowledge base
+    //
+    const solidRest = new SolidRestBrowser();
+    const myFetcher = await solidRest.configFetcher(kb);
+
+    // from here on, myFetcher & myUpdater will
+    // support in-browser fetches
+    //
+    const uri = 'browser://HTML5FS/test.tll';
+    const why = $rdf.sym(uri);
+    const doc = $rdf.Namespace(uri+'#');
+    const expected = doc('turtleDoc');
+    kb.add( why, doc('isA'), expected,why );
+    await myFetcher.putBack(why);
+    kb.remove(why);
+    await myFetcher.load(why);
+    const got = kb.any(why,doc('isA'),null,why);
+    if(got && got.value===expected.value) alert ("Success!");
+    else alert(got.value);
+  }
+  test();
+
+</script>

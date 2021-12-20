@@ -1,0 +1,132 @@
+<body>
+    <button id="login">login to test</button>
+    <h3>Testing rdflib load, putBack, and update on browser local storage ...</h3>
+
+<!-- Import browserFS, rdflib, SolidRestBrowser, SolidClientAuthn
+-->
+<script src="https://cdn.jsdelivr.net/npm/browserfs@1.4.3/dist/browserfs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/rdflib@2.2.14/dist/rdflib.min.js">
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@inrupt/solid-client-authn-browser@1/dist/solid-client-authn.bundle.js"></script>
+
+
+<script type="module">
+
+const kb = $rdf.graph();
+const updater = new $rdf.UpdateManager(kb)
+let fetcher;  
+import SolidRestBrowser from './src/index.js';
+const solidRest = new SolidRestBrowser({DEBUG:false});
+
+async function main(session){
+  fetcher = await solidRest.fetcher(kb,{
+    fetch : solidClientAuthentication.getDefaultSession().fetch
+  });
+  let fn = "/foo/bar/test.ttl";
+  await test("browser://LocalStorage"+fn);
+  await test("browser://IndexedDB"+fn);
+  await test("browser://HTML5FS"+fn);
+  fetcher = await solidRest.fetcher(kb,{
+    browserFSconfig : { fs: 'LocalStorage' },
+    httpOnly : true,
+    fetch : myFetch
+  });
+  await test("browser://https://example.com"+fn);
+  await solidRest.dump();
+//  await test("https://jeff-zucker.solidcommunity.net/private/test.ttl");
+}
+
+async function myFetch(uri,options){
+  let inrupt = solidClientAuthentication.getDefaultSession();
+  let res;
+  try {
+    res = await solidRest.fetch(uri,options);
+    console.log(`Stored local <${uri}>.`);
+  }
+  catch(e){console.log(`Could not store local <${uri}> : ${e}`);}
+  if(options.method==='PUT'){
+    uri = uri.replace(/browser:\/\//,'');
+    try {
+      await inrupt.fetch(uri,options);
+      console.log(`Stored remote <${uri}>.`);
+    }
+    catch(e){console.log(`Could not store remote <${uri}> : ${e}`);}
+  }
+  return res;
+}
+
+async function test(uri){
+  const why = $rdf.sym(uri);
+  const doc = $rdf.Namespace(uri+"#");
+  let ins1 = $rdf.st(doc('It'), doc('isA'), doc('TurtleDoc'), why)
+  let ins2 = $rdf.st(doc('This'), doc('isA'), doc('LocalStorageDoc'), why)
+  let del = []
+  kb.add(ins1);
+  await fetcher.putBack(why);
+  try { 
+    await kb.updater.update(del, ins2);
+  }
+  catch(e){ console.log(e) }
+  await fetcher.load(uri);
+  let results = kb.any( doc('This'),doc('isA'),null,why);
+  let msg = (results && results.value===doc("LocalStorageDoc").value) ?"ok" :"fail";
+  document.body.innerHTML += `
+    <p>Testing &lt;${uri}> : ${msg}</p>
+  `
+}
+    const idp = "https://solidcommunity.net";
+    const auth = solidClientAuthentication;
+    let session;
+    document.getElementById('login').onclick = ()=> { 
+        auth.login({
+            oidcIssuer: idp, 
+            redirectUrl: window.location.href,
+            clientName: "rdflib test"
+        });
+    }
+    async function handleRedirectAfterLogin() {
+        await auth.handleIncomingRedirect();
+        session = auth.getDefaultSession();
+        if (session.info.isLoggedIn)  main(session);
+    }
+//    handleRedirectAfterLogin();
+main()
+</script>
+<script src="../dist/window/solid-rest-browser.bundle.js"></script>
+
+<script type="module">
+  async function test(){
+    const solidRest = new SolidRestBrowser();
+    await solidRest.configure();
+    const uri = 'browser://IndexedDB/foo/bar/text.txt';
+    const expected = 'Sample content.';
+    await solidRest.fetch( uri, {
+      method:'PUT', 
+      body: expected,
+      headers:{"content-type":"text/plain"},
+    })
+    let got = await solidRest.fetch(uri);
+    if(await got.text()===expected) alert ("Success!");
+    else alert("Failure!");
+  }
+  test();
+</script>
+
+
+
+const kb = $rdf.graph();
+const updater = new $rdf.UpdateManager(kb);
+let fetcher;
+import SolidRestBrowser from './src/index.js';
+const solidRest = new SolidRestBrowser({DEBUG:false});
+async function main(session){
+  fetcher = await solidRest.fetcher(kb,{
+   fetch : solidClientAuthentication.getDefaultSession().fetch
+  });
+}
+
+
+
+
+
+
