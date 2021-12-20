@@ -15,10 +15,15 @@ It's easy to create local-first apps with this library, see below for some examp
 Before loading Solid Rest you should import the browserFS library as well 
 as any Solid libraries you need (e.g. solid-client-authn-browser, rdflib, 
 etc.).  You can install these libraries locally or point to CDNs such as 
-
-* https://cdn.jsdelivr.net/npm/browserfs@1/dist/browserfs.min.js,
-* https://cdn.jsdelivr.net/npm/rdflib@2/dist/rdflib.min.js, or 
-* https://cdn.jsdelivr.net/npm/@inrupt/solid-client-authn-browser@1/dist/solid-client-authn.bundle.js
+```html
+<script src="https://cdn.jsdelivr.net/npm/browserfs@1/dist/browserfs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/rdflib@2/dist/rdflib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@inrupt/solid-client-authn-browser@1/dist/solid-client-authn.bundle.js"></script>
+```
+Then you need to import Solid-Rest-Browser itself.  You can do this from a local install or from here:
+```html
+<script src="https://solid.github.io/solid-rest/browser/dist/solid-rest-browser.bundle.js"></script>
+```
                      
 ## Using Stand-alone
 
