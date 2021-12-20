@@ -12,31 +12,44 @@ export default class SolidRestBrowser {
     options ||= {};
     options.method ||= 'GET';
     let fn = uri.replace(/browser:\//,'');
-//    fn = fn.replace(/https*:\//,'');
-//    fn = fn.replace(/\/example.com/,'')
+    const isContainer = fn.endsWith('/');
     uri = new URL( uri );
+    let content;
     const success =  {
       ok:true,
       status:200,
+      statusText:"OK",
       headers : {
-        etag:uuid(),
-        "wac-allow":`user="read write append control",public="read"`,
+        "etag"         : uuid(),
+        "wac-allow"    : `user="read write append control",public="read"`,
+        "x-powered-by" : "Solid Rest Browser",
+        "date"         : (new Date()).toString(),
       },
     }
     const failure =  { ok:false, status:500 }
     if(options.method==='PUT'){
       try { 
-        await this.make_containers(fn);
-        await this.writeFile(fn,options.body); 
-        await this.writeFile(fn+'.type',options.headers['content-type']);
+        await this.make_containers(fn); // creates intermediate folders
+        if(!isContainer) {
+          await this.writeFile(fn,options.body); 
+          await this.writeFile(fn+'.type',options.headers['content-type']);
+        }
+        success.status = "201";
+        success.statusText = "Created";
         return new Response(null,success);
       }
       catch(e){ console.log(e); throw e; }
     }
     else if(options.method==='GET'){
       try { 
-        let content = await this.readFile(fn); 
-        success.headers['content-type'] = await this.readFile(fn+'.type');
+        if(isContainer){
+          content = await this.getContainer(fn)|| ""; 
+          success.headers['content-type'] = 'text/turtle';
+        }
+        else {
+          content = await this.readFile(fn) || ""; 
+          success.headers['content-type'] = await this.readFile(fn+'.type');
+        }
         return new Response(content,success);
       }
       catch(e){ console.log(e); failure.statusText=e; return(failure); }
@@ -100,6 +113,7 @@ export default class SolidRestBrowser {
   }
 
   async make_containers(pathname){
+    const isContainer = pathname.endsWith('/');
     let inexistentParents = []
     // Get all parents which need to be created
     let curParent = this._getParent(pathname)
@@ -110,9 +124,9 @@ export default class SolidRestBrowser {
 //    if (!curParent) // Should not happen, that we get to the root
 //      Promise.resolve();
 
+    if(isContainer) inexistentParents.push(pathname);
     // Create missing parents
     while (inexistentParents.length) {
-      // postContainer expects an url without '/' at the end
       let  container = inexistentParents.pop().slice(0, -1)
       this.log("Creating container ",container)
       try{
@@ -151,7 +165,27 @@ export default class SolidRestBrowser {
     }
   }
 
-  readFolder(fn){
+  async getContainer(path){
+    let folderArray = await this.readFolder(path);
+    if(folderArray.code) return Promise.reject(code)
+    folderArray = folderArray.filter((i)=>!i.endsWith('.type'));
+    let pathname = path;
+    let str = "@prefix : <#>. @prefix ldp: <http://www.w3.org/ns/ldp#>.\n" + "<> a ldp:BasicContainer, ldp:Container";
+    if (folderArray.length) {
+      str = str + "; ldp:contains\n";
+      for (var i = 0; i < folderArray.length; i++) {
+        let fn = folderArray[i];
+        fn = encodeURI(fn);
+        str = str + `  <${fn}>,\n`;
+      }
+      str = str.replace(/,\n$/, "");
+    }
+    str = str + `.\n`;
+    return(str);
+  }
+
+
+  async readFolder(fn){
     return new Promise( async (resolve, reject) => {
       try {
         this.fs.readdir(fn,async (err,folderArray)=>{

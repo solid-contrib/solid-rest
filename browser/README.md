@@ -69,7 +69,7 @@ In most cases, you'll want to interact with both the in-browser data and data fr
       fetch : solidClientAuthentication.getDefaultSession().fetch
     })
 ```
-This assumes that you have provided other code to handle the authentication, see [a hybrid in-browser and authenticated rdflib fetch](examples/hybrid.html) for a working example.
+This assumes that you have provided other code to handle the authentication, see [a hybrid in-browser and authenticated rdflib fetch](examples/authn.html) for a working example.
 
 If you create a fetcher with the fetch option specified, you will end up with a hybrid fetcher. URLs in http: and https: schemes will use the supplied authenticated fetch, while URLs in the browser: scheme will use the in-browser fetch.   
 
@@ -127,6 +127,14 @@ In the example below, we'll simply copy the file locally and then remotely with 
 This code would mean that any uses of myFetcher.load, myFetcher.putBack,
 and myUpdater.update would always read from the in-browser data and write 
 to both the in-browser and the external Pod storages.
+
+## Other Details
+
+When you create the SolidRestBrowser object, you can add a flag to turn debugging info on:
+```javascript
+  const solidRest = new SolidRestBrowser({DEBUG:true});
+```
+
 
 &copy; 2021, Jeff Zucker, all rights reserved;
 may be freely distributed under an MIT license
