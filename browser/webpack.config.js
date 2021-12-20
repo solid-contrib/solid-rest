@@ -18,7 +18,7 @@ const window = {
     name: 'window',
     output: {
         ...common.output,
-        path: path.resolve(__dirname, 'dist', 'window'),
+        path: path.resolve(__dirname, 'dist'),
         libraryTarget: 'umd',
     },
     module: {
@@ -32,6 +32,7 @@ const window = {
 }
 
 // Configurations specific to the node build
+/*
 const node = {
     ...common,
     name: 'node',
@@ -41,8 +42,8 @@ const node = {
         libraryTarget: 'commonjs2',
     },
 }
-
+*/
 module.exports = [
     window,
-    node,
+//    node
 ]
