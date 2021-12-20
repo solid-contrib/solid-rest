@@ -2,7 +2,7 @@
 
 Solid access to in-browser and cloud storage
 
-This library supports using most Solid methods on data stored in the browser and cloud storage.  It is a shim between Solid and the [browserFS]() library.  Out of the box, it supports Local Storage, IndexedDB, and the HTML5 File System API.  Users may also pass in their own browserFS configuration for example, Dropbox or any of the dozen or so browserFS supported file systems.
+This library supports using most Solid methods on data stored in the browser and cloud storage.  It is a shim between Solid and the [browserFS](https://github.com/jvilk/BrowserFS) library.  Out of the box, it supports Local Storage, IndexedDB, and the HTML5 File System API.  Users may also pass in their own browserFS configuration for example, Dropbox or any of the dozen or so browserFS supported file systems.
 
 Once initialized, most Solid methods can be used with in-browser or cloud data simply by using URLs in the form `browser://LocalStorage/foo/bar.ttl`, where "LocalStorage" could be "IndexedDB", "Dropbox" or other browserFS storage type.
 
@@ -63,7 +63,7 @@ The library has a configFetcher method that modifies rdflib's fetcher object to 
 ```
 See also a [complete working example of rdflib no-auth usage](examples/rdflib.html).
 
-In most cases, you'll want to interact with both the in-browser data and data from one or more pods.  If some of those pods require authentication, you'll need to supply an authenticated fetch such as [Inrupt's Solid Client Authn Browser](https://github.io/inrupt/solid-client-authn).  You can add this the same way as you would with standard rdflib, by supplying the Inrupt fetch on fetcher creation. If you've imported Inrupt's authentication library in a script tag, you can add it to rdflib's fetcher like this:
+In most cases, you'll want to interact with both the in-browser data and data from one or more pods.  If some of those pods require authentication, you'll need to supply an authenticated fetch such as [Inrupt's Solid Client Authn Browser](https://github.com/inrupt/solid-client-authn-js).  You can add this the same way as you would with standard rdflib, by supplying the Inrupt fetch on fetcher creation. If you've imported Inrupt's authentication library in a script tag, you can add it to rdflib's fetcher like this:
 ```javascript
     const fetcher = await solidRest.configFetcher(kb,{
       fetch : solidClientAuthentication.getDefaultSession().fetch
