@@ -2,13 +2,13 @@
 
 Solid access to in-browser and cloud storage
 
-This library supports using most Solid methods on data stored in the browser and cloud storage.  It is a shim between Solid and the [browserFS](https://github.com/jvilk/BrowserFS) library.  Out of the box, it supports Local Storage, IndexedDB, and the HTML5 File System API.  Users may also pass in their own browserFS configuration for example, Dropbox or any of the dozen or so browserFS supported file systems.
+This library supports using most Solid methods on data stored in the browser and cloud storage.  It is a shim between Solid and the [browserFS](https://github.com/jvilk/BrowserFS) library.  Out of the box, it supports Local Storage, IndexedDB, and the HTML5 File System API.  Users may also pass in their own browserFS configuration using any of the dozen or so browserFS supported file systems.
 
-Once initialized, most Solid methods can be used with in-browser or cloud data simply by using URLs in the form `browser://LocalStorage/foo/bar.ttl`, where "LocalStorage" could be "IndexedDB", "Dropbox" or other browserFS storage type.
+Once initialized, most Solid methods can be used with in-browser or cloud data simply by using URLs in the form `browser://LocalStorage/foo/bar.ttl`, where "LocalStorage" could be "IndexedDB", "HTML5FS" or other browserFS storage type.
 
 In-browser URLs may be used directly with stand-alone Solid Rest fetches, or, more likely, as the fetch for rdflib, the solid-ui forms system, or other high-level libraries.
 
-It's easy to create local-first apps with this library, see below for some examples.
+The library can be used for dual-fetches, for example to write both in-browser and to a pod.  This feature could be combined with syncing logic to create a local-first app.  See the example below.
 
 ## Importing the prerequisites
 
@@ -95,7 +95,7 @@ This example would remove the mountable file system and replace it with a single
 
 You can use this configuration option to support any of the dozen or so browserFS backends or to create a mountable or mirrored file system. You can pass any valid browserFS configuration.
 
-## A Local-First Example
+## Dual Fetches - a basis for  Local-First
 
 A local-first system stores data in the browser and syncs it with remote Pod data.  To do this you'll need to create a custom fetch method.  
 
@@ -126,7 +126,7 @@ In the example below, we'll simply copy the file locally and then remotely with 
 ```
 This code would mean that any uses of myFetcher.load, myFetcher.putBack,
 and myUpdater.update would always read from the in-browser data and write 
-to both the in-browser and the external Pod storages.
+to both the in-browser and the external Pod storages. An app or library could add conflict resolution, syncing and other features to create a local first system using any library that supports Solid fetches. 
 
 ## Other Details
 
