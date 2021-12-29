@@ -1,13 +1,9 @@
-import libPath from "path";
-import { contentType as contentTypeLookup } from 'mime-types';
+// import { contentType as contentTypeLookup } from 'mime-types';
 import { v1 as uuidv1 } from 'uuid';
 import * as pod from './createServerlessPod.js';
 const linkExt = ['.acl', '.meta'];
 const linksExt = linkExt.concat('.meta.acl');
 
-
-function url2Path( url ) {
-}
 
 async function createServerlessPod(base) {
   console.log(`Creating pod at <${base}>`);
@@ -24,13 +20,14 @@ async function createServerlessPod(base) {
   await this.perform('FULL_PUT', base + "/inbox/.meta", "");
 }
 
-function getContentType(ext, type) {
+async function getContentType(path, type) {
+  let ext = this.getExtension(path);
   if (!ext || ext === '.ttl' || ext === '.acl' || ext === '.meta' || type === "Container") {
     return 'text/turtle';
   } else {
-    let ctype = contentTypeLookup(ext) || "";
+//    let ctype = contentTypeLookup(ext) || "";
+    let ctype = await this.perform('GET_CONTENT_TYPE',path) || "";
     return ctype;
-//    return ctype ? ctype : 'text/turtle';
   }
 }
 

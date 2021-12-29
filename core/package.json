@@ -1,15 +1,16 @@
 {
   "name": "@solid-rest/core",
-  "version": "2.1.1",
+  "version": "2.1.3x",
   "author": "Jeff Zucker",
   "license": "MIT",
   "description": "treat any storage as a mini Solid server",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "scripts": {
-    "build": "npm run build:clean && npm run build:cjs && npm run build:esm",
-    "build:clean": "rm -rf dist && mkdir dist && mkdir dist/cjs && mkdir dist/esm",
+    "build": "npm run build:clean && npm run build:cjs && npm run build:esm && npm run build:umd",
+    "build:clean": "rm -rf dist && mkdir dist && mkdir dist/cjs && mkdir dist/esm && mkdir dist/umd",
     "build:cjs": "babel --plugins @babel/plugin-transform-modules-commonjs src --out-dir dist/cjs",
+    "build:umd": "babel --plugins @babel/plugin-transform-modules-umd src --out-dir dist/umd",
     "build:esm": "babel src --out-dir dist/esm"
   },
   "repository": {
@@ -29,13 +30,13 @@
   "homepage": "https://github.com/jeff-zucker/solid-rest#readme",
   "dependencies": {
     "cross-fetch": "3.0.6",
-    "mime-types": "2.1.27",
     "uuid": "8.3.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.10",
     "@babel/core": "^7.14.6",
     "@babel/plugin-transform-modules-commonjs": "^7.12.1",
+    "@babel/plugin-transform-modules-umd": "^7.16.0",
     "babel-preset-es2015": "6.24.1",
     "babel-preset-stage-0": "6.24.1"
   }

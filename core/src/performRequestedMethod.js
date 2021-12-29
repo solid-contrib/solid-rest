@@ -1,4 +1,3 @@
-import libPath from 'path';
 
 export default async function perform(method, pathname, content, ctype) {
   this.request = this.requestObj;
@@ -31,8 +30,16 @@ export default async function perform(method, pathname, content, ctype) {
       return await this.storage.itemType(pathname);
       break;
 
+    case 'GET_CONTENT_TYPE':
+      return await this.storage.getContentType(pathname).bind(this.storage);
+      break;
+
+    case 'GET_PATH_HANDLER':
+      return await this.storage.getPathHandler(pathname);
+      break;
+
     case 'GET_ITEM_INFO':
-      return await this.storage.getItemInfo(pathname);
+      return await this.storage.getItemInfo(pathname,this.request);
       break;
 
     case 'GET_FILES':
@@ -65,7 +72,7 @@ export default async function perform(method, pathname, content, ctype) {
       break;
 
     case 'CREATE_INTERMEDIATE_CONTAINERS':
-      return await this.storage.makeContainers(pathname);
+      return await this.storage.makeContainers(pathname) || 1;
       break;
 
     case 'GET':
@@ -76,7 +83,7 @@ export default async function perform(method, pathname, content, ctype) {
           return files;
         }
 
-        return await this.containerAsTurtle(pathname, files, this.request.typewanted);
+        return await this.containerAsTurtle(pathname, files, this.request.typewanted,this);
       } else {
         let thing = await this.storage.getResource(pathname);
         if (!thing) return false;
@@ -141,17 +148,13 @@ export default async function perform(method, pathname, content, ctype) {
       let exists=await this.storage.itemExists(pathname.replace('file://',''));
       if( !exists ) await this.perform('FULL_PUT', pathname, "", ctype);
 ;
-
-      
       // 415 patchOnNonTurtle is handled already in handleRequest.js
       let oldContent = await this.storage.getResource(pathname);
       oldContent = oldContent && oldContent.body ? oldContent.body : oldContent;
 //      if (!oldContent) return false;
       oldContent = typeof oldContent === 'string' ? oldContent : oldContent.toString();
       let newContent,patchStatus;
-
-
-//      try {
+      try {
         [patchStatus, newContent] = await this.patch.patchContent(oldContent, contentType, this.request);
         if (patchStatus !== 200) {
           return {
@@ -159,15 +162,13 @@ export default async function perform(method, pathname, content, ctype) {
             body: newContent
           };
         }
-/*      } catch (e) {
+      } catch (e) {
         if(!e.length) e = "";
         return {
           status: e,
           statusText: e.toString()
         };
       }
-*/
-
 //      const status = await this.storage.makeContainers(pathname);
 
 //      if (!status) return false;

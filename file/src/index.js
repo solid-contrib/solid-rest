@@ -5,6 +5,7 @@ import fs from "fs-extra";
 import mime from "mime-types"; // import concatStream from "concat-stream";
 
 export class SolidRestFile {
+
   /**
    * file system backend for Solid-Rest
    * @constructor
@@ -17,16 +18,39 @@ export class SolidRestFile {
       plugin: this
     });
   }
+
   /**
    * check if file exists
    * @param filePath
    * @return {boolean}
    */
-
-
   async itemExists(path) {
     return fs.existsSync(path);
   }
+
+  /**
+   * check file's content-type
+   * @param filePath
+   * @return {string}
+   */
+  async getContentType(path) {
+    return await mime.lookup(path);
+  }
+
+  /**
+   * get path handler
+   * @param filePath
+   * @return {string}
+   */
+  async getPathHandler(path) {
+    if (path.startsWith('file')) {
+      return libPath;                                                   
+    }
+    else {                                                                
+      return libPath.posix;
+    }
+  }
+
   /**
    * check if thing is Container or Resource
    * @param filePath
@@ -84,7 +108,7 @@ export class SolidRestFile {
 
   async getItemInfo(fn) {
     fn = fn.replace(/^file:\/\//, '');
-    let mimetype = mime.lookup(fn); // mimetype from ext
+    let mimetype = await mime.lookup(fn); // mimetype from ext
 
     let type = await this.itemType(fn); // Container/Resource
 
@@ -118,7 +142,8 @@ export class SolidRestFile {
       mode: mode,
       exists: exists,
       isContainer: type === "Container" ? true : false,
-      mimetype: mimetype
+      mimetype: mimetype,
+      contentType: mimetype
     };
     return Promise.resolve(item);
   }

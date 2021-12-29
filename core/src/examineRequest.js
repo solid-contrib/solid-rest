@@ -1,4 +1,5 @@
-import { URL } from "url";
+import { Url as URL } from "url";
+
 export function getRequest(uri, options) {
   const request = normalizeRequestKeys(options);
   request.headers = normalizeRequestKeys(request.headers);

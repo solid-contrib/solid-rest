@@ -3,8 +3,9 @@
      location : /foo/bar.txt
  ldp:contains : bar.txt
 */
-import libPath from 'path';
+//import libPath from 'path';
 import { Response, Headers } from 'cross-fetch';
+import { v4 as uuid } from 'uuid';
 const statusText = {
   200: "OK",
   201: "Created",
@@ -33,7 +34,6 @@ export async function handleResponse(response, originalRequest) {
      * object  : or send a header and optional body
      * string  : or, for get requests, send the content
   */
-
   if (typeof response === 'number') {
     wrapHeaders = false;
     finalResponse.headers.status = response;
@@ -68,9 +68,8 @@ export async function handleResponse(response, originalRequest) {
 
   const pathname = item.pathname;
 
-//  const fn = this.basename(pathname, item.pathHandler); 
-//  const fn = this.basename(pathname); 
-  const fn = libPath.basename(pathname); 
+  // const fn = libPath.basename(pathname); 
+  const fn = pathname.replace(/.*\//,''); 
 
   headers['content-type'] = this.item.contentType; // CONTENT-TYPE	  
 
@@ -105,27 +104,60 @@ export async function handleResponse(response, originalRequest) {
     headers['ms-author-via'] = ["SPARQL"];                   
   }
 
+
   let body = finalResponse.body || this.response.body || ""; // Now we merge headers we created with response headers, prefering response
 
   Object.assign(headers, finalResponse.headers);
+//alert(finalResponse.headers.status)
   headers.status = finalResponse.headers.status || this.response.headers.status || 500;
 
+  async function serialize(uri,body,informat,outformat){
+    return new Promise( async (resolve,reject)=>{
+      let u = $rdf.sym(uri);
+      let kb = $rdf.graph();
+      await $rdf.parse(body, kb, uri, informat); 
+      $rdf.serialize(u, kb, uri,outformat,(err, str)=>{
+        if(err) return( reject(err) );
+        else return( resolve(str)  );
+      });
+    })
+  }
+
+  let accept = this.request.headers.accept;
+  accept = accept && accept.match(/ /) ?null :accept;
+  if(accept){
+    if( accept.match(/(text\/turtle|application\/ld\+json)/) ){
+      body = await serialize(this.request.url,body.toString(),this.item.contentType,accept)
+    }
+    else {
+      headers.status = "405";
+      headers.statusText = `Unsupported content-type in accept header : ${accept}`;
+    }
+  }
+
   headers.statusText = headers.statusText || statusText[headers.status]; 
+
+  headers.etag = `W/"${uuid()}"`;
+  headers['content-length'] = (typeof Buffer !='undefined') ?Buffer.byteLength(body,'utf8') :(typeof Blob!="undefined") ?(new Blob([body])).size :77;
+
   // Now we create & return the Response object
   for(var h of Object.keys(headers)){
     if(! headers[h]) delete headers[h];
   }
 
-  if(!headers.url.match(/:/)) headers.url = "file://"+headers.url;
-
-
-
+  if(!headers.url.match(/:/)) headers.url = (this.prefix||"file:") + "//"+headers.url;
 
 //  headers.location = headers.location || headers.url.replace(/^....?:\/\//,'');
 
 
 //  if(!headers.location.match(/^file:/)) headers.location = "file://"+headers.location;
 
+if(originalRequest.method==='HEAD') {
+  body = "";
+  for(let k of Object.keys(headers)){
+    body = body + `${k}:${headers[k]}\n`;
+  }
+}
 
   if (originalRequest.plainResponse) {
     // from a server that wants to munge

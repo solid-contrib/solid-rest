@@ -48,9 +48,7 @@ export async function handleRequest(uri, originalRequest) {
     if (item.isAcl) request.method.requiresControl = true;
     if (request.method === "POST") return 403;
   }
-  if (item.mode.control) item.mode.write = true; // does control imply read?
-
-  if (item.mode.write) item.mode.append = true; // does write imply read?
+  if (item.mode.write) item.mode.append = true;
 
   const method = methods[request.method];
   if (!method) console.log(55,request.method);

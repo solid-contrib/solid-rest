@@ -1,16 +1,17 @@
-import libPath from "path";
+//import libPath from "path";
 import Url from "url";
+var pathHandler;
+
 export async function getItem(uri, request) {
-  let pathHandler, url, pname;
+  let url, pname;
+  pathHandler = await this.perform('GET_PATH_HANDLER',uri);
 
   if (uri.startsWith('file')) {
     url = Url.format(request.url);
     pname = Url.fileURLToPath(url);
-    pathHandler = libPath;
   } else {
     url = decodeURIComponent(uri);
     pname = Url.parse(url).pathname;
-    pathHandler = libPath.posix;
   }
 
   const item = await this.perform('GET_ITEM_INFO', pname, request);
@@ -48,10 +49,9 @@ export async function getItem(uri, request) {
 
   pname = (request.method==="POST") ?this.mungePath(item.pathname,request.slug) :item.pathname;
   item.extension = this.getExtension(pname);
-//  item.extension = this.getExtension(item.pathname);
-  item.contentType = this.getContentType(item.extension);
+  item.contentType = await this.getContentType(item.pathname);
   item.patchOnNonTurtle = request.method === 'PATCH' && !item.contentType.match('text/turtle');
-  item.isAcl = this.extension === '.acl'; // TBD use LinkExt
+  item.isAcl = pname.match(/\.acl/); // TBD use LinkExt
 
   //item.isAuxResource = item.isAcl || this.extension === '.meta';
   item.isAuxResource = pname.match(/\.(acl|meta)$/) ?true :false;

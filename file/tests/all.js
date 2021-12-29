@@ -175,7 +175,7 @@ const resPatchN3_2 = [`@prefix : <#>.
 // if set to 0, skips those tests
 const check = {
   headers:1,
-  patch:1,
+  patch:0,
 }
 async function run(scheme){
 
@@ -314,10 +314,6 @@ if( check.patch ){
   ok("200 patch n3 delete, insert, where",res.status==200 && testPatch(res1, cfg.resPatchN3_2), res1)
 
 }
-//res = await GET(cfg.base)
-//  console.log(await res.text())
-
-
   // DELETE 
   res = await DELETE( cfg.file1 )  // delete r1.name
   ok("200 delete resource",res.status==200,res)

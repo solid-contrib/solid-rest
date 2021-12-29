@@ -43,7 +43,8 @@ const node = {
     },
 }
 */
+const resolve = {resolve:{ fallback: { "path": false } }}
 module.exports = [
-    window,
-//    node
+    resolve,
+    window
 ]
