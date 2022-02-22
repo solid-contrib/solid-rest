@@ -1,6 +1,6 @@
 import libPath from "path";
 import { Readable } from "stream";
-import SolidRest from "../../../core/";
+import SolidRest from "@solid-rest/core/";
 import fs from "fs-extra";
 import mime from "mime-types"; // import concatStream from "concat-stream";
 
