@@ -111,6 +111,7 @@ export async function handleResponse(response, originalRequest) {
 //alert(finalResponse.headers.status)
   headers.status = finalResponse.headers.status || this.response.headers.status || 500;
 
+  let $rdf = typeof window != "undefined" && window.$rdf ? window.$rdf : typeof global != "undefined" && global.$rdf ? global.$rdf : null;
   async function serialize(uri,body,informat,outformat){
     return new Promise( async (resolve,reject)=>{
       let u = $rdf.sym(uri);
@@ -122,10 +123,9 @@ export async function handleResponse(response, originalRequest) {
       });
     })
   }
-
   let accept = this.request.headers.accept;
   accept = accept && accept.match(/ /) ?null :accept;
-  if(accept){
+  if(this.patch && accept){
     if( accept.match(/(text\/turtle|application\/ld\+json)/) ){
       body = await serialize(this.request.url,body.toString(),this.item.contentType,accept)
     }
