@@ -4,6 +4,7 @@ const methods = {
     requiresWrite: 1
   },
   POST: {
+    mustExist: 1,
     requiresAppend: 1,
     requiresContentType: 1
   },
@@ -44,13 +45,13 @@ export async function handleRequest(uri, originalRequest) {
   if (item.folderFileConfusion) return 400; // can't have both /foo and /foo/
   if (item.patchOnNonRdf) return 400;
 
-  if (item.isAuxResource) {
-    if (item.isAcl) request.method.requiresControl = true;
-    if (request.method === "POST") return 403;
-  }
   if (item.mode.write) item.mode.append = true;
 
   const method = methods[request.method];
+  if (item.isAuxResource) {
+    if (item.isAcl) method.requiresControl = true;
+    if (request.method === "POST") return 403;
+  }
   if (!method) console.log(55,request.method);
   if (!method) return 409;
   if (method.mustExist && !item.exists) return 404;

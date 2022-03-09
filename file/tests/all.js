@@ -211,7 +211,7 @@ if(check.headers){
 
 
   res = await postFolder( cfg.missingFolderPost,cfg.c2name )
-  ok( "201 post container, parent not found", res.status==201,res)
+  ok( "404 post container, parent not found", res.status==404,res)
 
   res = await postFile( cfg.folder1,cfg.r1name,cfg.text )
   ok( "201 post resource", res.status==201,res)
@@ -247,7 +247,7 @@ if(check.headers){
 //  slug = cfg.folder1 + slug;
 
   res = await postFile( cfg.missingFolderPost, cfg.r1name )
-  ok( "201 post resource, parent not found", res.status==201,res)
+  ok( "404 post resource, parent not found", res.status==404,res)
 
   // PUT
 
