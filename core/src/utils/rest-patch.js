@@ -77,7 +77,6 @@ export default class RestPatch {
   // serialize graph to turtle
   async writeGraph(graph, resource) {
     const resourceSym = graph.sym(resource.url);
-console.log(44,resource.contentType)
     try {
       const serialized = $rdf.serialize(resourceSym, graph, resource.url, resource.contentType)
       return serialized;

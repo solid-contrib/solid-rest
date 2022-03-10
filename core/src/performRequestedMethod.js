@@ -31,7 +31,8 @@ export default async function perform(method, pathname, content, ctype) {
       break;
 
     case 'GET_CONTENT_TYPE':
-      return await this.storage.getContentType(pathname).bind(this.storage);
+      return await this.storage.getContentType(pathname)
+//      return await this.storage.getContentType(pathname).bind(this.storage);
       break;
 
     case 'GET_PATH_HANDLER':

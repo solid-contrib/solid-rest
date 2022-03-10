@@ -23,7 +23,7 @@ export default class SolidRest {
     this.perform = perform.bind(this);
     this.isAuxResource = isAuxResource.bind(this);
     this.getAuxResources = getAuxResources.bind(this);
-    this.getContentType = this.storage.getContentType.bind(this.storage);
+    this.getContentType = getContentType;
     this.generateRandomSlug = generateRandomSlug.bind(this);
     this.createServerlessPod = createServerlessPod.bind(this);
     if(this.storage.configFetcher) this.configFetcher = this.storage.configFetcher.bind(this.storage)
