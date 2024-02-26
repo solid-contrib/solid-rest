@@ -91,7 +91,6 @@ export class SolidRestFile {
       for (var f in files) {
         if(files[f].startsWith('.')) continue;
         if(files[f].startsWith('#')) continue;
-console.log(files[f]);
         if(!pathname.endsWith('/')) pathname = pathname + "/";
         newFiles.push(await this.getItemInfo(pathname + files[f]));
       }
