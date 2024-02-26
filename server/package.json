@@ -1,0 +1,18 @@
+{
+  "name": "solid-rest-server",
+  "version": "1.0.0",
+  "description": "A simple Solid server based on Solid-Rest",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index"
+  },
+  "keywords": [],
+  "author": "Jeff Zucker",
+  "license": "MIT",
+  "dependencies": {
+    "@solid-rest/file": "^2.1.18",
+    "express": "^4.18.2",
+    "mashlib": "^1.8.10-alpha",
+    "solid-node-client": "^2.1.10"
+  }
+}
