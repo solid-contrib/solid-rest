@@ -68,18 +68,18 @@ const patchN3_1 = (url) => `@prefix solid: <http://www.w3.org/ns/solid/terms#>.
   @prefix schem: <http://schema.org/>.
   @prefix : <#>.
   @prefix ex: <http://example.com#>.
-  <> solid:patches <${url}>;
+  <> a solid:InsertDeletePatch ;
   solid:inserts { <> a :test; ex:temp :245. <#new> schem:temp1 :245; ex:temp1 :200 .}.`
 const patchN3_2 = (url) => `@prefix solid: <http://www.w3.org/ns/solid/terms#>.
   @prefix schem: <http://schema.org/>.
   @prefix : <#>.
   @prefix ex: <http://example.com#>.
-  <> solid:patches <${url}>;
+  <> a solid:InsertDeletePatch ;
   solid:deletes { <> a :test. }.`
 const  patchN3_3 = (url) => `@prefix solid: <http://www.w3.org/ns/solid/terms#>.
   @prefix : <#>.
   @prefix ex: <http://example.com#>.
-  <> solid:patches <${url}>;
+  <> a solid:InsertDeletePatch ;
   solid:deletes { <> a :test. };
   solid:where { ?a ex:temp1 :200. };
   solid:inserts { ?a ex:temp :321; ex:temp1 :250, :300. }.`
@@ -175,7 +175,7 @@ const resPatchN3_2 = [`@prefix : <#>.
 // if set to 0, skips those tests
 const check = {
   headers:1,
-  patch:0,
+  patch:1,
 }
 async function run(scheme){
 
@@ -276,6 +276,8 @@ if(check.headers){
   res = await HEAD( cfg.missingFolder )
   ok("404 head resource, not found",res.status==404,res )
 
+  console.log(res.headers)
+
   // GET
   res = await GET( cfg.missingFolder )
   ok("404 get container, not found",res.status==404,res )
@@ -295,18 +297,16 @@ if( check.patch ){
   res = await PATCH( cfg.file1,cfg.text, 'application/sparql-update' )
   ok("400 patch erroneous patchContent",res.status==400, res)
 
-/* JZ: I CAN NOT GET THIS TO FAIL in file:
- res = await PATCH( cfg.file1,cfg.patchSparql1, 'application/sparql-update' )
- ok("409 patch failed, cannot delete not existant triple",res.status==409, res)
-*/
+  res = await PATCH( cfg.file1,cfg.patchSparql1, 'application/sparql-update' )
+  ok("409 patch failed, cannot delete not existant triple",res.status==409, res)
+
   res = await PATCH( cfg.file1,cfg.patchSparql, 'application/sparql-update' )
   res1 = await GET( cfg.file1 )
   ok("200 patch sparql insert, delete to existing resource",res.status==200 && testPatch(res1, cfg.resPatchSparql), res1)
 
-
   res = await PATCH( cfg.file1,cfg.patchN3_1, 'text/n3' )
   res1 = await GET( cfg.file1 )
-  //console.warn(res1.statusText.toString())
+  // console.warn(res1.statusText.toString())
   ok("200 patch n3 insert",res.status==200 && testPatch(res1, cfg.resPatchN3_1), res1)
 
   res = await PATCH( cfg.file1,cfg.patchN3_3, 'text/n3' )
@@ -351,8 +351,9 @@ if(check.headers && typeof slug !='undefined'){
   res = await DELETE( cfg.base )
   ok("200 delete container",res.status==200,res)
 
-  let skipped = 34 - passes - fails;
-  console.warn(`${passes}/34 tests passed, ${fails} failed, ${skipped} skipped\n`)
+  /* let skipped = 34 - passes - fails;
+  console.warn(`${passes}/${tests} tests passed, ${fails} failed, ${skipped} skipped\n`) */
+  console.warn(`${passes}/${tests} tests passed, ${fails} failed\n`)
   allfails = allfails + fails
 }
 /* =========================================================== */
