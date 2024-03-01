@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html id="docHTML">
+<head>
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+    <link type="text/css" rel="stylesheet" href="./node_modules/mashlib/dist/mash.css" />
+    <script type="text/javascript" src="./node_modules/mashlib/dist/mashlib.js"></script>
+    <script type="module">
+const port = 3000;
+var host = `http://localhost:${port}`;
+
+window.SolidAppContext = {
+  noAuth : host,
+  webId : host + "/profile/card#me",
+  app : host,
+  webid : host + "/profile/card#me",
+  scroll : 130 // for eyeFocus, should be height of top banner
+}
+/*
+window.$SolidTestEnvironment = {
+  iconBase : "/common/icons/",
+  originalIconBase : "/common/originalIcons/",
+}
+*/
+let go; // good advice :-)
+document.addEventListener('DOMContentLoaded', function() {
+    const $rdf = UI.rdf
+    const dom = document
+    $rdf.Fetcher.crossSiteProxyTemplate = self.origin + '/xss?uri={uri}';
+    var uri = window.location.href;
+    window.document.title = 'Data Kitchen: ' + uri;
+    var kb = UI.store;
+    var outliner = panes.getOutliner(dom)
+
+    function go ( event ) {
+      if( typeof event === "string" ) {
+        uriField.value = event; // call to go() from electron menu;
+      }
+      let uri = $rdf.uri.join(uriField.value, window.location.href)
+      console.log("User field " + uriField.value)
+      console.log("User requests " + uri)
+
+      const params = new URLSearchParams(location.search)
+      params.set('uri', uri);
+      window.history.replaceState({}, '', `${location.pathname}?${params}`);
+
+      var subject = kb.sym(uri);
+      // UI.widgets.makeDraggable(icon, subject) // beware many handlers piling up
+      mungeLoginArea(UI.authn.authSession); // no login for no-atuh pages
+      outliner.GotoSubject(subject, true, undefined, true, undefined);
+    }
+    const loginButtonArea = document.getElementById("loginButtonArea");
+    const uriField = dom.getElementById('uriField')
+    const goButton = dom.getElementById('goButton')
+    const webIdArea = dom.getElementById('webId')
+    const banner = dom.getElementById('inputArea')
+
+    mungeLoginArea();
+    if(window.ipcRenderer) window.ipcRenderer.init(go); // electron communication
+
+    function mungeLoginArea(){
+      loginButtonArea.innerHTML="";
+      loginButtonArea.appendChild(UI.login.loginStatusBox(document, null, {}))
+      if( uriField.value.startsWith(host) ){
+        loginButtonArea.style.display="none";
+        webIdArea.innerHTML = "Local Data-Kitchen User";
+        banner.style.backgroundColor="#bbbbcc";
+      }
+      else {
+        if(UI.authn.authSession && UI.authn.authSession.info.isLoggedIn){
+           const logoutButton = loginButtonArea.querySelector('input');
+           logoutButton.value = "Logout";
+           let displayId = UI.authn.authSession.info.webId.replace(/https:\/\//,'').replace(/\/profile\/card#me/,'');
+           webIdArea.innerHTML = displayId;
+           banner.style.backgroundColor="#bbccbb";
+        }
+        else {
+           banner.style.backgroundColor="#ccbbbb";
+        }
+        loginButtonArea.style.display="inline-block";
+      }
+    }
+
+    uriField.addEventListener('keyup', function (e) {
+      if (e.keyCode === 13) {
+        go(e)
+      }
+    }, false)
+
+    goButton.addEventListener('click', go, false);
+    let initial = new URLSearchParams(self.location.search).get("uri") || host + "/";
+    if (initial) {
+      uriField.value = initial
+      go()
+    } else {
+      console.log('ready for user input')
+    }
+
+if( UI.authn.authSession ) {
+    UI.authn.authSession.onLogin(() => {
+      mungeLoginArea();
+      go()
+    })
+    UI.authn.authSession.onLogout(() => {
+      document.cookie = "nssidp.sid=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      mungeLoginArea();
+      webIdArea.innerHTML = "Local Data-Kitchen User";
+      go()
+    })
+    UI.authn.authSession.onSessionRestore((url) => {
+      mungeLoginArea();
+      go()
+    })
+}
+});
+</script>
+</head>
+<body>
+  <table style="width:100%;" id="inputArea">
+    <tr>
+      <td style="text-align:right;">Visiting&nbsp;</td>
+      <td>
+        <div>
+          <input id="uriField" type="text" style="font-size:100%; min-width:25em; padding:0.5em;"/>
+          <input type="button" id="goButton" value="Go" />
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td style="text-align:right;">As&nbsp;</td>
+      <td><div style="margin-top:0.5em;margin-bottom:0.5em;"><span id="webId" style="font-weight:bold">Local Data-Kitchen User </span> <span id="loginButtonArea"></span>
+</div></td>
+    </tr>
+  </table>
+  <table style="width:100%;">
+    <tr>
+      <div class="TabulatorOutline" id="DummyUUID" role="main">
+          <table id="outline"></table>
+          <div id="GlobalDashboard"></div>
+      </div>
+    </tr>
+  </table>
+</body>
+</html>
