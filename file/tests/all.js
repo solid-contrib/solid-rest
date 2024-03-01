@@ -276,7 +276,7 @@ if(check.headers){
   res = await HEAD( cfg.missingFolder )
   ok("404 head resource, not found",res.status==404,res )
 
-  console.log(res.headers)
+  // console.log(res.headers)
 
   // GET
   res = await GET( cfg.missingFolder )

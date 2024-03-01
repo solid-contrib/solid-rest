@@ -71,6 +71,10 @@ export async function handleResponse(response, originalRequest) {
   // const fn = libPath.basename(pathname); 
   const fn = pathname.replace(/.*\//,'');
 
+  headers['vary'] = 'accept,authorization,origin'
+
+  headers['access-control-expose-headers'] =  'accept-patch,accept-post,accept-put,allow,content-range,etag,last-modified,link,location,updates-via,wac-allow,www-authenticate'
+
   headers['content-type'] = this.item.contentType; // CONTENT-TYPE	  
 
   headers.link = headers.link || createLinkHeader(item); // LINK
@@ -145,6 +149,9 @@ export async function handleResponse(response, originalRequest) {
   headers.etag = `W/"${uuid()}"`;
   headers['content-length'] = (typeof Buffer !='undefined') ?Buffer.byteLength(body,'utf8') :(typeof Blob!="undefined") ?(new Blob([body])).size :77;
 
+  // TODO (?) last-modified
+  // TODO Link storage at root : '<http://www.w3.org/ns/pim/space#Storage>; rel="type"'
+
   // Now we create & return the Response object
   for(var h of Object.keys(headers)){
     if(! headers[h]) delete headers[h];
@@ -205,6 +212,7 @@ function createWacHeader(mode) {
 }
 
 function createAllowHeader(patch, mode) {
+  // TODO conditions on DELETE (root/ root/.acl can't be deleted)
   return 'OPTIONS,HEAD' + (mode.read ? ',GET' : '') + (mode.write ? ',POST,PUT,DELETE' : '') + (mode.write && patch ? ',PATCH' : '');
 }
 
