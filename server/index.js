@@ -15,7 +15,7 @@ if(!(port && docRoot)) {
   process.exit();
 }
 
-app.all('*', async (req, res) => {
+app.all('*', async (req, res, next) => {
   const filePath = "file://" + docRoot + req.path;
   try{
     const solidRestRequest = mungeRestRequest(req);
@@ -25,6 +25,7 @@ app.all('*', async (req, res) => {
     res.send(content);
   }
   catch(e){console.log(e)}
+  next()
 });
 function mungeRestResponse(res,solidRestResponse){
       res.status = solidRestResponse.status;
@@ -32,6 +33,14 @@ function mungeRestResponse(res,solidRestResponse){
      res.headers = solidRestResponse.headers;
          res.url = solidRestResponse.url;
     res.location = solidRestResponse.location;
+    // https://expressjs.com/en/api.html#res.type
+    // TODO more types to be tested image, json ....
+    const type = res.headers.get('content-type')
+    if (type.includes('html')) {
+      res.type('html');
+    } else if (type.includes('text')) {
+      res.type('text');
+    }
   return res;
 }
 function mungeRestRequest(req){
