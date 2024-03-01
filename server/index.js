@@ -20,9 +20,9 @@ app.all('*', async (req, res, next) => {
   try{
     const solidRestRequest = mungeRestRequest(req);
     const solidRestResponse = await client.fetch(filePath,solidRestRequest);
-    let content = (await solidRestResponse.body).toString('utf8');
+    let content = solidRestResponse.body.toString();
     res = mungeRestResponse(res,solidRestResponse);
-    res.send(content)
+    res.send(content);
   }
   catch(e){console.log(e)}
   next()
