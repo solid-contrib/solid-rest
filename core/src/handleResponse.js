@@ -56,7 +56,7 @@ export async function handleResponse(response, originalRequest) {
   // constructed ones later
 
   if(method.match(/(PUT)/) && finalResponse.headers.status == 200){
-    finalResponse.headers.status = 201 
+    finalResponse.headers.status = 201
   }
   if(method.match(/(DELETE|GET|HEAD)/) && finalResponse.headers.status == 201){
     finalResponse.headers.status = 200 
@@ -69,7 +69,11 @@ export async function handleResponse(response, originalRequest) {
   const pathname = item.pathname;
 
   // const fn = libPath.basename(pathname); 
-  const fn = pathname.replace(/.*\//,''); 
+  const fn = pathname.replace(/.*\//,'');
+
+  headers['vary'] = 'accept,authorization,origin'
+
+  headers['access-control-expose-headers'] =  'accept-patch,accept-post,accept-put,allow,content-range,etag,last-modified,link,location,updates-via,wac-allow,www-authenticate'
 
   headers['content-type'] = this.item.contentType; // CONTENT-TYPE	  
 
@@ -99,10 +103,10 @@ export async function handleResponse(response, originalRequest) {
     if(!headers.url.endsWith('/')) headers.url=headers.url+"/";
 */
   }
-  if (this.patch) {                        // ACCEPT-PATCH & MS-AUTHOR-VIA
-    headers['accept-patch'] = ['application/sparql-update'];
+  /* if (this.patch) {                        // ACCEPT-PATCH & MS-AUTHOR-VIA
+    headers['accept-patch'] = ['text/n3', 'application/sparql-update'];
     headers['ms-author-via'] = ["SPARQL"];                   
-  }
+  } */
 
 
   let body = finalResponse.body || this.response.body || ""; // Now we merge headers we created with response headers, prefering response
@@ -140,8 +144,13 @@ export async function handleResponse(response, originalRequest) {
 */
   headers.statusText = headers.statusText || statusText[headers.status]; 
 
+  headers = createAcceptHeader(request, headers) // ACCEPT
+
   headers.etag = `W/"${uuid()}"`;
   headers['content-length'] = (typeof Buffer !='undefined') ?Buffer.byteLength(body,'utf8') :(typeof Blob!="undefined") ?(new Blob([body])).size :77;
+
+  // TODO (?) last-modified
+  // TODO Link storage at root : '<http://www.w3.org/ns/pim/space#Storage>; rel="type"'
 
   // Now we create & return the Response object
   for(var h of Object.keys(headers)){
@@ -203,7 +212,25 @@ function createWacHeader(mode) {
 }
 
 function createAllowHeader(patch, mode) {
+  // TODO conditions on DELETE (root/ root/.acl can't be deleted)
   return 'OPTIONS,HEAD' + (mode.read ? ',GET' : '') + (mode.write ? ',POST,PUT,DELETE' : '') + (mode.write && patch ? ',PATCH' : '');
+}
+
+function createAcceptHeader(request, headers) {
+  const status = headers.status
+  // no Accept header
+  if (request.method.match(/DELETE/) || status >= 500 || status.toString().match(/401|403/)) return headers
+  // Accept headers on container
+  if (request.url.endsWith('/')) {
+    if (status === 404) headers['accept-put'] = ['*/*'];
+    headers['accept-post'] = ['*/*'];
+  } else {
+    // Accept headers on document
+    headers['accept-put'] = ['*/*'];
+    headers['accept-patch'] = ['text/n3', 'application/sparql-update'];
+    headers['ms-author-via'] = ["SPARQL"];
+  }
+  return headers
 }
 
 function createLinkHeader(item) {
