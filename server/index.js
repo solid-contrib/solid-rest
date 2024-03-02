@@ -2,13 +2,15 @@ const {SolidNodeClient} = require('solid-node-client');
 const client = new SolidNodeClient();
 const express = require('express');
 const URL = require('url');
+const path = require('path')
 const bodyParser = require('body-parser');
 
 const app = express();
 app.use(bodyParser.text());
 
 const port = process.argv[2] || null;
-const docRoot = process.argv[3] || null;
+let docRoot = process.argv[3] || null;
+docRootIndex = __dirname
 if(!(port && docRoot)) {
   console.log("Syntax: npm run start port documentRoot.");
   console.log("   e.g. npm run start 3000 /home/me.");
@@ -16,7 +18,15 @@ if(!(port && docRoot)) {
 }
 
 app.all('*', async (req, res, next) => {
-  const filePath = "file://" + docRoot + req.path;
+  let filePath = "file://" + docRoot + req.path;
+  // if (req.path === '/') return res.redirect(301, 'http://localhost:3000/index.html')
+  if (req.path === '/index.html') {
+    // req.url = '/index.html'
+    filePath = "file://" + docRootIndex + req.path
+  } if (req.path.startsWith('/node_modules/mashlib/dist')) {
+    filePath = "file://" + docRootIndex + req.path
+  }
+  // return res.sendFile(path.dirname(require.resolve('./index.html'))+'/index.html')
   try{
     const solidRestRequest = mungeRestRequest(req);
     const solidRestResponse = await client.fetch(filePath,solidRestRequest);
@@ -40,12 +50,15 @@ function mungeRestResponse(res,solidRestResponse){
       res.type('html');
     } else if (type.includes('text')) {
       res.type('text');
+    } else if (type.includes('json')) {
+      res.type('json');
     }
   return res;
 }
 function mungeRestRequest(req){
   return {
      status : req.status,
+     method : req.method,
     headers : req.headers,
         url : 'file://' + docRoot + req.path,
        slug : req.slug,
