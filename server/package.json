@@ -6,8 +6,11 @@
   "scripts": {
     "start": "node index"
   },
-  "keywords": [],
+  "keywords": ["Solid"],
   "author": "Jeff Zucker",
+  "contributors": [
+     "Alain Bourgeois"
+  ],
   "license": "MIT",
   "dependencies": {
     "@solid-rest/file": "^2.1.18",
