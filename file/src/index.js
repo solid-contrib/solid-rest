@@ -54,7 +54,7 @@ export class SolidRestFile {
   /**
    * check if thing is Container or Resource
    * @param filePath
-   * @return "Container" | "Resource" | null
+   * @return { type: "Container"|"Resource", metadata: stat } | {}
    */
 
 
@@ -65,13 +65,13 @@ export class SolidRestFile {
       stat = await fs.lstatSync(path);
     } catch (err) {}
 
-    if (!stat) return null;
+    if (!stat) return {};
     if (stat.isSymbolicLink()) {
-       return "Container";
+       return { type: "Container", metadata: stat };
     };
-    if (stat.isDirectory()) return "Container";
-    if (stat.isFile()) return "Resource";
-    return null;
+    if (stat.isDirectory()) return { type: "Container", metadata: stat };
+    if (stat.isFile()) return { type: "Resource", metadata: stat };
+    return {};
   }
   /**
    * read a folder
@@ -112,7 +112,7 @@ export class SolidRestFile {
     fn = fn.replace(/^file:\/\//, '');
     let mimetype = await mime.lookup(fn); // mimetype from ext
 
-    let type = await this.itemType(fn); // Container/Resource
+    const { type, metadata } = await this.itemType(fn); // Container/Resource and metadata
 
     let exists = await this.itemExists(fn);
     if (!type && fn.endsWith('/')) type = "Container";
@@ -145,7 +145,8 @@ export class SolidRestFile {
       exists: exists,
       isContainer: type === "Container" ? true : false,
       mimetype: mimetype,
-      contentType: mimetype
+      contentType: mimetype,
+      metadata: metadata
     };
     return Promise.resolve(item);
   }
