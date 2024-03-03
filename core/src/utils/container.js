@@ -19,11 +19,11 @@ export default async function containerAsTurtle(pathname, contentsArray, typeWan
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix stat: <http://www.w3.org/ns/posix/stat#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
-<> a ldp:BasicContainer, ldp:Container
-`;
+
+<> a ldp:BasicContainer, ldp:Container`;
 
   if (filenames.length) {
-    str = str + "; ldp:contains\n";
+    str = str + ";\n ldp:contains\n"; // alain
 
     for (var i = 0; i < filenames.length; i++) {
       let fn = filenames[i].path;
@@ -43,16 +43,20 @@ export default async function containerAsTurtle(pathname, contentsArray, typeWan
           modified = i.modified;
         }
         catch(e){console.log(e)}
+      } else if (filenames[i].metadata) {
+        size = filenames[i].metadata.size
+        mtime = filenames[i].metadata.mtimeMs
+        modified = new Date(mtime).toISOString()
       }
       ctype = ctype || await self.getContentType(fn, ftype) || "";
       // REMOVE CHARSET FROM CONTENT-TYPE
       ctype = ctype.replace(/;.*/, '');
       ftype = filenames[i].isContainer ? "ldp:Container; a ldp:BasicContainer; a ldp:Resource" : "ldp:Resource";
-      str2 = str2 + `<${fn}> a ${ftype}.\n`;
-      if(ctype)
-        str2 = str2 + `<${fn}> a <http://www.w3.org/ns/iana/media-types/${ctype}#Resource>.\n`; // str2 = str2 + `<${fn}> :type "${ctype}".\n`
+      str2 = str2 + `<${fn}> a ${ftype}`;
+      if(ctype && !filenames[i].isContainer) // no media-type for Container
+        str2 = str2 + `, <http://www.w3.org/ns/iana/media-types/${ctype}#Resource>`; // str2 = str2 + `<${fn}> :type "${ctype}".\n`
       if(size){
-        str2 = str2 + `<${fn}> stat:size ${size}; stat:mtime ${mtime}; dct:"${modified}"^^xsd:dateTime.\n`
+        str2 = str2 + `;\n  stat:size ${size};\n  stat:mtime ${mtime};\n  dct:modified "${modified}"^^xsd:dateTime.\n`
       }
     }
 
