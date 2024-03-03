@@ -113,9 +113,10 @@ export class SolidRestFile {
     let mimetype = await mime.lookup(fn); // mimetype from ext
 
     const { type, metadata } = await this.itemType(fn); // Container/Resource and metadata
+    let itemType = type
 
     let exists = await this.itemExists(fn);
-    if (!type && fn.endsWith('/')) type = "Container";
+    if (!type && fn.endsWith('/')) itemType = "Container";
     let read = true, write = true;
     if (exists) {
       try {
@@ -143,7 +144,7 @@ export class SolidRestFile {
       extension: mime.extension(fn),
       mode: mode,
       exists: exists,
-      isContainer: type === "Container" ? true : false,
+      isContainer: itemType === "Container" ? true : false,
       mimetype: mimetype,
       contentType: mimetype,
       metadata: metadata
