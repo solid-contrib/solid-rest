@@ -291,8 +291,16 @@ if(check.headers){
     && !res.headers.get("allow").match('PATCH'),res )
 
   res = await HEAD( cfg.root )
-  ok("200 head Container, no DELETE in Allow header", res.status === 200
+  ok("200 head root Container, no DELETE in Allow header", res.status === 200
     && !res.headers.get("allow").match('DELETE'),res )
+
+  res = await HEAD( cfg.root )
+  ok("200 head root Container, pim Storage header", res.status === 200
+    && res.headers.get("Link").includes('pim/space#Storage'),res )
+
+  res = await HEAD( cfg.folder1 )
+  ok("200 head non root Container, no pim Storage header", res.status === 200
+    && !res.headers.get("Link").includes('pim/space#Storage'),res )
 
   res = await HEAD( cfg.rootAcl )
   ok("404 head root/.acl, no DELETE in Allow header", res.status === 404
@@ -307,7 +315,6 @@ if(check.headers){
   acceptPost = res.headers.get('Accept-Post')
   acceptPatch = res.headers.get('Accept-Patch')
   ok("404 get container, notfound, accept headers",res.status==404 && acceptPut === '*/*' && acceptPost === '*/*' && acceptPatch === null,res)
-
 
   res = await GET( cfg.file1 )
   ok("200 get resource",res.status==200 && await res.text()===cfg.text, res)
