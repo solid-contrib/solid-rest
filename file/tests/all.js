@@ -2,6 +2,7 @@ const $rdf = global.$rdf = require('rdflib');
 const {SolidRestFile} = require('../');
 const libUrl = require('url');
 
+global.$rdf = $rdf;
 const client = new SolidRestFile();
 const kb = $rdf.graph();
 const fetcher = $rdf.fetcher(kb,{fetch:client.fetch.bind(client)});
@@ -45,6 +46,8 @@ async function getConfig(scheme){
    * we assume that test-folder exists and is empty
   */
   let  base   = scheme + "/test-folder4"
+  let  root   = host + "/"
+  let  rootAcl = host + "/.acl"
   let  c1name = "rest/"
   let  c2name = "deep-folder"
   let  r1name = "test1.ttl"
@@ -144,6 +147,8 @@ const resPatchN3_2 = [`@prefix : <#>.
   let cfg =  {
     host   : host,
     base   : base,
+    root   : root,
+    rootAcl : rootAcl,
     dummy  : base + "/dummy.txt",
     c1name : c1name,
     c2name : c2name,
@@ -184,6 +189,7 @@ async function run(scheme){
   let cfg = await getConfig(scheme)
   let res, res1
   let acceptPatch, acceptPost, acceptPut
+  let allow
 
   if(scheme==="mem:")  cfg.base += "/"
   try {res=await PUT(cfg.dummy)}catch(e){console.log(e)}
@@ -271,12 +277,26 @@ if(check.headers){
 
   // HEAD
   res = await HEAD( cfg.deepR )
-  ok("200 head",res.status==200 && res.headers.get("allow"),res )
+  ok("200 head",res.status==200,res )
+
+  res = await HEAD( cfg.deepR )
+  ok("200 head Document, no POST in Allow header",res.status==200
+    && !res.headers.get("allow").match('POST'), res)
 
   res = await HEAD( cfg.missingFolder )
-  ok("404 head resource, not found",res.status==404,res )
+  ok("404 head", res.status === 404,res )
 
-  // console.log(res.headers)
+  res = await HEAD( cfg.missingFolder )
+  ok("404 head Container, no PATCH in Allow header", res.status === 404
+    && !res.headers.get("allow").match('PATCH'),res )
+
+  res = await HEAD( cfg.root )
+  ok("200 head Container, no DELETE in Allow header", res.status === 200
+    && !res.headers.get("allow").match('DELETE'),res )
+
+  res = await HEAD( cfg.rootAcl )
+  ok("404 head root/.acl, no DELETE in Allow header", res.status === 404
+    && !res.headers.get("allow").match('DELETE'),res )
 
   // GET
   res = await GET( cfg.missingFolder )
@@ -338,7 +358,7 @@ if( check.patch ){
   acceptPut = res.headers.get('Accept-Put')
   acceptPost = res.headers.get('Accept-Post')
   acceptPatch = res.headers.get('Accept-Patch')
-  ok("200 delete resource",res.status==200
+  ok("200 delete resource, no accept headers",res.status==200
     && acceptPatch===null && acceptPost=== null && acceptPut=== null,res)
 
   res = await DELETE( cfg.folder1 )

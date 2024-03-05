@@ -79,7 +79,7 @@ export async function handleResponse(response, originalRequest) {
 
   headers.link = headers.link || createLinkHeader(item); // LINK
 
-  headers.allow = createAllowHeader(this.patch, this.item.mode); // ALLOW
+  headers.allow = createAllowHeader(item.pathname) // ALLOW
 
   headers['wac-allow'] = createWacHeader(this.item.mode); // WAC-ALLOW
 
@@ -211,9 +211,13 @@ function createWacHeader(mode) {
   return `user="read write append control",public="read"`;
 }
 
-function createAllowHeader(patch, mode) {
-  // TODO conditions on DELETE (root/ root/.acl can't be deleted)
-  return 'OPTIONS,HEAD' + (mode.read ? ',GET' : '') + (mode.write ? ',POST,PUT,DELETE' : '') + (mode.write && patch ? ',PATCH' : '');
+function createAllowHeader(requestPath) {
+  // root/ root/.acl can't be deleted
+  let del = (requestPath === '/' || requestPath === '/.acl') ? '' : ',DELETE'
+  // no PATCH on Container
+  if (requestPath.endsWith('/')) return 'OPTIONS,HEAD,GET,POST,PUT' + del
+  // no POST on Document
+  else return 'OPTIONS,HEAD,GET,PATCH,PUT' + del
 }
 
 function createAcceptHeader(request, headers) {
