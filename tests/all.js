@@ -59,8 +59,9 @@ async function getConfig(scheme){
   let  file1  = folder1 + r1name
   let  file2  = folder2 + r2name
   let  missingFolder = base + "/noSuchThing/norThis/"
-
+  let  missingFolderPost = base + "/noSuchThingPost/"
   const patchSparql = `INSERT { :new <#temp> <#245>; <temp1> "n0:240" .}
+
   DELETE { <> a :test.}`
   const patchSparql1 = `INSERT { :new <#temp> <#245>; <temp1> "n0:240" .}
   DELETE { <> a :NONEXISTANT.}`
@@ -213,7 +214,7 @@ if(check.headers){
   ok( "201 post resource", res.status==201,res)
 
   loc = res.headers.get('location')
-  ok( "post resource returns location header",  (cfg.folder1+cfg.r1name).match(loc), loc) 
+  ok( "post resource returns location header",  loc.endsWith(cfg.r1name), loc) 
 
   res = await GET(cfg.folder1);
   const gotText = await res.text();
@@ -232,7 +233,8 @@ if(check.headers){
 
   res = await GET(cfg.folder1);
   gotText = await res.text();
-  regex = new RegExp('<'+slug+'>');
+  const tmpSlug = slug.replace(/.*\//,'');
+  regex = new RegExp('<'+tmpSlug+'>');
   ok( "contained resources use relative path with slugs", gotText.match(regex), gotText )
 
 
