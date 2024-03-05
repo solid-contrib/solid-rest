@@ -182,8 +182,8 @@ async function run(scheme){
 
   [tests,fails,passes] = [0,0,0]
   let cfg = await getConfig(scheme)
-  let res
-  let res1
+  let res, res1
+  let acceptPatch, acceptPost, acceptPut
 
   if(scheme==="mem:")  cfg.base += "/"
   try {res=await PUT(cfg.dummy)}catch(e){console.log(e)}
@@ -282,12 +282,31 @@ if(check.headers){
   res = await GET( cfg.missingFolder )
   ok("404 get container, not found",res.status==404,res )
 
+  res = await GET( cfg.missingFolder )
+  acceptPut = res.headers.get('Accept-Put')
+  acceptPost = res.headers.get('Accept-Post')
+  acceptPatch = res.headers.get('Accept-Patch')
+  ok("404 get container, notfound, accept headers",res.status==404 && acceptPut === '*/*' && acceptPost === '*/*' && acceptPatch === null,res)
+
+
   res = await GET( cfg.file1 )
   ok("200 get resource",res.status==200 && await res.text()===cfg.text, res)
+
+  res = await GET( cfg.file1 )
+  acceptPut = res.headers.get('Accept-Put')
+  acceptPost = res.headers.get('Accept-Post')
+  acceptPatch = res.headers.get('Accept-Patch')
+  ok("200 get resource, accept headers",res.status==200 && acceptPut === '*/*' && acceptPost === null && acceptPatch === 'text/n3,application/sparql-update',res)
 
   res = await GET( cfg.folder1 )
   let type = res.headers.get("content-type")
   ok("200 get container",res.status==200 && type==="text/turtle",res)
+
+  res = await GET( cfg.folder1 )
+  acceptPut = res.headers.get('Accept-Put')
+  acceptPost = res.headers.get('Accept-Post')
+  acceptPatch = res.headers.get('Accept-Patch')
+  ok("200 get container, accept headers",res.status==200 && acceptPut === null && acceptPost === '*/*' && acceptPatch === null,res)
 
 if( check.patch ){
   // PATCH 
@@ -316,7 +335,11 @@ if( check.patch ){
 }
   // DELETE 
   res = await DELETE( cfg.file1 )  // delete r1.name
-  ok("200 delete resource",res.status==200,res)
+  acceptPut = res.headers.get('Accept-Put')
+  acceptPost = res.headers.get('Accept-Post')
+  acceptPatch = res.headers.get('Accept-Patch')
+  ok("200 delete resource",res.status==200
+    && acceptPatch===null && acceptPost=== null && acceptPut=== null,res)
 
   res = await DELETE( cfg.folder1 )
   ok("409 delete container, not empty",res.status==409,res)
@@ -420,6 +443,6 @@ async function testPatch (res, resPatch) {
 
 console.log = (...args)=>{
   for(let a of args){
-    if(!a.toString().match(/^\@\@\@/) ) console.warn(a);
+    if(!a || !a.toString().match(/^\@\@\@/) ) console.warn(a);
   }
 }
