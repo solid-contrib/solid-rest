@@ -77,7 +77,8 @@ export async function handleResponse(response, originalRequest) {
 
   headers['content-type'] = this.item.contentType; // CONTENT-TYPE	  
 
-  headers.link = headers.link || createLinkHeader(item); // LINK
+  const storageHeader = item.pathname === '/' ? ', <http://www.w3.org/ns/pim/space#Storage>; rel="type"' : ''
+  headers.link = headers.link || (createLinkHeader(item) + storageHeader); // LINK
 
   headers.allow = createAllowHeader(item.pathname) // ALLOW
 
@@ -150,7 +151,6 @@ export async function handleResponse(response, originalRequest) {
   headers['content-length'] = (typeof Buffer !='undefined') ?Buffer.byteLength(body,'utf8') :(typeof Blob!="undefined") ?(new Blob([body])).size :77;
 
   // TODO (?) last-modified
-  // TODO Link storage at root : '<http://www.w3.org/ns/pim/space#Storage>; rel="type"'
 
   // Now we create & return the Response object
   for(var h of Object.keys(headers)){
@@ -245,14 +245,14 @@ function createLinkHeader(item) {
   if (ext === '.acl') // .acl not controlledBy or describedBy anything
     return `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
   else if (ext === '.meta') {
-    return `<${fn}.acl>; rel="acl",` // .meta controlledBy .meta.acl
-        + `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
+    return `<${fn}.acl>; rel="acl"` // .meta controlledBy .meta.acl
+        + `, <http://www.w3.org/ns/ldp#Resource>; rel="type"`;
   }
   else if (isContainer) {
-    return  `<.meta>; rel="describedBy", <.acl>; rel="acl",` + `<http://www.w3.org/ns/ldp#Container>; rel="type",` + `<http://www.w3.org/ns/ldp#BasicContainer>; rel="type"` + `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
+    return  `<.meta>; rel="describedBy", <.acl>; rel="acl"` + `, <http://www.w3.org/ns/ldp#Container>; rel="type"` + `, <http://www.w3.org/ns/ldp#BasicContainer>; rel="type"` + `, <http://www.w3.org/ns/ldp#Resource>; rel="type"`;
   }
   else {
-    let link = `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl",` + `<http://www.w3.org/ns/ldp#Resource>; rel="type"`;
+    let link = `<${fn}.meta>; rel="describedBy", <${fn}.acl>; rel="acl"` + `, <http://www.w3.org/ns/ldp#Resource>; rel="type"`;
     return link;
   }  
 } // THE END!
