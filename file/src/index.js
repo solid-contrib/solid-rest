@@ -1,6 +1,6 @@
 import libPath from "path";
 import { Readable } from "stream";
-import SolidRest from "@solid-rest/core/";
+import SolidRest from "../../../core/";
 import fs from "fs-extra";
 import mime from "mime-types"; // import concatStream from "concat-stream";
 
@@ -161,7 +161,6 @@ export class SolidRestFile {
 
   async getResource(pathname) {
     let ctype, encoding, bodyData;
-
     try {
       ctype = mime.contentType(pathname) || "";
       encoding = ctype.match(/text|application/) ? "utf8" : null;
