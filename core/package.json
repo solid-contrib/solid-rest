@@ -1,10 +1,10 @@
 {
   "name": "@solid-rest/core",
-  "version": "2.1.18",
+  "version": "2.1.19",
   "author": "Jeff Zucker",
   "contributors": [
-     "Alain Bourgeois",
-     "Rahul Gupta"
+    "Alain Bourgeois",
+    "Rahul Gupta"
   ],
   "license": "MIT",
   "description": "treat any storage as a mini Solid server",
